@@ -1,5 +1,3 @@
-@import "../../styles/variables.css";
-
 .container {
   height: 7rem;
   display: flex;
@@ -8,4 +6,5 @@
   padding: var(--spacing-xxl);
   border-bottom: 1px solid var(--gray-color);
   background-color: var(--main-color);
+  justify-content: space-around;
 }
