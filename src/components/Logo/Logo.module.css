@@ -1,0 +1,21 @@
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 7rem;
+  width: auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.logo svg {
+  height: 100%;
+  width: auto;
+  fill: var(--accent-color);
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.logo:hover svg {
+  transform: scale(1.02);
+  filter: drop-shadow(0 0 6px rgba(255, 214, 0, 0.6));
+}
