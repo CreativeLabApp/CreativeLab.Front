@@ -1,0 +1,39 @@
+.authButtons {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.login {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  height: 5vh;
+  border: 1px solid var(--accent-color);
+  border-radius: var(--border-radius);
+  background: transparent;
+  color: var(--accent-color);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.login:hover {
+  background: var(--accent-color);
+  color: var(--font-color);
+}
+
+.register {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  height: 5vh;
+  border: none;
+  border-radius: var(--border-radius);
+  background: var(--accent-color);
+  color: var(--font-color);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast, 0.2s ease);
+}
+
+.register:hover {
+  background: var(--hover-color);
+}

@@ -27,10 +27,3 @@
   --spacing-xl: 1.5rem;
   --spacing-xxl: 2.5rem;
 }
-
-[data-theme="dark"] {
-  --main-color: #122435;
-  --font-color: #f4f7f9;
-  --element-color: #6bcfa8;
-  --gray-color: #1e2e45;
-}
