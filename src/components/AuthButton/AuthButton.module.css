@@ -1,0 +1,27 @@
+.authButtons {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.login {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  height: 5vh;
+  border: 1px solid var(--accent-color);
+  border-radius: var(--border-radius);
+  background-color: var(--accent-color);
+  color: var(--main-color);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  transition: transform 0.5 ease;
+}
+
+.login:hover {
+  transform: scale(1.02);
+  background-color: var(--main-color);
+  color: var(--font-color);
+}
+
+.login:active {
+  transform: scale(0.97);
+}

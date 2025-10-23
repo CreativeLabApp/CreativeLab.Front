@@ -4,7 +4,7 @@ import Logo from "../Logo/Logo";
 import HeaderContainer from "../HeaderContainer/HeaderContainer";
 import Navbar from "../Navbar/Navbar";
 import SearchBar from "../SearchBar/SearchBar";
-import AuthButtons from "../AuthButtons/AuthButtons";
+import AuthButton from "../AuthButton/AuthButton";
 
 function Header() {
   return (
@@ -12,7 +12,7 @@ function Header() {
       <Logo />
       <Navbar links={links} />
       <SearchBar placeholder="Поиск" />
-      <AuthButtons />
+      <AuthButton />
     </HeaderContainer>
   );
 }
