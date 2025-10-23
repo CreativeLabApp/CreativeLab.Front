@@ -1,0 +1,31 @@
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.column h4 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-xs);
+  color: var(--accent-color);
+}
+
+.column a {
+  color: var(--font-color);
+  text-decoration: none;
+  font-size: var(--font-size-base);
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+}
+
+.column a:hover {
+  color: var(--element-color);
+  text-decoration: underline;
+}
+
+.column p {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--font-color);
+  user-select: text;
+}

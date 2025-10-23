@@ -1,5 +1,5 @@
 .container {
-  height: 7rem;
+  height: 9rem;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -7,4 +7,5 @@
   border-bottom: 1px solid var(--gray-color);
   background-color: var(--main-color);
   justify-content: space-around;
+  position: sticky;
 }

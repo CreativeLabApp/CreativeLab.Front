@@ -1,0 +1,19 @@
+.columns {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  gap: 50px;
+}
+
+@media (max-width: 480px) and (orientation: portrait) {
+  .columns {
+    gap: var(--spacing-lg);
+    text-align: center;
+  }
+}
+
+@media (max-width: 1080px) and (orientation: landscape) {
+  .columns {
+    gap: var(--spacing-lg);
+  }
+}
