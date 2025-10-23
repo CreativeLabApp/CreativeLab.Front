@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./FooterColumn.module.css";
 import { Link } from "react-router-dom";
 
-export default function FooterColumn({ title, items }) {
+function FooterColumn({ title, items }) {
   return (
     <div className={styles.column}>
       <h4>{title}</h4>
@@ -28,3 +28,5 @@ export default function FooterColumn({ title, items }) {
     </div>
   );
 }
+
+export default FooterColumn;

@@ -1,0 +1,7 @@
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xxl);
+  justify-content: space-between;
+  height: 30%;
+}

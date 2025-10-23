@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./FooterColumns.module.css";
 import FooterColumn from "../FooterColumn/FooterColumn";
 
-export default function FooterColumns({ columns }) {
+function FooterColumns({ columns }) {
   return (
     <div className={styles.columns}>
       {columns.map((col, index) => (
@@ -11,3 +11,5 @@ export default function FooterColumns({ columns }) {
     </div>
   );
 }
+
+export default FooterColumns;

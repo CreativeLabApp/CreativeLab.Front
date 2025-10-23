@@ -1,0 +1,10 @@
+.section {
+  padding: var(--spacing-xl);
+  width: 80%;
+}
+
+.title {
+  font-size: var(--font-size-subtitle);
+  margin-bottom: var(--spacing-lg);
+  color: var(--font-color);
+}
