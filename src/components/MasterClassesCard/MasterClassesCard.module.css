@@ -43,3 +43,10 @@
   color: var(--accent-color);
   font-weight: bold;
 }
+
+.placeholder {
+  margin: 0 auto;
+  height: 180px;
+  width: 10vh;
+  color: var(--accent-color);
+}
