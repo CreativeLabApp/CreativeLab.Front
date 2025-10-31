@@ -1,0 +1,27 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-self: center;
+  align-self: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background-color: var(--background-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px var(--shadow-color);
+  border: 1px solid var(--border-color);
+  margin: 0 auto;
+  min-height: 50vh;
+}
+
+.title {
+  font-size: var(--font-size-xl);
+  font-weight: bold;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-sm);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}

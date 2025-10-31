@@ -1,8 +1,15 @@
 import React from "react";
 import styles from "./AuthButton.module.css";
+import { useNavigate } from "react-router-dom";
 
 function AuthButton() {
-  return <button className={styles.login}>Войти</button>;
+  const navigate = useNavigate(null);
+
+  return (
+    <button className={styles.login} onClick={() => navigate("/login")}>
+      Войти
+    </button>
+  );
 }
 
 export default AuthButton;
