@@ -4,20 +4,21 @@
   justify-self: center;
   align-self: center;
   gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  background-color: var(--background-color);
+  padding: var(--spacing-xl);
+  background-color: var(--main-color);
   border-radius: var(--border-radius);
   box-shadow: 0 4px 12px var(--shadow-color);
   border: 1px solid var(--border-color);
   margin: 0 auto;
-  min-height: 50vh;
 }
 
 .title {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-title);
   font-weight: bold;
   color: var(--font-color);
   margin-bottom: var(--spacing-sm);
+  width: 100%;
+  text-align: center;
 }
 
 .content {

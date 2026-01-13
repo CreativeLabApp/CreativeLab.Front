@@ -1,0 +1,17 @@
+.formBottom {
+  margin-top: 16px;
+  text-align: center;
+  color: #666;
+  font-size: var(--font-size-md);
+}
+
+.registerLink {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.registerLink:hover {
+  text-decoration: underline;
+}

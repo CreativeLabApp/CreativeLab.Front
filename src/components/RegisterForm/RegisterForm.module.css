@@ -1,0 +1,61 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.nameFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+@media (max-width: 768px) {
+  .nameFields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.checkboxWrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.checkbox {
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.checkboxLabel {
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.error {
+  color: #ff3b30;
+  background-color: rgba(255, 59, 48, 0.1);
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin: 10px 0;
+}
+
+.success {
+  color: #34c759;
+  background-color: rgba(52, 199, 89, 0.1);
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  margin: 10px 0;
+}
+
+.errorMessage {
+  color: #ff3b30;
+  font-size: 12px;
+  margin-top: 5px;
+  display: block;
+}
