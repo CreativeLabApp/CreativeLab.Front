@@ -1,6 +1,5 @@
 .section {
-  padding: var(--spacing-xl);
-  width: 80%;
+  width: 100%;
 }
 
 .title {

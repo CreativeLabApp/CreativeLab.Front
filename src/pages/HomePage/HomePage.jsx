@@ -1,11 +1,11 @@
 import React from "react";
 import PageWrapper from "../../components/common/PageWrapper/PageWrapper";
-import PopularMasterClasses from "../../components/PopularMasterClasses/PopularMasterClasses";
+import HomeContent from "../../components/HomeContent/HomeContent";
 
 function HomePage() {
   return (
     <PageWrapper>
-      <PopularMasterClasses />
+      <HomeContent />
     </PageWrapper>
   );
 }

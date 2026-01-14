@@ -1,13 +1,22 @@
 import React from "react";
 import styles from "./PopularMasterClasses.module.css";
-import { popularClasses } from "../../sources/popularClasses";
 import MasterClassesList from "../MasterClassesList/MasterClassesList";
 
-function PopularMasterClasses() {
+function PopularMasterClasses({ masterClasses }) {
+  console.log(masterClasses);
   return (
     <section className={styles.section}>
-      <h2 className={styles.title}>Популярные мастер-классы</h2>
-      <MasterClassesList masterClasses={popularClasses} />
+      {masterClasses.length === 0 ? (
+        <div className={styles.noResults}>
+          <div className={styles.noResultsIcon}>🔍</div>
+          <h3 className={styles.noResultsTitle}>Ничего не найдено</h3>
+          <p className={styles.noResultsText}>
+            Попробуйте изменить параметры поиска или выбрать другие фильтры
+          </p>
+        </div>
+      ) : (
+        <MasterClassesList masterClasses={masterClasses} />
+      )}
     </section>
   );
 }

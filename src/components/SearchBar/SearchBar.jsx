@@ -1,31 +1,54 @@
 import React, { useState } from "react";
 import { ReactComponent as MagnifierIcon } from "../../assets/magnifier.svg";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 import styles from "./SearchBar.module.css";
 
-function SearchBar({ placeholder }) {
-  const [query, setQuery] = useState("");
+function SearchBar({ placeholder, onSearch, value = "" }) {
+  const [query, setQuery] = useState(value);
 
   const handleChange = (e) => {
-    setQuery(e.target.value);
+    const newQuery = e.target.value;
+    setQuery(newQuery);
+    if (onSearch) {
+      onSearch(newQuery);
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Поиск:", query);
+    if (onSearch) {
+      onSearch(query);
+    }
+  };
+
+  const handleClear = () => {
+    setQuery("");
+    if (onSearch) {
+      onSearch("");
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className={styles.form}>
-      <input
-        type="text"
-        value={query}
-        onChange={handleChange}
-        placeholder={placeholder}
-        className={styles.input}
-      />
-      <button type="submit" className={styles.button}>
-        <MagnifierIcon className={styles.icon} />
-      </button>
+      <div className={styles.inputWrapper}>
+        <MagnifierIcon className={styles.searchIcon} />
+        <input
+          type="text"
+          value={query}
+          onChange={handleChange}
+          placeholder={placeholder}
+          className={styles.input}
+        />
+        {query && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className={styles.clearButton}
+          >
+            <XMarkIcon className={styles.clearIcon} />
+          </button>
+        )}
+      </div>
     </form>
   );
 }
