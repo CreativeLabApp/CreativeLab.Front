@@ -4,13 +4,30 @@ import {
   StarIcon,
   UserIcon,
   TagIcon,
+  HeartIcon,
 } from "@heroicons/react/24/outline";
-import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
+import {
+  StarIcon as StarIconSolid,
+  HeartIcon as HeartIconSolid,
+} from "@heroicons/react/24/solid";
 import styles from "./MasterClassesCard.module.css";
 import { useNavigate } from "react-router-dom";
+import { useFavoritesStore } from "../../stores/favoritesStore";
 
 function MasterClassesCard({ item }) {
   const navigate = useNavigate();
+  const { toggleFavorite, isFavorite } = useFavoritesStore();
+
+  const isItemFavorite = isFavorite(item.id);
+
+  const handleDetailsClick = () => {
+    navigate(`/master-class/${item.id}`);
+  };
+
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation();
+    toggleFavorite(item.id);
+  };
 
   // Форматирование рейтинга
   const renderRating = (rating) => {
@@ -39,10 +56,7 @@ function MasterClassesCard({ item }) {
   };
 
   return (
-    <div
-      className={styles.card}
-      onClick={() => navigate(`/master-class/${item.id}`)}
-    >
+    <div className={styles.card} onClick={handleDetailsClick}>
       {/* Верхняя часть с изображением */}
       <div className={styles.imageContainer}>
         {item.image ? (
@@ -53,6 +67,21 @@ function MasterClassesCard({ item }) {
             <span className={styles.placeholderText}>{item.category}</span>
           </div>
         )}
+
+        {/* Кнопка избранного */}
+        <button
+          className={styles.favoriteButton}
+          onClick={handleFavoriteClick}
+          aria-label={
+            isItemFavorite ? "Удалить из избранного" : "Добавить в избранное"
+          }
+        >
+          {isItemFavorite ? (
+            <HeartIconSolid className={styles.favoriteIcon} />
+          ) : (
+            <HeartIcon className={styles.favoriteIcon} />
+          )}
+        </button>
 
         {/* Бейдж категории */}
         <div className={styles.categoryBadge}>
@@ -103,10 +132,7 @@ function MasterClassesCard({ item }) {
 
       {/* Нижняя часть с кнопкой */}
       <div className={styles.footer}>
-        <button
-          className={styles.actionButton}
-          onClick={() => navigate(`/master-class/${item.id}`)}
-        >
+        <button className={styles.actionButton} onClick={handleDetailsClick}>
           Подробнее
         </button>
       </div>

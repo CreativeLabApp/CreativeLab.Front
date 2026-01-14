@@ -9,6 +9,7 @@ import RegisterPage from "./pages/RegisterPage/RegisterPage";
 import MasterClassDetailPage from "./pages/MasterClassDetailsPage/MasterClassDetailsPage";
 import NotFoundPage from "./pages/NotFoundPage/NotFoundPage";
 import FavoritesPage from "./pages/FavoritesPage/FavoritesPage";
+import MarketplacePage from "./pages/MarketplacePage/MarketplacePage";
 
 function App() {
   return (
@@ -27,6 +28,15 @@ function App() {
       <Route path="/favorite" element={<Layout />}>
         <Route index element={<FavoritesPage />} />
       </Route>
+
+      <Route path="/shop" element={<Layout />}>
+        <Route index element={<MarketplacePage />} />
+      </Route>
+
+      {/* <Route path="shop/product/:id" element={<ProductDetailPage />} />
+      <Route path="shop/cart" element={<CartPage />} />
+      <Route path="shop/add-product" element={<AddProductPage />} />
+      <Route path="shop/seller/:id" element={<SellerDashboardPage />} /> */}
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

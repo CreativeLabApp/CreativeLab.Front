@@ -6,7 +6,7 @@ import Button from "../common/Button/Button";
 import styles from "./LoginForm.module.css";
 import FormBottom from "../common/FormBottom/FormBottom";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/useAuthStore";
+import { useAuthStore } from "../../stores/authStore";
 
 function LoginForm() {
   const login = useAuthStore((store) => store.login);

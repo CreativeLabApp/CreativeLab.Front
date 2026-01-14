@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./AuthButton.module.css";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/useAuthStore";
+import { useAuthStore } from "../../stores/authStore";
 
 function AuthButton() {
   const user = useAuthStore((state) => state.user);

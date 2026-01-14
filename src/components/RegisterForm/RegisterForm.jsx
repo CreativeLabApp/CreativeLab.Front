@@ -3,10 +3,10 @@ import FormWrapper from "../common/FormWrapper/FormWrapper";
 import { FormProvider, useForm } from "react-hook-form";
 import Input from "../common/Input/Input";
 import Button from "../common/Button/Button";
-import styles from "./RegisterForm.module.css"; // Создайте отдельный файл стилей
+import styles from "./RegisterForm.module.css";
 import FormBottom from "../common/FormBottom/FormBottom";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../stores/useAuthStore";
+import { useAuthStore } from "../../stores/authStore";
 
 function RegisterForm() {
   const login = useAuthStore((store) => store.login); // После регистрации логиним пользователя
