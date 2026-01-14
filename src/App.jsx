@@ -7,6 +7,7 @@ import "./styles/global.css";
 import LoginPage from "./pages/LoginPage/LoginPage";
 import RegisterPage from "./pages/RegisterPage/RegisterPage";
 import MasterClassDetailPage from "./pages/MasterClassDetailsPage/MasterClassDetailsPage";
+import NotFoundPage from "./pages/NotFoundPage/NotFoundPage";
 
 function App() {
   return (
@@ -21,6 +22,8 @@ function App() {
       <Route path="/master-class/:id" element={<Layout />}>
         <Route index element={<MasterClassDetailPage />} />
       </Route>
+
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
