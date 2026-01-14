@@ -83,7 +83,7 @@ function HomeContent() {
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Мастер-классы</h1>
+        <div className={styles.title}>Мастер-классы</div>
         <SearchBar
           placeholder="Поиск мастер-классов"
           onSearch={setSearchQuery}

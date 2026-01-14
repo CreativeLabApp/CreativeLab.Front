@@ -39,7 +39,10 @@ function MasterClassesCard({ item }) {
   };
 
   return (
-    <div className={styles.card}>
+    <div
+      className={styles.card}
+      onClick={() => navigate(`/master-class/${item.id}`)}
+    >
       {/* Верхняя часть с изображением */}
       <div className={styles.imageContainer}>
         {item.image ? (

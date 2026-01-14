@@ -3,7 +3,6 @@ import styles from "./PopularMasterClasses.module.css";
 import MasterClassesList from "../MasterClassesList/MasterClassesList";
 
 function PopularMasterClasses({ masterClasses }) {
-  console.log(masterClasses);
   return (
     <section className={styles.section}>
       {masterClasses.length === 0 ? (
