@@ -10,6 +10,7 @@ import MasterClassDetailPage from "./pages/MasterClassDetailsPage/MasterClassDet
 import NotFoundPage from "./pages/NotFoundPage/NotFoundPage";
 import FavoritesPage from "./pages/FavoritesPage/FavoritesPage";
 import MarketplacePage from "./pages/MarketplacePage/MarketplacePage";
+import ProductDetailPage from "./pages/ProductDetailPage/ProductDetailPage";
 
 function App() {
   return (
@@ -29,14 +30,16 @@ function App() {
         <Route index element={<FavoritesPage />} />
       </Route>
 
-      <Route path="/shop" element={<Layout />}>
+      <Route path="/marketplace" element={<Layout />}>
         <Route index element={<MarketplacePage />} />
       </Route>
 
-      {/* <Route path="shop/product/:id" element={<ProductDetailPage />} />
-      <Route path="shop/cart" element={<CartPage />} />
-      <Route path="shop/add-product" element={<AddProductPage />} />
-      <Route path="shop/seller/:id" element={<SellerDashboardPage />} /> */}
+      <Route path="marketplace/product/:id" element={<Layout />}>
+        <Route index element={<ProductDetailPage />} />
+      </Route>
+      {/* <Route path="marketplace/cart" element={<CartPage />} />
+      <Route path="marketplace/add-product" element={<AddProductPage />} />
+      <Route path="marketplace/seller/:id" element={<SellerDashboardPage />} /> */}
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
