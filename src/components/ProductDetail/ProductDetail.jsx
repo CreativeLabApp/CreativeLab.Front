@@ -251,7 +251,7 @@ function ProductDetail() {
                   </div>
                   <button
                     className={styles.contactSellerButton}
-                    onClick={() => navigate(`/seller/${product.sellerId}`)}
+                    onClick={() => navigate(`/creator/${product.sellerId}`)}
                   >
                     Страница продавца
                   </button>

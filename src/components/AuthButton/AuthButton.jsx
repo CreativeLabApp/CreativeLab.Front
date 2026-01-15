@@ -6,12 +6,11 @@ import { useAuthStore } from "../../stores/authStore";
 function AuthButton() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
-  const logout = useAuthStore((store) => store.logout);
   const navigate = useNavigate();
 
   const handleClick = () => {
     if (isAuthenticated && user) {
-      logout();
+      navigate("/creator/" + user.id);
     } else {
       navigate("/login");
     }

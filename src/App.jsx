@@ -11,6 +11,7 @@ import NotFoundPage from "./pages/NotFoundPage/NotFoundPage";
 import FavoritesPage from "./pages/FavoritesPage/FavoritesPage";
 import MarketplacePage from "./pages/MarketplacePage/MarketplacePage";
 import ProductDetailPage from "./pages/ProductDetailPage/ProductDetailPage";
+import CreatorProfilePage from "./pages/CreatorProfilePage/CreatorProfilePage";
 
 function App() {
   return (
@@ -37,9 +38,11 @@ function App() {
       <Route path="marketplace/product/:id" element={<Layout />}>
         <Route index element={<ProductDetailPage />} />
       </Route>
-      {/* <Route path="marketplace/cart" element={<CartPage />} />
-      <Route path="marketplace/add-product" element={<AddProductPage />} />
-      <Route path="marketplace/seller/:id" element={<SellerDashboardPage />} /> */}
+      {/*<Route path="marketplace/add-product" element={<AddProductPage />} />*/}
+
+      <Route path="creator/:id" element={<Layout />}>
+        <Route index element={<CreatorProfilePage />} />
+      </Route>
 
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

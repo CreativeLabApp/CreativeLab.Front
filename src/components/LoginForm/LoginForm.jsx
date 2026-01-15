@@ -16,6 +16,7 @@ function LoginForm() {
 
   const methods = useForm({
     defaultValues: {
+      id: 3,
       email: "",
       password: "",
       role: "user",
@@ -37,6 +38,7 @@ function LoginForm() {
       // Вызываем login с правильными данными
       login(
         {
+          id: data.id,
           email: data.email,
           role: data.role,
         },
