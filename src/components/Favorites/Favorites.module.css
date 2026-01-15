@@ -11,7 +11,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--spacing-xxl);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -29,13 +30,13 @@
 .titleSection {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
 }
 
 .titleIcon {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   color: var(--error-color);
 }
 
@@ -43,16 +44,24 @@
   font-size: var(--font-size-title);
   font-weight: 700;
   color: var(--font-color);
-  margin: 0;
+  margin: 0 0 var(--spacing-xs) 0;
 }
 
 .subtitle {
   font-size: var(--font-size-base);
   color: var(--gray-color);
   line-height: 1.5;
+  margin: 0;
+}
+
+.headerActions {
+  flex-shrink: 0;
 }
 
 .clearButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
   background: none;
   border: 2px solid var(--error-color);
   color: var(--error-color);
@@ -70,6 +79,104 @@
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 82, 82, 0.2);
+}
+
+.clearIcon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Табы */
+.tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: none;
+  border: none;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  color: var(--gray-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: var(--border-radius);
+  white-space: nowrap;
+  position: relative;
+}
+
+.tab:hover {
+  background: var(--shadow-color);
+  color: var(--font-color);
+}
+
+.tab.active {
+  background: var(--accent-color);
+  color: var(--font-color);
+  font-weight: 600;
+}
+
+.tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -17px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-color);
+  border-radius: 2px;
+}
+
+.tabIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.tabCount {
+  background: var(--card-background);
+  color: var(--font-color);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-left: var(--spacing-xs);
+}
+
+.tab.active .tabCount {
+  background: var(--main-color);
+}
+
+/* Контент */
+.contentSection {
+  margin-bottom: var(--spacing-xxl);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-xl);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.sectionIcon {
+  width: 24px;
+  height: 24px;
+  color: var(--accent-color);
 }
 
 /* Сетка с карточками */
@@ -93,19 +200,101 @@
   }
 }
 
+/* Обертка для карточки с кнопкой удаления */
+.cardWrapper {
+  position: relative;
+}
+
+.removeButton {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+}
+
+.cardWrapper:hover .removeButton {
+  opacity: 1;
+}
+
+.removeButton:hover {
+  background: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.removeIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--error-color);
+}
+
+/* Пустой таб */
+.emptyTab {
+  text-align: center;
+  padding: var(--spacing-xxl) var(--spacing-xl);
+  background: var(--main-color);
+  border-radius: var(--border-radius);
+  border: 2px dashed var(--border-color);
+  margin: var(--spacing-xxl) 0;
+}
+
+.emptyTabIcon {
+  width: 64px;
+  height: 64px;
+  color: var(--gray-color);
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.5;
+}
+
+.emptyTabTitle {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.emptyTabText {
+  font-size: var(--font-size-base);
+  color: var(--gray-color);
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto var(--spacing-xl);
+}
+
 /* Подсказка в футере */
 .footerHint {
   text-align: center;
   padding: var(--spacing-xl);
-  background: #747373;
+  background: var(--card-background);
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
+  margin-top: var(--spacing-xxl);
 }
 
 .footerHint p {
   font-size: var(--font-size-base);
-  color: var(--main-color);
+  color: var(--font-color);
   margin-bottom: var(--spacing-md);
+}
+
+.footerLinks {
+  display: flex;
+  gap: var(--spacing-lg);
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .exploreLink {
@@ -121,6 +310,7 @@
   text-decoration: underline;
 }
 
+/* Состояние пустого избранного */
 .emptyState {
   text-align: center;
   padding: var(--spacing-xxl) var(--spacing-xl);
@@ -144,7 +334,7 @@
 .emptyTitle {
   font-size: var(--font-size-xl);
   font-weight: 600;
-  color: var(--title-color);
+  color: var(--font-color);
   margin-bottom: var(--spacing-md);
 }
 
@@ -163,7 +353,31 @@
   flex-wrap: wrap;
 }
 
+.catalogButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: none;
+  border: 2px solid var(--border-color);
+  color: var(--font-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.catalogButton:hover {
+  border-color: var(--accent-color);
+  background: var(--card-background);
+}
+
 .exploreButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
   background: var(--accent-color);
   color: var(--font-color);
   border: none;
@@ -182,22 +396,9 @@
   box-shadow: 0 4px 12px var(--shadow-color);
 }
 
-.catalogButton {
-  background: none;
-  border: 2px solid var(--border-color);
-  color: var(--font-color);
-  border-radius: var(--border-radius);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-
-.catalogButton:hover {
-  border-color: var(--accent-color);
-  background: var(--card-background);
+.buttonIcon {
+  width: 20px;
+  height: 20px;
 }
 
 /* Анимации */

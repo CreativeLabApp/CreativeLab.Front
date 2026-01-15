@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useMarketplaceStore } from "../../stores/marketplaceStore";
+import { useFavoritesStore } from "../../stores/favoritesStore";
 import {
   PhotoIcon,
   StarIcon,
@@ -18,10 +19,11 @@ import styles from "./ProductCard.module.css";
 
 function ProductCard({ product }) {
   const navigate = useNavigate();
-  const { addToCart, toggleWishlist, isInWishlist, cart } =
-    useMarketplaceStore();
+  const { addToCart, cart } = useMarketplaceStore();
+  const { toggleFavoriteProduct, isFavoriteProduct, favoriteProducts } =
+    useFavoritesStore();
 
-  const isInWish = isInWishlist(product.id);
+  const isInFavorites = isFavoriteProduct(product.id);
   const cartItem = cart.find((item) => item.productId === product.id);
   const inCart = cartItem ? cartItem.quantity : 0;
 
@@ -34,9 +36,9 @@ function ProductCard({ product }) {
     addToCart(product.id);
   };
 
-  const handleToggleWishlist = (e) => {
+  const handleToggleFavorite = (e) => {
     e.stopPropagation();
-    toggleWishlist(product.id);
+    toggleFavoriteProduct(product.id);
   };
 
   const renderRating = (rating) => {
@@ -97,29 +99,20 @@ function ProductCard({ product }) {
         {/* Кнопки действий */}
         <div className={styles.actionButtons}>
           <button
-            className={styles.wishlistButton}
-            onClick={handleToggleWishlist}
+            className={`${styles.favoriteButton} ${
+              isInFavorites ? styles.active : ""
+            }`}
+            onClick={handleToggleFavorite}
             aria-label={
-              isInWish ? "Удалить из избранного" : "Добавить в избранное"
+              isInFavorites ? "Удалить из избранного" : "Добавить в избранное"
             }
           >
-            {isInWish ? (
+            {isInFavorites ? (
               <HeartIconSolid className={styles.actionIcon} />
             ) : (
               <HeartIcon className={styles.actionIcon} />
             )}
           </button>
-
-          {product.status === "available" && (
-            <button
-              className={styles.cartButton}
-              onClick={handleAddToCart}
-              aria-label="Добавить в корзину"
-            >
-              <ShoppingCartIcon className={styles.actionIcon} />
-              {inCart > 0 && <span className={styles.cartCount}>{inCart}</span>}
-            </button>
-          )}
         </div>
       </div>
 
