@@ -14,6 +14,7 @@ import ProductDetailPage from "./pages/ProductDetailPage/ProductDetailPage";
 import CreatorProfilePage from "./pages/CreatorProfilePage/CreatorProfilePage";
 import CreateMasterClassPage from "./pages/CreateMasterClassPage/CreateMasterClassPage";
 import RatingPage from "./pages/RatingPage/RatingPage";
+import MessagesPage from "./pages/MessagesPage/MessagesPage";
 
 function App() {
   return (
@@ -52,6 +53,10 @@ function App() {
 
       <Route path="/rating" element={<Layout />}>
         <Route index element={<RatingPage />} />
+      </Route>
+
+      <Route path="/messages" element={<Layout />}>
+        <Route index element={<MessagesPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

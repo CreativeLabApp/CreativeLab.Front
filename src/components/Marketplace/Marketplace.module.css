@@ -12,7 +12,6 @@
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
   box-shadow: 0 4px 20px var(--shadow-color);
-  border: 1px solid var(--border-color);
 }
 
 .headerContent {
