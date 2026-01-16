@@ -6,7 +6,6 @@ import styles from "./CreateMasterClass.module.css";
 import {
   PhotoIcon,
   TagIcon,
-  VideoCameraIcon,
   DocumentPlusIcon,
   XMarkIcon,
   PlusIcon,
@@ -221,9 +220,6 @@ function CreateMasterClass() {
 
       addMasterClass(newMasterClass);
 
-      // Показываем сообщение об успехе
-      alert("Мастер-класс успешно создан!");
-
       // Перенаправляем на страницу созданного мастер-класса
       navigate(`/master-class/${newId}`);
     } catch (error) {
@@ -275,7 +271,6 @@ function CreateMasterClass() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.headerContent}>
-          <VideoCameraIcon className={styles.headerIcon} />
           <div>
             <h1 className={styles.title}>Создание мастер-класса</h1>
             <p className={styles.subtitle}>
