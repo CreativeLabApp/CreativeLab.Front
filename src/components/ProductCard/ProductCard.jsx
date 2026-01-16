@@ -1,13 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useMarketplaceStore } from "../../stores/marketplaceStore";
 import { useFavoritesStore } from "../../stores/favoritesStore";
 import {
   PhotoIcon,
   StarIcon,
   UserIcon,
   TagIcon,
-  ShoppingCartIcon,
   HeartIcon,
   EyeIcon,
 } from "@heroicons/react/24/outline";
@@ -19,21 +17,13 @@ import styles from "./ProductCard.module.css";
 
 function ProductCard({ product }) {
   const navigate = useNavigate();
-  const { addToCart, cart } = useMarketplaceStore();
-  const { toggleFavoriteProduct, isFavoriteProduct, favoriteProducts } =
-    useFavoritesStore();
+  const { toggleFavoriteProduct, isFavoriteProduct } = useFavoritesStore();
 
   const isInFavorites = isFavoriteProduct(product.id);
-  const cartItem = cart.find((item) => item.productId === product.id);
-  const inCart = cartItem ? cartItem.quantity : 0;
 
   const handleDetailsClick = () => {
+    console.log(product.sellerId);
     navigate(`/marketplace/product/${product.id}`);
-  };
-
-  const handleAddToCart = (e) => {
-    e.stopPropagation();
-    addToCart(product.id);
   };
 
   const handleToggleFavorite = (e) => {

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuthStore } from "../../stores/authStore";
+import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./Messages.module.css";
 import {
   EnvelopeIcon,
@@ -32,6 +33,8 @@ const enhancedCreatorsData = creatorsData.map((creator) => ({
 
 function Messages() {
   const { user } = useAuthStore();
+  const location = useLocation();
+  const navigate = useNavigate();
   const messagesEndRef = useRef(null);
 
   const [selectedCreator, setSelectedCreator] = useState(null);
@@ -42,40 +45,108 @@ function Messages() {
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatSearch, setNewChatSearch] = useState("");
   const [availableCreators, setAvailableCreators] = useState([]);
+  const [userChats, setUserChats] = useState([]);
+
+  // Получаем creatorId из query параметров
+  const searchParams = new URLSearchParams(location.search);
+  const creatorIdFromUrl = searchParams.get("creatorId");
+
+  // Получение всех креаторов, с которыми есть диалоги у текущего пользователя
+  const getChatsWithCurrentUser = useCallback(
+    (messagesData) => {
+      if (!user) return [];
+
+      const creatorIds = new Set();
+
+      // Собираем всех креаторов, с которыми есть диалоги
+      Object.keys(messagesData).forEach((key) => {
+        const [userId1, userId2] = key.split("-").map(Number);
+
+        // Проверяем, участвует ли текущий пользователь в диалоге
+        if (userId1 === user.id) {
+          creatorIds.add(userId2);
+        } else if (userId2 === user.id) {
+          creatorIds.add(userId1);
+        }
+      });
+
+      // Получаем полные данные креаторов
+      return enhancedCreatorsData.filter(
+        (creator) => creator.id !== user.id && creatorIds.has(creator.id)
+      );
+    },
+    [user]
+  ); // Зависимость от user
+
+  // Инициализация сообщений - обычный useEffect
+  useEffect(() => {
+    const savedMessages =
+      JSON.parse(localStorage.getItem("creator-messages")) || {};
+    setMessages(savedMessages);
+
+    // Получаем чаты после загрузки сообщений
+    const chats = getChatsWithCurrentUser(savedMessages);
+    setUserChats(chats);
+  }, [user, getChatsWithCurrentUser]); // Добавляем getChatsWithCurrentUser в зависимости
+
+  // Эффект для автоматического открытия чата при наличии creatorId в URL
+  useEffect(() => {
+    if (creatorIdFromUrl && user && userChats) {
+      const creatorId = parseInt(creatorIdFromUrl);
+
+      // Проверяем, существует ли такой креатор
+      const creator = enhancedCreatorsData.find((c) => c.id === creatorId);
+
+      if (creator) {
+        // Проверяем, есть ли уже чат с этим креатором
+        const existingChat = userChats.find((c) => c.id === creatorId);
+
+        if (existingChat) {
+          setSelectedCreator(existingChat);
+        } else {
+          // Создаем новый чат
+          setSelectedCreator(creator);
+          // Очищаем query параметр из URL
+          navigate("/messages", { replace: true });
+        }
+      }
+    }
+  }, [creatorIdFromUrl, user, userChats, navigate]);
 
   // Инициализация сообщений
   useEffect(() => {
     const savedMessages =
       JSON.parse(localStorage.getItem("creator-messages")) || {};
     setMessages(savedMessages);
-  }, []);
 
-  // Получение всех креаторов, с которыми есть диалоги у текущего пользователя
-  const getChatsWithCurrentUser = () => {
-    if (!user) return [];
+    // Получаем чаты после загрузки сообщений
+    const chats = getChatsWithCurrentUser(savedMessages);
+    setUserChats(chats);
+  }, [user, getChatsWithCurrentUser]);
 
-    const creatorIds = new Set();
+  // Эффект для автоматического открытия чата при наличии creatorId в URL
+  useEffect(() => {
+    if (creatorIdFromUrl && user) {
+      const creatorId = parseInt(creatorIdFromUrl);
 
-    // Собираем всех креаторов, с которыми есть диалоги
-    Object.keys(messages).forEach((key) => {
-      const [userId1, userId2] = key.split("-").map(Number);
+      // Проверяем, существует ли такой креатор
+      const creator = enhancedCreatorsData.find((c) => c.id === creatorId);
 
-      // Проверяем, участвует ли текущий пользователь в диалоге
-      if (userId1 === user.id) {
-        creatorIds.add(userId2);
-      } else if (userId2 === user.id) {
-        creatorIds.add(userId1);
+      if (creator) {
+        // Проверяем, есть ли уже чат с этим креатором
+        const existingChat = userChats.find((c) => c.id === creatorId);
+
+        if (existingChat) {
+          setSelectedCreator(existingChat);
+        } else {
+          // Создаем новый чат
+          setSelectedCreator(creator);
+          // Очищаем query параметр из URL
+          navigate("/messages", { replace: true });
+        }
       }
-    });
-
-    // Получаем полные данные креаторов
-    return enhancedCreatorsData.filter(
-      (creator) => creator.id !== user.id && creatorIds.has(creator.id)
-    );
-  };
-
-  // Получаем чаты текущего пользователя
-  const userChats = getChatsWithCurrentUser();
+    }
+  }, [creatorIdFromUrl, user, userChats, navigate]);
 
   // Фильтрация чатов по поиску
   const filteredChats = userChats.filter(
@@ -130,6 +201,11 @@ function Messages() {
     };
 
     setMessages(updatedMessages);
+
+    // Обновляем userChats после отправки сообщения
+    const updatedChats = getChatsWithCurrentUser(updatedMessages);
+    setUserChats(updatedChats);
+
     localStorage.setItem("creator-messages", JSON.stringify(updatedMessages));
 
     // Имитация ответа от креатора
@@ -150,6 +226,9 @@ function Messages() {
       };
 
       setMessages(updatedWithReply);
+      const updatedChatsAfterReply = getChatsWithCurrentUser(updatedWithReply);
+      setUserChats(updatedChatsAfterReply);
+
       localStorage.setItem(
         "creator-messages",
         JSON.stringify(updatedWithReply)

@@ -81,13 +81,13 @@
 .creatorsList {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-md);
 }
 
 .creatorsTitle {
   font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--font-color);
+  margin: var(--spacing-md);
 }
 
 .creatorItem {
@@ -98,8 +98,8 @@
   border: 1px solid var(--border-color);
   cursor: pointer;
   transition: all 0.2s;
-  margin-bottom: var(--spacing-md);
   position: relative;
+  margin: var(--spacing-md);
 }
 
 .creatorItem:hover {
@@ -109,27 +109,6 @@
 .creatorItem.selected {
   background: var(--accent-color);
   color: var(--font-color);
-}
-
-.creatorAvatar {
-  position: relative;
-  margin-right: var(--spacing-md);
-}
-
-.creatorAvatar img {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.avatarIcon {
-  width: 50px;
-  height: 50px;
-  color: var(--gray-color);
-  background: var(--border-color);
-  border-radius: 50%;
-  padding: var(--spacing-sm);
 }
 
 .creatorInfo {
@@ -622,6 +601,7 @@
   background: var(--accent-color);
   color: var(--font-color);
   padding: 2px 8px;
+  margin: var(--spacing-md);
   border-radius: 12px;
   font-size: var(--font-size-sm);
   font-weight: 600;

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFavoritesStore } from "../../stores/favoritesStore";
 import { useMarketplaceStore } from "../../stores/marketplaceStore";
+import { useMasterClassesStore } from "../../stores/masterClassesStore"; // Добавляем импорт
 import MasterClassesCard from "../MasterClassesCard/MasterClassesCard";
 import ProductCard from "../ProductCard/ProductCard";
 import styles from "./Favorites.module.css";
@@ -15,8 +16,8 @@ import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 
 function Favorites() {
   const {
-    favorites,
-    favoriteProducts,
+    favorites, // Это массив ID мастер-классов
+    favoriteProducts, // Это массив ID товаров
     removeFromFavorites,
     toggleFavoriteProduct,
     clearFavorites,
@@ -25,14 +26,28 @@ function Favorites() {
     getAllFavoritesCount,
   } = useFavoritesStore();
 
-  const { products } = useMarketplaceStore();
+  const { products, getProductById } = useMarketplaceStore();
+  const { getMasterClassById } = useMasterClassesStore(); // Добавляем
 
   const [activeTab, setActiveTab] = useState("masterclasses");
 
-  // Получаем избранные товары - исправленная строка
-  const favoriteProductsList = products.filter((product) =>
-    favoriteProducts.includes(product.id)
-  );
+  // Получаем полные объекты мастер-классов по их ID
+  const favoriteMasterClasses = favorites
+    .map((id) => {
+      const item = getMasterClassById(id);
+      return item ? { ...item, id } : null;
+    })
+    .filter((item) => item !== null);
+
+  // Получаем полные объекты товаров по их ID
+  const favoriteProductsData = favoriteProducts
+    .map((id) => {
+      const product = getProductById
+        ? getProductById(id)
+        : products.find((p) => p.id === id);
+      return product ? { ...product, id } : null;
+    })
+    .filter((product) => product !== null);
 
   const favoritesCount = getAllFavoritesCount();
   const masterClassesCount = getFavoritesCount();
@@ -116,7 +131,7 @@ function Favorites() {
             <div className={styles.contentSection}>
               <h2 className={styles.sectionTitle}>Избранные мастер-классы</h2>
               <div className={styles.grid}>
-                {favorites.map((item) => (
+                {favoriteMasterClasses.map((item) => (
                   <div key={item.id} className={styles.cardWrapper}>
                     <MasterClassesCard item={item} />
                   </div>
@@ -130,7 +145,7 @@ function Favorites() {
             <div className={styles.contentSection}>
               <h2 className={styles.sectionTitle}>Избранные товары</h2>
               <div className={styles.grid}>
-                {favoriteProductsList.map((product) => (
+                {favoriteProductsData.map((product) => (
                   <div key={product.id} className={styles.cardWrapper}>
                     <ProductCard product={product} />
                   </div>
@@ -149,7 +164,7 @@ function Favorites() {
                     Мастер-классы ({masterClassesCount})
                   </h2>
                   <div className={styles.grid}>
-                    {favorites.map((item) => (
+                    {favoriteMasterClasses.map((item) => (
                       <div key={item.id} className={styles.cardWrapper}>
                         <MasterClassesCard item={item} />
                         <button
@@ -172,7 +187,7 @@ function Favorites() {
                     Товары ({productsCount})
                   </h2>
                   <div className={styles.grid}>
-                    {favoriteProductsList.map((product) => (
+                    {favoriteProductsData.map((product) => (
                       <div key={product.id} className={styles.cardWrapper}>
                         <ProductCard product={product} />
                         <button

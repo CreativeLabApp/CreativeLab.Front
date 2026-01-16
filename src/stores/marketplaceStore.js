@@ -1,6 +1,6 @@
-// stores/marketplaceStore.js
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import creatorsData from "../sources/creators";
 
 export const useMarketplaceStore = create(
   persist(
@@ -20,7 +20,7 @@ export const useMarketplaceStore = create(
           views: 124,
           createdAt: "2024-01-15",
           tags: ["акварель", "пейзаж", "ручная работа"],
-          status: "available", // available, sold, reserved
+          status: "available",
           materials: ["акварель", "бумага"],
           dimensions: "30x40 см",
           weight: "0.3 кг",
@@ -46,11 +46,30 @@ export const useMarketplaceStore = create(
         },
         {
           id: 3,
+          title: "Цифровая иллюстрация 'Космическое путешествие'",
+          description:
+            "Созданная в Procreate иллюстрация в стиле научной фантастики, разрешение 3000x4000px",
+          price: 2800,
+          seller: "Артём Артюшевский",
+          sellerId: 3,
+          category: "Цифровое искусство",
+          images: [],
+          rating: 4.9,
+          views: 156,
+          createdAt: "2024-01-05",
+          tags: ["цифровое", "иллюстрация", "sci-fi"],
+          status: "available",
+          materials: ["цифровой файл"],
+          dimensions: "3000x4000px",
+          weight: "цифровой",
+        },
+        {
+          id: 4,
           title: "Керамическая кружка 'Уют'",
           description: "Ручная лепка, глазурь, подходит для напитков",
           price: 1800,
           seller: "Ольга Смирнова",
-          sellerId: 3,
+          sellerId: 4,
           category: "Керамика",
           images: [],
           rating: 4.9,
@@ -63,41 +82,22 @@ export const useMarketplaceStore = create(
           weight: "0.4 кг",
         },
         {
-          id: 4,
-          title: "Шерстяной шарф 'Зимняя сказка'",
-          description: "Ручное вязание из мериносовой шерсти, очень теплый",
-          price: 2800,
-          seller: "Татьяна Новикова",
-          sellerId: 4,
-          category: "Текстиль",
-          images: [],
-          rating: 4.7,
-          views: 203,
-          createdAt: "2023-12-20",
-          tags: ["вязание", "шерсть", "аксессуар"],
-          status: "available",
-          materials: ["мериносовая шерсть"],
-          dimensions: "180x30 см",
-          weight: "0.3 кг",
-        },
-        {
           id: 5,
-          title: "Свечи ароматические 'Лавандовый рай'",
-          description:
-            "Набор из 3 свечей с натуральными маслами, ручная заливка",
-          price: 950,
-          seller: "Наталья Ковалева",
+          title: "Картина маслом 'Закат в горах'",
+          description: "Масляная живопись на холсте, размер 50x70 см",
+          price: 8500,
+          seller: "Алексей Морозов",
           sellerId: 5,
-          category: "Ароматерапия",
+          category: "Живопись",
           images: [],
           rating: 4.5,
-          views: 178,
-          createdAt: "2024-01-12",
-          tags: ["свечи", "ароматерапия", "натуральное"],
+          views: 203,
+          createdAt: "2023-12-20",
+          tags: ["масло", "пейзаж", "холст"],
           status: "available",
-          materials: ["соевый воск", "эфирные масла"],
-          dimensions: "Ø6x8 см каждая",
-          weight: "0.5 кг",
+          materials: ["масляные краски", "холст"],
+          dimensions: "50x70 см",
+          weight: "2.0 кг",
         },
         {
           id: 6,
@@ -119,65 +119,140 @@ export const useMarketplaceStore = create(
         },
         {
           id: 7,
-          title: "Кожаный блокнот 'Винтаж'",
-          description: "Ручная выделка кожи, 120 листов, замковое крепление",
-          price: 1600,
-          seller: "Алина Яковлева",
+          title: "Каллиграфический набор 'Восточная сказка'",
+          description: "Набор для каллиграфии с чернилами, перьями и бумагой",
+          price: 3200,
+          seller: "Дмитрий Волков",
           sellerId: 7,
           category: "Канцелярия",
+          images: [],
+          rating: 4.7,
+          views: 178,
+          createdAt: "2024-01-12",
+          tags: ["каллиграфия", "набор", "творчество"],
+          status: "available",
+          materials: ["перья", "чернила", "бумага"],
+          dimensions: "25x35 см",
+          weight: "0.8 кг",
+        },
+        {
+          id: 8,
+          title: "Шерстяной шарф 'Зимняя сказка'",
+          description: "Ручное вязание из мериносовой шерсти, очень теплый",
+          price: 2800,
+          seller: "Татьяна Новикова",
+          sellerId: 8,
+          category: "Текстиль",
+          images: [],
+          rating: 4.7,
+          views: 203,
+          createdAt: "2023-12-20",
+          tags: ["вязание", "шерсть", "аксессуар"],
+          status: "available",
+          materials: ["мериносовая шерсть"],
+          dimensions: "180x30 см",
+          weight: "0.3 кг",
+        },
+        {
+          id: 9,
+          title: "Фотография 'Городские огни'",
+          description:
+            "Профессиональная фотография ночного города, печать на холсте",
+          price: 4500,
+          seller: "Сергей Петров",
+          sellerId: 9,
+          category: "Фотография",
           images: [],
           rating: 4.4,
           views: 98,
           createdAt: "2024-01-03",
-          tags: ["кожа", "блокнот", "винтаж"],
+          tags: ["фотография", "город", "ночь"],
           status: "available",
-          materials: ["натуральная кожа", "бумага"],
-          dimensions: "15x21 см",
-          weight: "0.25 кг",
+          materials: ["холст", "чернила"],
+          dimensions: "40x60 см",
+          weight: "1.2 кг",
         },
         {
-          id: 8,
-          title: "Мозаичное панно 'Морская волна'",
-          description: "Ручная сборка из смальты, готово к размещению на стене",
-          price: 7500,
-          seller: "Марина Семенова",
-          sellerId: 8,
-          category: "Декор",
+          id: 10,
+          title: "Свечи ароматические 'Лавандовый рай'",
+          description:
+            "Набор из 3 свечей с натуральными маслами, ручная заливка",
+          price: 950,
+          seller: "Наталья Ковалёва",
+          sellerId: 10,
+          category: "Ароматерапия",
+          images: [],
+          rating: 4.9,
+          views: 234,
+          createdAt: "2024-01-18",
+          tags: ["свечи", "ароматерапия", "натуральное"],
+          status: "available",
+          materials: ["соевый воск", "эфирные масла"],
+          dimensions: "Ø6x8 см каждая",
+          weight: "0.5 кг",
+        },
+        {
+          id: 11,
+          title: "Скетчбук с маркерами 'Уличный стиль'",
+          description: "Набор из скетчбука и 12 алкогольных маркеров",
+          price: 1800,
+          seller: "Павел Григорьев",
+          sellerId: 11,
+          category: "Канцелярия",
+          images: [],
+          rating: 4.5,
+          views: 112,
+          createdAt: "2024-01-01",
+          tags: ["скетчинг", "маркеры", "творчество"],
+          status: "available",
+          materials: ["бумага", "маркеры"],
+          dimensions: "А5",
+          weight: "0.6 кг",
+        },
+        {
+          id: 12,
+          title: "Цветочная композиция 'Весеннее настроение'",
+          description: "Свежий букет из сезонных цветов, ручная сборка",
+          price: 2500,
+          seller: "Юлия Захарова",
+          sellerId: 12,
+          category: "Флористика",
+          images: [],
+          rating: 4.8,
+          views: 145,
+          createdAt: "2024-01-08",
+          tags: ["цветы", "букет", "флористика"],
+          status: "available",
+          materials: ["свежие цветы"],
+          dimensions: "Ø30x40 см",
+          weight: "1.5 кг",
+        },
+        {
+          id: 13,
+          title: "Гончарный набор 'Начинающий гончар'",
+          description:
+            "Набор для работы с глиной: глина, инструменты, инструкция",
+          price: 3800,
+          seller: "Андрей Белов",
+          sellerId: 13,
+          category: "Керамика",
           images: [],
           rating: 4.9,
           views: 67,
           createdAt: "2023-12-25",
-          tags: ["мозаика", "панно", "интерьер"],
+          tags: ["гончарное дело", "набор", "обучение"],
           status: "available",
-          materials: ["смальта", "клей", "основа"],
-          dimensions: "40x60 см",
-          weight: "2.5 кг",
+          materials: ["глина", "инструменты"],
+          dimensions: "30x40x10 см",
+          weight: "3.0 кг",
         },
         {
-          id: 9,
-          title: "Войлочные тапочки 'Домашний уют'",
-          description: "Ручное валяние из овечьей шерсти, очень теплые",
-          price: 1900,
-          seller: "Лариса Дмитриева",
-          sellerId: 9,
-          category: "Обувь",
-          images: [],
-          rating: 4.6,
-          views: 112,
-          createdAt: "2024-01-01",
-          tags: ["войлок", "тапочки", "handmade"],
-          status: "available",
-          materials: ["овечья шерсть"],
-          dimensions: "Размеры 36-42",
-          weight: "0.4 кг",
-        },
-        {
-          id: 10,
+          id: 14,
           title: "Мыло ручной работы 'Цитрусовый микс'",
           description: "Набор из 5 кусков с натуральными маслами и цедрой",
           price: 650,
-          seller: "Ирина Федорова",
-          sellerId: 10,
+          seller: "Ирина Фёдорова",
+          sellerId: 14,
           category: "Косметика",
           images: [],
           rating: 4.7,
@@ -189,10 +264,58 @@ export const useMarketplaceStore = create(
           dimensions: "7x5x3 см каждый",
           weight: "0.6 кг",
         },
+        {
+          id: 15,
+          title: "Укулеле 'Гавайские ритмы'",
+          description:
+            "Укулеле сопрано с чехлом и медиатором, идеально для начинающих",
+          price: 4200,
+          seller: "Михаил Соколов",
+          sellerId: 15,
+          category: "Музыка",
+          images: [],
+          rating: 4.4,
+          views: 112,
+          createdAt: "2024-01-01",
+          tags: ["укулеле", "музыка", "инструмент"],
+          status: "available",
+          materials: ["дерево", "нейлоновые струны"],
+          dimensions: "53x20x6 см",
+          weight: "0.8 кг",
+        },
       ],
-
-      cart: [],
       wishlist: [],
+
+      // Методы для работы с продавцами
+      getCreators: () => {
+        return creatorsData;
+      },
+
+      getCreatorById: (id) => {
+        return creatorsData.find((creator) => creator.id === id);
+      },
+
+      getCreatorProducts: (sellerId) => {
+        return get().products.filter(
+          (product) => product.sellerId === sellerId
+        );
+      },
+
+      getCreatorStats: (sellerId) => {
+        const products = get().getCreatorProducts(sellerId);
+        const creator = get().getCreatorById(sellerId);
+
+        return {
+          totalProducts: products.length,
+          totalViews: products.reduce((sum, product) => sum + product.views, 0),
+          averageRating: creator?.rating || 0,
+          totalSales: Math.floor(Math.random() * 50), // Примерная статистика продаж
+          totalRevenue: products.reduce(
+            (sum, product) => sum + product.price,
+            0
+          ),
+        };
+      },
 
       // Методы для товаров
       addProduct: (product) => {
@@ -213,46 +336,6 @@ export const useMarketplaceStore = create(
         set((state) => ({
           products: state.products.filter((product) => product.id !== id),
         }));
-      },
-
-      // Методы для корзины
-      addToCart: (productId) => {
-        set((state) => {
-          const existingItem = state.cart.find(
-            (item) => item.productId === productId
-          );
-          if (existingItem) {
-            return {
-              cart: state.cart.map((item) =>
-                item.productId === productId
-                  ? { ...item, quantity: item.quantity + 1 }
-                  : item
-              ),
-            };
-          } else {
-            return {
-              cart: [...state.cart, { productId, quantity: 1 }],
-            };
-          }
-        });
-      },
-
-      removeFromCart: (productId) => {
-        set((state) => ({
-          cart: state.cart.filter((item) => item.productId !== productId),
-        }));
-      },
-
-      updateCartQuantity: (productId, quantity) => {
-        set((state) => ({
-          cart: state.cart.map((item) =>
-            item.productId === productId ? { ...item, quantity } : item
-          ),
-        }));
-      },
-
-      clearCart: () => {
-        set({ cart: [] });
       },
 
       // Методы для вишлиста
@@ -345,6 +428,41 @@ export const useMarketplaceStore = create(
         return [...get().products]
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
           .slice(0, limit);
+      },
+
+      // Дополнительные методы
+      getRelatedProducts: (currentProductId, limit = 4) => {
+        const products = get().products;
+        const currentProduct = products.find((p) => p.id === currentProductId);
+
+        if (!currentProduct) return [];
+
+        return products
+          .filter(
+            (p) =>
+              p.id !== currentProductId &&
+              (p.category === currentProduct.category ||
+                p.sellerId === currentProduct.sellerId)
+          )
+          .slice(0, limit);
+      },
+
+      incrementViews: (productId) => {
+        set((state) => ({
+          products: state.products.map((product) =>
+            product.id === productId
+              ? { ...product, views: product.views + 1 }
+              : product
+          ),
+        }));
+      },
+
+      updateProductStatus: (productId, status) => {
+        set((state) => ({
+          products: state.products.map((product) =>
+            product.id === productId ? { ...product, status } : product
+          ),
+        }));
       },
     }),
     {

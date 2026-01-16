@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMarketplaceStore } from "../../stores/marketplaceStore";
+import { useFavoritesStore } from "../../stores/favoritesStore"; // Добавляем импорт
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -8,13 +9,13 @@ import {
   TagIcon,
   PhotoIcon,
   EyeIcon,
-  ShoppingCartIcon,
   HeartIcon,
   ShareIcon,
   CurrencyDollarIcon,
   CalendarDaysIcon,
   CubeIcon,
   ScaleIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import {
   StarIcon as StarIconSolid,
@@ -29,13 +30,11 @@ import Notification from "../common/Notification/Notification";
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const {
-    products,
-    toggleWishlist,
-    isInWishlist,
-    getProductsBySeller,
-    getPopularProducts,
-  } = useMarketplaceStore();
+  const { products, getProductsBySeller, getPopularProducts } =
+    useMarketplaceStore();
+
+  // Используем favoritesStore для управления избранным
+  const { toggleFavoriteProduct, isFavoriteProduct } = useFavoritesStore();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +42,8 @@ function ProductDetail() {
   const [showNotification1, setShowNotification1] = useState(false);
   const [showNotification2, setShowNotification2] = useState(false);
 
-  const isInWish = isInWishlist(parseInt(id));
+  // Проверяем, находится ли товар в избранном
+  const isInWish = isFavoriteProduct(parseInt(id));
 
   useEffect(() => {
     // Имитация загрузки данных
@@ -81,13 +81,24 @@ function ProductDetail() {
   }, [showNotification2]);
 
   const handleToggleWishlist = () => {
-    toggleWishlist(product.id);
+    toggleFavoriteProduct(parseInt(id));
     if (!isInWish) setShowNotification1(true);
   };
 
   const handleShare = async () => {
     await navigator.clipboard.writeText(window.location.href);
     setShowNotification2(true);
+  };
+
+  // Функция для перехода в чат с продавцом
+  const handleMessageSeller = () => {
+    if (product?.sellerId) {
+      // Переход на страницу сообщений с предварительно выбранным продавцом
+      navigate(`/messages?creatorId=${product.sellerId}`);
+    } else {
+      // Если нет sellerId, переходим просто в сообщения
+      navigate("/messages");
+    }
   };
 
   const renderRating = (rating) => {
@@ -312,7 +323,7 @@ function ProductDetail() {
             </div>
           </div>
 
-          {/* Правая колонка  */}
+          {/* Правая колонка */}
           <div className={styles.rightColumn}>
             <div className={styles.purchaseCard}>
               <div className={styles.purchaseHeader}>
@@ -343,8 +354,11 @@ function ProductDetail() {
               {/* Кнопки действий */}
               <div className={styles.actionButtons}>
                 {product.status === "available" ? (
-                  <button className={styles.buyButton}>
-                    <ShoppingCartIcon className={styles.buyIcon} />
+                  <button
+                    className={styles.buyButton}
+                    onClick={handleMessageSeller}
+                  >
+                    <ChatBubbleLeftRightIcon className={styles.buyIcon} />
                     Написать продавцу
                   </button>
                 ) : (
