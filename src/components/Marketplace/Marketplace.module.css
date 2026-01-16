@@ -45,7 +45,7 @@
 }
 
 .title {
-  font-size: var(--font-size-title-lg);
+  font-size: var(--font-size-title);
   font-weight: 700;
   color: var(--font-color);
   margin: 0;

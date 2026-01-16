@@ -52,7 +52,6 @@ function Favorites() {
       <div className={styles.header}>
         <div className={styles.headerContent}>
           <div className={styles.titleSection}>
-            <HeartIconSolid className={styles.titleIcon} />
             <div>
               <h1 className={styles.title}>Избранное</h1>
               <p className={styles.subtitle}>
