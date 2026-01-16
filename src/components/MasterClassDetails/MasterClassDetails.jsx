@@ -14,20 +14,24 @@ import {
   StarIcon as StarIconSolid,
   HeartIcon as HeartIconSolid,
 } from "@heroicons/react/24/solid";
-import popularClasses from "../../sources/popularClasses";
 import styles from "./MasterClassDetails.module.css";
 import Loader from "../common/Loader/Loader";
 import { useFavoritesStore } from "../../stores/favoritesStore";
+import { useMasterClassesStore } from "../../stores/masterClassesStore";
 import Notification from "../common/Notification/Notification";
 
 function MasterClassDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [masterClass, setMasterClass] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
 
   const { toggleFavorite, isFavorite } = useFavoritesStore();
+  const { getMasterClassById, incrementViews, masterClasses } =
+    useMasterClassesStore();
+
+  // Получаем мастер-класс из хранилища
+  const masterClass = getMasterClassById(parseInt(id));
 
   // Проверяем, является ли текущий мастер-класс избранным
   const isItemFavorite = isFavorite(parseInt(id));
@@ -37,23 +41,22 @@ function MasterClassDetails() {
   };
 
   useEffect(() => {
+    // Увеличиваем счетчик просмотров при загрузке страницы
+    incrementViews(parseInt(id));
+  }, [id, incrementViews]);
+
+  useEffect(() => {
     // Имитация загрузки данных
     const timer = setTimeout(() => {
-      const foundClass = popularClasses.find(
-        (item) => item.id === parseInt(id)
-      );
-
-      if (foundClass) {
-        setMasterClass(foundClass);
-      } else {
+      if (!masterClass) {
         navigate("/");
+      } else {
+        setLoading(false);
       }
-
-      setLoading(false);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [id, navigate]);
+  }, [id, masterClass, navigate]);
 
   useEffect(() => {
     if (showNotification) {
@@ -90,9 +93,24 @@ function MasterClassDetails() {
   };
 
   const handleShare = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setShowNotification(true);
-    setShowNotification(true);
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setShowNotification(true);
+    } catch (err) {
+      console.error("Failed to copy: ", err);
+    }
+  };
+
+  // Функция для получения похожих мастер-классов
+  const getRelatedMasterClasses = () => {
+    if (!masterClass) return [];
+
+    return masterClasses
+      .filter(
+        (item) =>
+          item.category === masterClass.category && item.id !== masterClass.id
+      )
+      .slice(0, 2);
   };
 
   if (loading) {
@@ -110,6 +128,8 @@ function MasterClassDetails() {
       </div>
     );
   }
+
+  const relatedClasses = getRelatedMasterClasses();
 
   return (
     <>
@@ -190,6 +210,11 @@ function MasterClassDetails() {
                   className={`${styles.imageActionButton} ${
                     isItemFavorite ? styles.active : ""
                   }`}
+                  aria-label={
+                    isItemFavorite
+                      ? "Удалить из избранного"
+                      : "Добавить в избранное"
+                  }
                 >
                   {isItemFavorite ? (
                     <HeartIconSolid className={styles.actionIcon} />
@@ -202,6 +227,7 @@ function MasterClassDetails() {
                 <button
                   onClick={handleShare}
                   className={styles.imageActionButton}
+                  aria-label="Поделиться"
                 >
                   <ShareIcon className={styles.actionIcon} />
                   <span>Поделиться</span>
@@ -253,23 +279,28 @@ function MasterClassDetails() {
               {/* Дополнительные действия */}
               <div className={styles.relatedSection}>
                 <h4 className={styles.relatedTitle}>Похожие мастер-классы</h4>
-                <div className={styles.relatedList}>
-                  {popularClasses
-                    .filter(
-                      (item) =>
-                        item.category === masterClass.category &&
-                        item.id !== masterClass.id
-                    )
-                    .slice(0, 2)
-                    .map((item) => (
+                {relatedClasses.length > 0 ? (
+                  <div className={styles.relatedList}>
+                    {relatedClasses.map((item) => (
                       <div
                         key={item.id}
                         className={styles.relatedItem}
                         onClick={() => navigate(`/master-class/${item.id}`)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            navigate(`/master-class/${item.id}`);
+                          }
+                        }}
                       >
                         <div className={styles.relatedImage}>
                           {item.image ? (
-                            <img src={item.image} alt={item.title} />
+                            <img
+                              src={item.image}
+                              alt={item.title}
+                              loading="lazy"
+                            />
                           ) : (
                             <PhotoIcon
                               className={styles.relatedPlaceholderIcon}
@@ -291,7 +322,12 @@ function MasterClassDetails() {
                         </div>
                       </div>
                     ))}
-                </div>
+                  </div>
+                ) : (
+                  <p className={styles.noRelatedText}>
+                    Нет похожих мастер-классов
+                  </p>
+                )}
               </div>
             </div>
           </div>

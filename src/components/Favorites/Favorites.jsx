@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useFavoritesStore } from "../../stores/favoritesStore";
 import { useMarketplaceStore } from "../../stores/marketplaceStore";
-import popularClasses from "../../sources/popularClasses";
 import MasterClassesCard from "../MasterClassesCard/MasterClassesCard";
 import ProductCard from "../ProductCard/ProductCard";
 import styles from "./Favorites.module.css";
@@ -29,11 +28,6 @@ function Favorites() {
   const { products } = useMarketplaceStore();
 
   const [activeTab, setActiveTab] = useState("masterclasses");
-
-  // Получаем избранные мастер-классы
-  const favoriteMasterClasses = popularClasses.filter((item) =>
-    favorites.includes(item.id)
-  );
 
   // Получаем избранные товары - исправленная строка
   const favoriteProductsList = products.filter((product) =>
@@ -123,7 +117,7 @@ function Favorites() {
             <div className={styles.contentSection}>
               <h2 className={styles.sectionTitle}>Избранные мастер-классы</h2>
               <div className={styles.grid}>
-                {favoriteMasterClasses.map((item) => (
+                {favorites.map((item) => (
                   <div key={item.id} className={styles.cardWrapper}>
                     <MasterClassesCard item={item} />
                   </div>
@@ -156,7 +150,7 @@ function Favorites() {
                     Мастер-классы ({masterClassesCount})
                   </h2>
                   <div className={styles.grid}>
-                    {favoriteMasterClasses.map((item) => (
+                    {favorites.map((item) => (
                       <div key={item.id} className={styles.cardWrapper}>
                         <MasterClassesCard item={item} />
                         <button

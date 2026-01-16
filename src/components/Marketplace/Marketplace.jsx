@@ -5,11 +5,7 @@ import ProductCard from "../ProductCard/ProductCard";
 import SearchBar from "../SearchBar/SearchBar";
 import MarketplaceFilter from "../MarketplaceFilter/MarketplaceFilter";
 import styles from "./Marketplace.module.css";
-import {
-  ShoppingBagIcon,
-  TagIcon,
-  PlusIcon,
-} from "@heroicons/react/24/outline";
+import { TagIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 function Marketplace() {
   const { products, searchProducts } = useMarketplaceStore();
@@ -91,7 +87,6 @@ function Marketplace() {
       <div className={styles.header}>
         <div className={styles.headerContent}>
           <div className={styles.titleSection}>
-            <ShoppingBagIcon className={styles.titleIcon} />
             <h1 className={styles.title}>Магазин</h1>
           </div>
         </div>

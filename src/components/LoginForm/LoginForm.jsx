@@ -20,6 +20,7 @@ function LoginForm() {
       email: "",
       password: "",
       role: "user",
+      name: "Артём Артюшевский",
     },
   });
 
@@ -36,14 +37,7 @@ function LoginForm() {
         .substr(2)}`;
 
       // Вызываем login с правильными данными
-      login(
-        {
-          id: data.id,
-          email: data.email,
-          role: data.role,
-        },
-        mockToken
-      );
+      login(data, mockToken);
 
       // Даем время на обновление состояния
       setTimeout(() => {

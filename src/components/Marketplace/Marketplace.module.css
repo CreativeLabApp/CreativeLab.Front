@@ -106,8 +106,8 @@
 /* Секция поиска */
 .searchSection {
   display: flex;
+  flex-direction: row;
   gap: var(--spacing-lg);
-  align-items: center;
 }
 
 @media (max-width: 768px) {
@@ -151,6 +151,9 @@
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: var(--spacing-xl);
+  background-color: var(--main-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
 }
 
 @media (max-width: 1024px) {

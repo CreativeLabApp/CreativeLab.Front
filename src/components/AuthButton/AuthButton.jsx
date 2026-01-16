@@ -6,6 +6,7 @@ import { useAuthStore } from "../../stores/authStore";
 function AuthButton() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  const logout = useAuthStore((state) => state.logout);
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -24,9 +25,14 @@ function AuthButton() {
       : "Войти";
 
   return (
-    <button className={styles.login} onClick={handleClick}>
-      {buttonText}
-    </button>
+    <div className={styles.buttons}>
+      <button className={styles.login} onClick={handleClick}>
+        {buttonText}
+      </button>
+      <button className={styles.login} onClick={() => logout()}>
+        Выйти
+      </button>
+    </div>
   );
 }
 
