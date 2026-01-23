@@ -16,6 +16,7 @@ import CreateMasterClassPage from "./pages/CreateMasterClassPage/CreateMasterCla
 import RatingPage from "./pages/RatingPage/RatingPage";
 import MessagesPage from "./pages/MessagesPage/MessagesPage";
 import CreateProduct from "./components/CreateProduct/CreateProduct";
+import EditProfilePage from "./pages/EditProfilePage/EditProfilePage";
 
 function App() {
   return (
@@ -49,6 +50,10 @@ function App() {
 
       <Route path="creator/:id" element={<Layout />}>
         <Route index element={<CreatorProfilePage />} />
+      </Route>
+
+      <Route path="profile/edit" element={<Layout />}>
+        <Route index element={<EditProfilePage />} />
       </Route>
 
       <Route path="/create-masterclass" element={<Layout />}>

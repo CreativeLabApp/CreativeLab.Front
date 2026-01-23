@@ -2,6 +2,7 @@ import React from "react";
 import styles from "./AuthButton.module.css";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 
 function AuthButton() {
   const user = useAuthStore((state) => state.user);
@@ -29,8 +30,8 @@ function AuthButton() {
       <button className={styles.login} onClick={handleClick}>
         {buttonText}
       </button>
-      <button className={styles.login} onClick={() => logout()}>
-        Выйти
+      <button className={styles.exit} onClick={() => logout()}>
+        <ArrowRightStartOnRectangleIcon className={styles.icon} />
       </button>
     </div>
   );
