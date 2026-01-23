@@ -1,0 +1,20 @@
+.descriptionSection {
+  background: var(--main-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-xl);
+  border: 1px solid var(--border-color);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--font-color);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.descriptionText {
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: var(--font-color);
+  margin: 0;
+}

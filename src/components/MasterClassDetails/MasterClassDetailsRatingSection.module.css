@@ -1,0 +1,253 @@
+.ratingSection {
+  display: flex;
+  flex-direction: column;
+  background: var(--card-background);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-xl);
+  margin: 0;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--font-color);
+  margin: 0;
+}
+
+/* Заголовок рейтинга */
+.ratingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.rateButton {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--accent-color);
+  color: var(--font-color);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.rateButton:hover:not(:disabled) {
+  background: var(--hover-color);
+  transform: translateY(-1px);
+}
+
+.rateButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rateIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.ratingContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.ratingOverview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  align-items: center;
+}
+
+.ratingScore {
+  display: flex;
+  align-items: baseline;
+}
+
+.ratingNumber {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--font-color);
+}
+
+.ratingOutOf {
+  font-size: var(--font-size-lg);
+  color: var(--gray-color);
+  margin-left: 2px;
+}
+
+/* Отображение рейтинга */
+.ratingDisplay {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.ratingStars {
+  display: flex;
+  gap: 2px;
+}
+
+.starButton {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.starButton.interactive:hover {
+  transform: scale(1.2);
+}
+
+.starButton.interactive:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.starIcon {
+  width: var(--star-size, 20px);
+  height: var(--star-size, 20px);
+  color: var(--accent-color);
+}
+
+.starIcon.halfStar {
+  clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+}
+
+.ratingValue {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-left: var(--spacing-sm);
+}
+
+.ratingStats {
+  margin-top: var(--spacing-sm);
+  text-align: center;
+}
+
+.ratingCount {
+  font-size: var(--font-size-sm);
+  color: var(--gray-color);
+}
+
+/* Информация о пользовательской оценке */
+.userRatingInfo {
+  margin-top: var(--spacing-xs);
+  padding-top: var(--spacing-xs);
+  border-top: 1px solid var(--border-color);
+}
+
+.userRatingLabel {
+  font-size: var(--font-size-xs);
+  color: var(--gray-color);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.userRatingValue {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.userRatingValue span {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+/* Распределение оценок */
+.ratingDistribution {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+}
+
+.ratingBar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.ratingBarLabel {
+  font-size: var(--font-size-xs);
+  color: var(--font-color);
+  width: 60px;
+}
+
+.ratingBarContainer {
+  flex: 1;
+  height: 8px;
+  background: var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ratingBarFill {
+  height: 100%;
+  background: var(--accent-color);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.ratingBarPercentage {
+  font-size: var(--font-size-xs);
+  color: var(--gray-color);
+  width: 40px;
+  text-align: right;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .ratingHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .rateButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ratingContent {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .ratingNumber {
+    font-size: 36px;
+  }
+
+  .ratingBar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+
+  .ratingBarContainer {
+    width: 100%;
+  }
+
+  .ratingBarPercentage {
+    text-align: left;
+    width: auto;
+  }
+
+  .starIcon {
+    width: var(--star-size, 16px);
+    height: var(--star-size, 16px);
+  }
+}

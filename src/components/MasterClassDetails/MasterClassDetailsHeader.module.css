@@ -1,0 +1,55 @@
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.title {
+  font-size: var(--font-size-title);
+  font-weight: 700;
+  color: var(--font-color);
+  line-height: 1.3;
+  margin: 0;
+}
+
+.metaInfo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  align-items: center;
+}
+
+.authorInfo,
+.categoryInfo,
+.viewsInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--gray-color);
+}
+
+.authorIcon,
+.categoryIcon,
+.viewsIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.authorName,
+.categoryName,
+.viewsCount {
+  font-size: var(--font-size-sm);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .title {
+    font-size: var(--font-size-xl);
+  }
+
+  .metaInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+}

@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   PhotoIcon,
   StarIcon,
   UserIcon,
-  TagIcon,
   HeartIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import {
   StarIcon as StarIconSolid,
@@ -17,8 +18,11 @@ import { useFavoritesStore } from "../../stores/favoritesStore";
 function MasterClassesCard({ item }) {
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavoritesStore();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const isItemFavorite = isFavorite(item.id);
+  const images = item.images || [];
+  const hasMultipleImages = images.length > 1;
 
   const handleDetailsClick = () => {
     navigate(`/master-class/${item.id}`);
@@ -27,6 +31,21 @@ function MasterClassesCard({ item }) {
   const handleFavoriteClick = (e) => {
     e.stopPropagation();
     toggleFavorite(item.id);
+  };
+
+  const handlePrevImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = (e) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const selectImage = (index, e) => {
+    e.stopPropagation();
+    setCurrentImageIndex(index);
   };
 
   // Форматирование рейтинга
@@ -55,12 +74,80 @@ function MasterClassesCard({ item }) {
     );
   };
 
+  // Получаем текущее изображение или заглушку
+  const getCurrentImage = () => {
+    if (images.length > 0) {
+      return images[currentImageIndex];
+    }
+    return null;
+  };
+
+  const currentImage = getCurrentImage();
+
   return (
     <div className={styles.card} onClick={handleDetailsClick}>
       {/* Верхняя часть с изображением */}
       <div className={styles.imageContainer}>
-        {item.image ? (
-          <img src={item.image} alt={item.title} className={styles.image} />
+        {currentImage ? (
+          <>
+            <img
+              src={currentImage}
+              alt={`${item.title} - изображение ${currentImageIndex + 1}`}
+              className={styles.image}
+            />
+
+            {/* Кнопки навигации для галереи */}
+            {hasMultipleImages && (
+              <>
+                <button
+                  className={styles.prevImageButton}
+                  onClick={handlePrevImage}
+                  aria-label="Предыдущее изображение"
+                >
+                  <ChevronLeftIcon className={styles.navIcon} />
+                </button>
+                <button
+                  className={styles.nextImageButton}
+                  onClick={handleNextImage}
+                  aria-label="Следующее изображение"
+                >
+                  <ChevronRightIcon className={styles.navIcon} />
+                </button>
+
+                {/* Счетчик изображений */}
+                <div className={styles.imageCounter}>
+                  {currentImageIndex + 1} / {images.length}
+                </div>
+              </>
+            )}
+
+            {/* Миниатюры для быстрого переключения */}
+            {hasMultipleImages && (
+              <div className={styles.cardThumbnails}>
+                {images.slice(0, 3).map((image, index) => (
+                  <button
+                    key={index}
+                    className={`${styles.cardThumbnail} ${
+                      currentImageIndex === index ? styles.active : ""
+                    }`}
+                    onClick={(e) => selectImage(index, e)}
+                    aria-label={`Показать изображение ${index + 1}`}
+                  >
+                    <img
+                      src={image}
+                      alt={`Миниатюра ${index + 1}`}
+                      className={styles.thumbnailImage}
+                    />
+                  </button>
+                ))}
+                {images.length > 3 && (
+                  <div className={styles.moreImagesBadge}>
+                    +{images.length - 3}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         ) : (
           <div className={styles.imagePlaceholder}>
             <PhotoIcon className={styles.placeholderIcon} />
@@ -82,17 +169,6 @@ function MasterClassesCard({ item }) {
             <HeartIcon className={styles.favoriteIcon} />
           )}
         </button>
-
-        {/* Бейдж категории */}
-        <div className={styles.categoryBadge}>
-          <TagIcon className={styles.categoryIcon} />
-          <span>{item.category}</span>
-        </div>
-
-        {/* Бейдж для популярных курсов */}
-        {item.views > 300 && (
-          <div className={styles.popularBadge}>Популярный</div>
-        )}
       </div>
 
       {/* Основной контент */}

@@ -9,7 +9,9 @@ import {
   DocumentPlusIcon,
   XMarkIcon,
   PlusIcon,
-  ExclamationTriangleIcon,
+  TrashIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 
 function CreateMasterClass() {
@@ -22,24 +24,23 @@ function CreateMasterClass() {
     description: "",
     category: "",
     tags: [],
+    images: [], // Теперь это массив
     views: 0,
-    rating: 4.5, // Дефолтное значение
+    rating: 0,
   });
 
   const [newTag, setNewTag] = useState("");
-  const [imagePreview, setImagePreview] = useState(null);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Проверяем авторизацию при загрузке компонента
   useEffect(() => {
     if (!isAuthenticated() || !user) {
-      // Если пользователь не авторизован, перенаправляем на страницу входа
       navigate("/login", { state: { from: "/create-masterclass" } });
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Получаем имя пользователя
   const currentAuthor = user?.name || "Аноним";
 
   const categories = [
@@ -71,7 +72,6 @@ function CreateMasterClass() {
       [name]: value,
     }));
 
-    // Очищаем ошибку при изменении
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -81,39 +81,120 @@ function CreateMasterClass() {
   };
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
-        setErrors((prev) => ({
-          ...prev,
-          image: "Изображение должно быть меньше 5MB",
-        }));
-        return;
-      }
+    const files = Array.from(e.target.files);
 
-      if (!file.type.match("image.*")) {
-        setErrors((prev) => ({
-          ...prev,
-          image: "Файл должен быть изображением",
-        }));
-        return;
-      }
+    if (files.length === 0) return;
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-
-      // Очищаем ошибку
-      if (errors.image) {
-        setErrors((prev) => ({
-          ...prev,
-          image: "",
-        }));
-      }
+    // Проверка общего количества изображений
+    if (formData.images.length + files.length > 10) {
+      setErrors((prev) => ({
+        ...prev,
+        images: "Максимум 10 изображений",
+      }));
+      return;
     }
+
+    const validFiles = [];
+    const invalidFiles = [];
+
+    files.forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        invalidFiles.push(`${file.name} - слишком большой размер (макс. 5MB)`);
+      } else if (!file.type.match("image.*")) {
+        invalidFiles.push(`${file.name} - не является изображением`);
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    if (invalidFiles.length > 0) {
+      setErrors((prev) => ({
+        ...prev,
+        images: invalidFiles.join(", "),
+      }));
+    }
+
+    if (validFiles.length > 0) {
+      const readers = validFiles.map((file) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(readers).then((images) => {
+        setFormData((prev) => ({
+          ...prev,
+          images: [...prev.images, ...images],
+        }));
+
+        // Устанавливаем индекс на первое добавленное изображение
+        if (formData.images.length === 0) {
+          setCurrentImageIndex(0);
+        }
+
+        if (errors.images) {
+          setErrors((prev) => ({
+            ...prev,
+            images: "",
+          }));
+        }
+      });
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+
+    // Корректируем текущий индекс
+    if (currentImageIndex >= index && currentImageIndex > 0) {
+      setCurrentImageIndex((prev) => Math.max(0, prev - 1));
+    }
+
+    if (errors.images) {
+      setErrors((prev) => ({
+        ...prev,
+        images: "",
+      }));
+    }
+  };
+
+  const handleMoveImage = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return;
+
+    const newImages = [...formData.images];
+    const [movedImage] = newImages.splice(fromIndex, 1);
+    newImages.splice(toIndex, 0, movedImage);
+
+    setFormData((prev) => ({
+      ...prev,
+      images: newImages,
+    }));
+
+    // Обновляем текущий индекс если перемещаемое изображение было текущим
+    if (currentImageIndex === fromIndex) {
+      setCurrentImageIndex(toIndex);
+    } else if (currentImageIndex > fromIndex && currentImageIndex <= toIndex) {
+      setCurrentImageIndex(currentImageIndex - 1);
+    } else if (currentImageIndex < fromIndex && currentImageIndex >= toIndex) {
+      setCurrentImageIndex(currentImageIndex + 1);
+    }
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? formData.images.length - 1 : prev - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === formData.images.length - 1 ? 0 : prev + 1
+    );
   };
 
   const handleAddTag = () => {
@@ -178,13 +259,16 @@ function CreateMasterClass() {
       newErrors.tags = "Добавьте хотя бы один тег";
     }
 
+    if (formData.images.length === 0) {
+      newErrors.images = "Добавьте хотя бы одно изображение";
+    }
+
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Проверяем авторизацию перед отправкой
     if (!isAuthenticated() || !user) {
       alert("Для создания мастер-класса необходимо авторизоваться");
       navigate("/login", { state: { from: "/create-masterclass" } });
@@ -200,7 +284,6 @@ function CreateMasterClass() {
     setIsSubmitting(true);
 
     try {
-      const imageUrl = imagePreview || null;
       const newId = Date.now();
 
       const newMasterClass = {
@@ -208,7 +291,7 @@ function CreateMasterClass() {
         title: formData.title,
         author: currentAuthor,
         rating: formData.rating || 4.5,
-        image: imageUrl,
+        images: formData.images, // Теперь это массив
         category: formData.category,
         description: formData.description,
         tags: formData.tags,
@@ -219,8 +302,6 @@ function CreateMasterClass() {
       };
 
       addMasterClass(newMasterClass);
-
-      // Перенаправляем на страницу созданного мастер-класса
       navigate(`/master-class/${newId}`);
     } catch (error) {
       console.error("Error creating master class:", error);
@@ -236,15 +317,15 @@ function CreateMasterClass() {
       description: "",
       category: "",
       tags: [],
+      images: [],
       views: 0,
       rating: 4.5,
     });
-    setImagePreview(null);
     setNewTag("");
     setErrors({});
+    setCurrentImageIndex(0);
   };
 
-  // Если пользователь не авторизован, показываем сообщение
   if (!isAuthenticated() || !user) {
     return (
       <button
@@ -284,50 +365,129 @@ function CreateMasterClass() {
         <div className={styles.formGrid}>
           {/* Левая колонка - основные данные */}
           <div className={styles.mainColumn}>
-            {/* Изображение */}
+            {/* Изображения */}
             <div className={styles.section}>
               <h3 className={styles.sectionTitle}>
                 <PhotoIcon className={styles.sectionIcon} />
-                Изображение мастер-класса
+                Изображения мастер-класса
               </h3>
-              <div className={styles.imageUploadContainer}>
-                {imagePreview ? (
-                  <div className={styles.imagePreviewWrapper}>
+
+              {/* Галерея изображений */}
+              {formData.images.length > 0 && (
+                <div className={styles.imageGallery}>
+                  {/* Основное изображение с навигацией */}
+                  <div className={styles.mainImageContainer}>
                     <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className={styles.imagePreview}
+                      src={formData.images[currentImageIndex]}
+                      alt={`Изображение ${currentImageIndex + 1}`}
+                      className={styles.mainImage}
                     />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImagePreview(null);
-                      }}
-                      className={styles.removeImageButton}
-                      aria-label="Удалить изображение"
-                    >
-                      <XMarkIcon className={styles.removeIcon} />
-                    </button>
+
+                    {/* Кнопки навигации */}
+                    {formData.images.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={handlePrevImage}
+                          className={styles.navButton}
+                          aria-label="Предыдущее изображение"
+                        >
+                          <ChevronLeftIcon className={styles.navIcon} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleNextImage}
+                          className={`${styles.navButton} ${styles.nextButton}`}
+                          aria-label="Следующее изображение"
+                        >
+                          <ChevronRightIcon className={styles.navIcon} />
+                        </button>
+                      </>
+                    )}
+
+                    {/* Счетчик изображений */}
+                    <div className={styles.imageCounter}>
+                      {currentImageIndex + 1} / {formData.images.length}
+                    </div>
                   </div>
-                ) : (
-                  <label className={styles.imageUploadArea}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className={styles.imageInput}
-                    />
-                    <PhotoIcon className={styles.uploadIcon} />
-                    <span className={styles.uploadText}>
-                      Нажмите для загрузки изображения
-                    </span>
-                    <span className={styles.uploadHint}>
-                      Рекомендуемый размер: 1200×800px
-                    </span>
-                  </label>
-                )}
-                {errors.image && (
-                  <div className={styles.error}>{errors.image}</div>
+
+                  {/* Миниатюры */}
+                  <div className={styles.thumbnails}>
+                    {formData.images.map((image, index) => (
+                      <div key={index} className={styles.thumbnailWrapper}>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentImageIndex(index)}
+                          className={`${styles.thumbnailButton} ${
+                            currentImageIndex === index ? styles.active : ""
+                          }`}
+                          aria-label={`Выбрать изображение ${index + 1}`}
+                        >
+                          <img
+                            src={image}
+                            alt={`Миниатюра ${index + 1}`}
+                            className={styles.thumbnailImage}
+                          />
+                        </button>
+                        <div className={styles.thumbnailActions}>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index)}
+                            className={styles.deleteThumbnailButton}
+                            aria-label={`Удалить изображение ${index + 1}`}
+                          >
+                            <TrashIcon className={styles.deleteIcon} />
+                          </button>
+                          {index > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveImage(index, index - 1)}
+                              className={styles.moveButton}
+                              aria-label="Переместить влево"
+                            >
+                              ←
+                            </button>
+                          )}
+                          {index < formData.images.length - 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleMoveImage(index, index + 1)}
+                              className={styles.moveButton}
+                              aria-label="Переместить вправо"
+                            >
+                              →
+                            </button>
+                          )}
+                        </div>
+                        <div className={styles.imageNumber}>{index + 1}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Загрузка изображений */}
+              <div className={styles.imageUploadContainer}>
+                <label className={styles.imageUploadArea}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className={styles.imageInput}
+                    multiple
+                  />
+                  <PhotoIcon className={styles.uploadIcon} />
+                  <span className={styles.uploadText}>
+                    {formData.images.length === 0
+                      ? "Нажмите для загрузки изображений"
+                      : `Добавить еще изображения (${formData.images.length}/10)`}
+                  </span>
+                  <span className={styles.uploadHint}>
+                    Можно загрузить до 10 изображений. Первое будет главным
+                  </span>
+                </label>
+                {errors.images && (
+                  <div className={styles.error}>{errors.images}</div>
                 )}
               </div>
             </div>

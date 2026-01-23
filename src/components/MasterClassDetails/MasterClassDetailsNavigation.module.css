@@ -1,0 +1,72 @@
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  color: var(--font-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background: var(--shadow-color);
+  border-color: var(--accent-color);
+}
+
+.backIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+}
+
+.breadcrumb {
+  color: var(--gray-color);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.breadcrumb:hover {
+  color: var(--accent-color);
+}
+
+.breadcrumbSeparator {
+  color: var(--border-color);
+  margin: 0 var(--spacing-xs);
+}
+
+.breadcrumbActive {
+  color: var(--font-color);
+  font-weight: 500;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .navigation {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .breadcrumbs {
+    flex-wrap: wrap;
+  }
+}

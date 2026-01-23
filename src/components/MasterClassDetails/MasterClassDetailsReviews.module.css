@@ -1,0 +1,116 @@
+.reviewsSection {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--border-color);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--font-color);
+  margin: 0 0 var(--spacing-lg) 0;
+}
+
+.reviewsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.reviewItem {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+}
+
+.reviewHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
+}
+
+.reviewAuthor {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.reviewAuthorIcon {
+  width: 32px;
+  height: 32px;
+  color: var(--accent-color);
+}
+
+.reviewAuthorName {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.reviewDate {
+  font-size: var(--font-size-xs);
+  color: var(--gray-color);
+  margin-top: 2px;
+}
+
+.reviewRating {
+  display: flex;
+  align-items: center;
+}
+
+.reviewRatingStars {
+  display: flex;
+  gap: 2px;
+}
+
+.reviewStarIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--accent-color);
+}
+
+.reviewStarIcon.empty {
+  color: var(--border-color);
+}
+
+.reviewComment {
+  font-size: var(--font-size-base);
+  color: var(--font-color);
+  line-height: 1.6;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Кнопка добавления отзыва */
+.addReviewSection {
+  margin-top: var(--spacing-xl);
+  text-align: center;
+}
+
+.addReviewButton {
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--accent-color);
+  color: var(--font-color);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.addReviewButton:hover {
+  background: var(--hover-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.addReviewIcon {
+  width: 20px;
+  height: 20px;
+}

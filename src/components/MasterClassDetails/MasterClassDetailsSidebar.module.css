@@ -1,0 +1,295 @@
+.sidebarCard {
+  background: var(--main-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-xl);
+  box-shadow: 0 4px 20px var(--shadow-color);
+}
+
+.sidebarTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Карточка пользовательской оценки */
+.userRatingCard {
+  background: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.userRatingTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.userRatingContent {
+  text-align: center;
+}
+
+.ratingStars {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.starIcon {
+  width: var(--star-size, 20px);
+  height: var(--star-size, 20px);
+  color: var(--accent-color);
+}
+
+.starIcon.empty {
+  color: var(--border-color);
+}
+
+.userRatingValue {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--accent-color);
+  margin: var(--spacing-xs) 0;
+}
+
+.userRatingComment {
+  font-size: var(--font-size-sm);
+  color: var(--font-color);
+  font-style: italic;
+  margin: var(--spacing-sm) 0;
+  padding: var(--spacing-sm);
+  background: var(--main-color);
+  border-radius: var(--border-radius);
+  border-left: 3px solid var(--accent-color);
+}
+
+.userRatingDate {
+  font-size: var(--font-size-xs);
+  color: var(--gray-color);
+}
+
+.editRatingButton {
+  width: 100%;
+  padding: var(--spacing-sm);
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  color: var(--font-color);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-md);
+}
+
+.editRatingButton:hover {
+  border-color: var(--accent-color);
+  background: rgba(255, 214, 0, 0.1);
+}
+
+.editRatingIcon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Теги */
+.tagsSection {
+  margin-bottom: var(--spacing-xl);
+}
+
+.tagsTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.tagsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.tag {
+  background: var(--card-background);
+  color: var(--font-color);
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: 20px;
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.tag:hover {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+/* Статистика */
+.statsSection {
+  margin-bottom: var(--spacing-lg);
+}
+
+.statsTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-sm);
+  background: var(--main-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+}
+
+.statIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--accent-color);
+  margin-bottom: var(--spacing-xs);
+}
+
+.statContent {
+  text-align: center;
+}
+
+.statValue {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--font-color);
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: var(--font-size-xs);
+  color: var(--gray-color);
+  margin-top: 2px;
+}
+
+/* Похожие мастер-классы */
+.relatedSection {
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--spacing-xl);
+}
+
+.relatedTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-lg);
+}
+
+.relatedList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.relatedItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.relatedItem:hover {
+  border-color: var(--accent-color);
+  background: var(--card-background);
+  transform: translateX(4px);
+}
+
+.relatedImage {
+  width: 80px;
+  height: 60px;
+  flex-shrink: 0;
+  border-radius: calc(var(--border-radius) / 2);
+  overflow: hidden;
+  background: var(--card-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.relatedImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.relatedPlaceholderIcon {
+  width: 24px;
+  height: 24px;
+  color: var(--gray-color);
+}
+
+.relatedInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.relatedItemTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--font-color);
+  line-height: 1.3;
+  margin: 0;
+}
+
+.relatedMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--gray-color);
+}
+
+.relatedAuthor,
+.relatedRating {
+  font-size: var(--font-size-xs);
+}
+
+.noRelatedText {
+  font-size: var(--font-size-sm);
+  color: var(--gray-color);
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
