@@ -17,6 +17,12 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+.navigationLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
 .backButton {
   display: flex;
   align-items: center;
@@ -66,6 +72,62 @@
 .breadcrumbActive {
   color: var(--font-color);
   font-weight: 500;
+}
+
+/* Кнопки владельца в навигации */
+.ownerActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.editButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--accent-color);
+  color: var(--font-color);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editButton:hover {
+  background: var(--hover-color);
+  transform: translateY(-1px);
+}
+
+.editIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.deleteProductButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteProductButton:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.deleteIcon {
+  width: 16px;
+  height: 16px;
 }
 
 /* Основной контент */
@@ -126,15 +188,17 @@
   font-weight: 500;
 }
 
+/* Контейнер статуса с действиями */
+.statusContainer {
+  margin-top: var(--spacing-lg);
+}
+
 .statusBadge {
-  position: absolute;
-  top: var(--spacing-lg);
-  left: var(--spacing-lg);
+  display: inline-block;
   padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: 20px;
   font-size: var(--font-size-sm);
   font-weight: 600;
-  z-index: 2;
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
@@ -154,11 +218,48 @@
   color: white;
 }
 
+.statusActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.markAsSold,
+.markAsReserved {
+  flex: 1;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: var(--font-size-xs);
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.markAsSold:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--error-color);
+  color: var(--error-color);
+}
+
+.markAsReserved:hover {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
 /* Центральная колонка - информация */
 .productInfo {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xl);
+}
+
+/* Заголовок с кнопкой редактирования */
+.titleSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .title {
@@ -167,6 +268,71 @@
   color: var(--font-color);
   line-height: 1.3;
   margin: 0;
+  flex: 1;
+}
+
+.inlineEditButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--main-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inlineEditButton:hover {
+  border-color: var(--accent-color);
+  background: rgba(255, 214, 0, 0.1);
+}
+
+.smallEditIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--font-color);
+}
+
+/* Заголовки секций с кнопками редактирования */
+.descriptionHeader,
+.specificationsHeader,
+.tagsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.descriptionHeader h3,
+.specificationsHeader h3,
+.tagsHeader h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--font-color);
+  margin: 0;
+}
+
+.editDescriptionButton,
+.editSpecsButton,
+.editTagsButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--main-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editDescriptionButton:hover,
+.editSpecsButton:hover,
+.editTagsButton:hover {
+  border-color: var(--accent-color);
+  background: rgba(255, 214, 0, 0.1);
 }
 
 .ratingSection {
@@ -203,6 +369,38 @@
   margin-left: var(--spacing-sm);
 }
 
+/* Цена с кнопкой редактирования */
+.priceDisplay {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.displayPrice {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--font-color);
+  line-height: 1;
+}
+
+.editPriceButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--main-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editPriceButton:hover {
+  border-color: var(--success-color);
+  background: rgba(16, 185, 129, 0.1);
+}
+
 .priceSection {
   display: flex;
   align-items: baseline;
@@ -221,16 +419,6 @@
   font-size: var(--font-size-lg);
   color: var(--gray-color);
   text-decoration: line-through;
-}
-
-.description h3,
-.sellerInfo h3,
-.specifications h3,
-.tagsSection h3 {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--font-color);
-  margin-bottom: var(--spacing-md);
 }
 
 .description p {
@@ -402,31 +590,6 @@
   margin: 0;
 }
 
-.priceDisplay {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: var(--spacing-lg);
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.displayPrice {
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--font-color);
-  line-height: 1;
-}
-
-.discountBadge {
-  background: var(--error-color);
-  color: white;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: 12px;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-}
-
 .stockInfo {
   display: flex;
   justify-content: space-between;
@@ -456,81 +619,72 @@
   height: 16px;
 }
 
-/* Количество */
-.quantitySection {
-  margin-bottom: var(--spacing-xl);
-}
-
-.quantityLabel {
-  display: block;
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--font-color);
-  margin-bottom: var(--spacing-sm);
-}
-
-.quantityControls {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.quantityButton {
-  width: 40px;
-  height: 40px;
-  background: var(--card-background);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--font-color);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.quantityButton:hover:not(:disabled) {
-  background: var(--accent-color);
-  border-color: var(--accent-color);
-}
-
-.quantityButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.quantityInput {
-  flex: 1;
-  text-align: center;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  color: var(--font-color);
-  background: var(--main-color);
-  outline: none;
-}
-
-.quantityInput:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.1);
-}
-
-.quantityInput::-webkit-outer-spin-button,
-.quantityInput::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
 /* Кнопки действий */
 .actionButtons {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-xl);
+}
+
+/* Кнопки действий для владельца */
+.ownerActionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.markSoldButton,
+.markReservedButton,
+.makeAvailableButton,
+.cancelReservationButton {
+  padding: var(--spacing-md);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.markSoldButton {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error-color);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.markSoldButton:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.markReservedButton {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.markReservedButton:hover {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.makeAvailableButton {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.makeAvailableButton:hover {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.cancelReservationButton {
+  background: rgba(100, 116, 139, 0.1);
+  color: #64748b;
+  border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.cancelReservationButton:hover {
+  background: rgba(100, 116, 139, 0.2);
 }
 
 .buyButton {
@@ -636,6 +790,140 @@
 .shareIcon {
   width: 18px;
   height: 18px;
+}
+
+/* Информация для владельца */
+.ownerInfo {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--border-color);
+}
+
+.ownerInfo h4 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.ownerStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm);
+  background: var(--card-background);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.statIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--gray-color);
+}
+
+.statValue {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.statLabel {
+  font-size: var(--font-size-xs);
+  color: var(--gray-color);
+}
+
+/* Модалка подтверждения удаления */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.deleteConfirmModal {
+  background: var(--main-color);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.deleteConfirmModal h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.deleteConfirmModal p {
+  font-size: var(--font-size-base);
+  color: var(--font-color);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.5;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+}
+
+.cancelButton {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--main-color);
+  color: var(--font-color);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: var(--card-background);
+  border-color: var(--accent-color);
+}
+
+.deleteButton {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--border-radius);
+  background: var(--error-color);
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteButton:hover {
+  background: #dc2626;
 }
 
 /* Гарантии */
@@ -791,6 +1079,16 @@
     gap: var(--spacing-md);
   }
 
+  .navigationLeft {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ownerActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
   .breadcrumbs {
     flex-wrap: wrap;
   }
@@ -826,6 +1124,10 @@
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: var(--spacing-lg);
   }
+
+  .ownerStats {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
@@ -849,12 +1151,21 @@
     font-size: 20px;
   }
 
+  .ownerActions {
+    flex-direction: column;
+  }
+
+  .editButton,
+  .deleteProductButton {
+    width: 100%;
+    justify-content: center;
+  }
+
   .actionButtons {
     gap: var(--spacing-sm);
   }
 
   .buyButton,
-  .buyNowButton,
   .soldButton {
     padding: var(--spacing-md);
     font-size: var(--font-size-sm);

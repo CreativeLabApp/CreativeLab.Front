@@ -9,7 +9,7 @@
 
 .header {
   border-radius: var(--border-radius);
-  padding: var(--spacing-xxl);
+  padding: var(--spacing-xxl) 0;
   margin-bottom: var(--spacing-xxl);
   color: var(--font-color);
 }
@@ -18,11 +18,6 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-lg);
-}
-
-.headerIcon {
-  width: 48px;
-  height: 48px;
 }
 
 .title {
@@ -57,28 +52,49 @@
   }
 }
 
+.mainColumn,
+.sideColumn {
+  display: flex;
+  flex-direction: column;
+}
+
 .section {
-  margin-bottom: var(--spacing-xxl);
+  padding: var(--spacing-lg);
+  background: var(--main-color);
+  border-radius: calc(var(--border-radius) - 2px);
 }
 
 .sectionTitle {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: 600;
-  margin: 0 0 var(--spacing-xl) 0;
+  margin: 0 0 var(--spacing-lg) 0;
   color: var(--font-color);
 }
 
 .sectionIcon {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   color: var(--accent-color);
 }
 
 .formGroup {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 .label {
@@ -86,25 +102,24 @@
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--font-color);
-  margin-bottom: var(--spacing-sm);
-}
-
-.label::after {
-  content: " *";
-  color: var(--error-color);
+  margin-bottom: var(--spacing-xs);
 }
 
 .input,
 .textarea,
 .select {
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 2px solid var(--border-color);
-  border-radius: calc(var(--border-radius) - 2px);
+  border-radius: calc(var(--border-radius) - 4px);
   font-size: var(--font-size-base);
   transition: all 0.2s;
   background: var(--main-color);
   color: var(--font-color);
+}
+
+.textarea {
+  max-height: 20vh;
 }
 
 .input:focus,
@@ -138,18 +153,45 @@
 
 .characterCount {
   text-align: right;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--gray-color);
   margin-top: var(--spacing-xs);
 }
 
-/* Image Upload */
+/* Стили для инпутов с иконками */
+.priceInputContainer,
+.dimensionsInputContainer,
+.weightInputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.priceIcon,
+.dimensionsIcon,
+.weightIcon {
+  position: absolute;
+  left: var(--spacing-md);
+  width: 18px;
+  height: 18px;
+  color: var(--gray-color);
+  pointer-events: none;
+}
+
+.priceInput,
+.dimensionsInput,
+.weightInput {
+  padding-left: calc(var(--spacing-md) + 24px);
+}
+
+/* Image Upload Styles */
 .imageUploadContainer {
   border: 2px dashed var(--border-color);
   border-radius: var(--border-radius);
-  padding: 40px;
+  padding: var(--spacing-xl);
   text-align: center;
   transition: all 0.2s;
+  background: var(--main-color);
 }
 
 .imageUploadContainer:hover {
@@ -162,6 +204,7 @@
   align-items: center;
   cursor: pointer;
   gap: var(--spacing-md);
+  padding: var(--spacing-lg);
 }
 
 .imageInput {
@@ -185,47 +228,61 @@
   color: var(--gray-color);
 }
 
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
 .imagePreviewWrapper {
   position: relative;
-  max-width: 400px;
-  margin: 0 auto;
+  border-radius: calc(var(--border-radius) - 4px);
+  overflow: hidden;
+  aspect-ratio: 1;
 }
 
 .imagePreview {
   width: 100%;
-  height: auto;
-  border-radius: calc(var(--border-radius) - 2px);
-  box-shadow: 0 4px 12px var(--shadow-color);
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s;
+}
+
+.imagePreview:hover {
+  transform: scale(1.05);
 }
 
 .removeImageButton {
   position: absolute;
-  top: -12px;
-  right: -12px;
+  top: 8px;
+  right: 8px;
   background: var(--error-color);
   color: var(--main-color);
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  opacity: 0.9;
 }
 
 .removeImageButton:hover {
   background: #dc2626;
   transform: scale(1.1);
+  opacity: 1;
 }
 
 .removeIcon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
-/* Tags */
+/* Tags and Materials Styles */
 .tagInputContainer {
   display: flex;
   gap: var(--spacing-sm);
@@ -235,9 +292,9 @@
   background: #10b981;
   color: var(--main-color);
   border: none;
-  border-radius: calc(var(--border-radius) - 2px);
-  min-width: 3.5rem;
-  height: 3.5rem;
+  border-radius: calc(var(--border-radius) - 4px);
+  min-width: 3rem;
+  height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -250,8 +307,8 @@
 }
 
 .addIcon {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
 }
 
 .tagsContainer {
@@ -264,8 +321,8 @@
 .tagItem {
   background: #fff8e1;
   color: var(--font-color);
-  padding: var(--spacing-xs) var(--spacing-md);
-  border-radius: 20px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 16px;
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
@@ -283,76 +340,28 @@
   color: var(--accent-color);
   cursor: pointer;
   padding: 0;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  opacity: 0.7;
 }
 
 .removeTagButton:hover {
   color: var(--font-color);
+  opacity: 1;
 }
 
 .removeTagIcon {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
 .tagHint {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   color: var(--gray-color);
   margin-top: var(--spacing-sm);
-}
-
-/* Rating */
-.ratingContainer {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-lg);
-}
-
-.ratingSlider {
-  flex: 1;
-  height: 8px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: var(--border-color);
-  border-radius: 4px;
-  outline: none;
-}
-
-.ratingSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  background: var(--accent-color);
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid var(--main-color);
-}
-
-.ratingSlider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  background: var(--accent-color);
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid var(--main-color);
-}
-
-.ratingValue {
-  font-size: var(--font-size-xl);
-  font-weight: 600;
-  color: var(--accent-color);
-  min-width: 60px;
-}
-
-.hint {
-  font-size: var(--font-size-sm);
-  color: var(--gray-color);
-  margin-top: var(--spacing-xs);
 }
 
 /* Action Buttons */
@@ -360,16 +369,16 @@
   display: flex;
   justify-content: flex-end;
   gap: var(--spacing-lg);
-  margin-top: 40px;
-  padding-top: var(--spacing-xxl);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
   border-top: 1px solid var(--border-color);
 }
 
 .secondaryButton,
 .cancelButton,
 .submitButton {
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-radius: calc(var(--border-radius) - 2px);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: calc(var(--border-radius) - 4px);
   font-size: var(--font-size-base);
   font-weight: 600;
   cursor: pointer;
@@ -378,16 +387,18 @@
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
+  min-width: 140px;
 }
 
 .secondaryButton {
-  background: #f3f4f6;
+  background: var(--card-background);
   color: var(--font-color);
   border: 2px solid var(--border-color);
 }
 
 .secondaryButton:hover {
   background: #e5e7eb;
+  border-color: var(--accent-color);
 }
 
 .cancelButton {
@@ -398,6 +409,7 @@
 
 .cancelButton:hover {
   background: #fee2e2;
+  border-color: var(--error-color);
 }
 
 .submitButton {
@@ -417,8 +429,8 @@
 }
 
 .submitIcon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 /* Info Panel */
@@ -427,6 +439,7 @@
   border-radius: var(--border-radius);
   padding: var(--spacing-xl);
   border: 1px solid var(--accent-color);
+  margin-top: var(--spacing-xl);
 }
 
 .infoTitle {
@@ -443,10 +456,11 @@
 }
 
 .infoList li {
-  padding: var(--spacing-sm) 0;
+  padding: var(--spacing-xs) 0;
   padding-left: var(--spacing-xl);
   position: relative;
   color: var(--font-color);
+  font-size: var(--font-size-sm);
 }
 
 .infoList li::before {
@@ -465,34 +479,6 @@
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
   padding-right: 2.5rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .container {
-    padding: var(--spacing-md);
-  }
-
-  .header {
-    padding: var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
-  }
-
-  .form {
-    padding: var(--spacing-xl);
-  }
-
-  .actionButtons {
-    flex-direction: column;
-    gap: var(--spacing-md);
-  }
-
-  .secondaryButton,
-  .cancelButton,
-  .submitButton {
-    width: 100%;
-    justify-content: center;
-  }
 }
 
 /* Стили для сообщения о неавторизации */
@@ -523,18 +509,20 @@
   max-width: 400px;
   margin-left: auto;
   margin-right: auto;
+  line-height: 1.5;
 }
 
 .loginButton {
   background: var(--accent-color);
   color: var(--font-color);
   border: none;
-  border-radius: calc(var(--border-radius) - 2px);
+  border-radius: calc(var(--border-radius) - 4px);
   padding: var(--spacing-md) var(--spacing-xl);
   font-size: var(--font-size-base);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  display: inline-block;
 }
 
 .loginButton:hover {
@@ -549,12 +537,6 @@
   padding: var(--spacing-xl);
   margin-bottom: var(--spacing-xl);
   border: 1px solid var(--border-color);
-}
-
-.authorIcon {
-  width: 32px;
-  height: 32px;
-  color: var(--accent-color);
 }
 
 .authorLabel {
@@ -575,14 +557,122 @@
   color: var(--gray-color);
 }
 
-/* Стиль для ползунка рейтинга */
-.ratingSlider {
-  width: 100%;
-  margin-top: var(--spacing-sm);
-}
-
 /* Обязательные поля */
 .label::after {
   content: " *";
   color: var(--error-color);
+}
+
+/* Стиль для отображения нескольких изображений */
+.imageCounter {
+  font-size: var(--font-size-sm);
+  color: var(--gray-color);
+  text-align: center;
+  margin-top: var(--spacing-sm);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-md);
+  }
+
+  .header {
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .form {
+    padding: var(--spacing-xl);
+  }
+
+  .section {
+    padding: var(--spacing-md);
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .secondaryButton,
+  .cancelButton,
+  .submitButton {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .imageGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .imageGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .formRow {
+    gap: var(--spacing-md);
+  }
+
+  .sectionTitle {
+    font-size: var(--font-size-base);
+  }
+}
+
+/* Стили для состояния загрузки */
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xxl);
+  color: var(--gray-color);
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--spacing-lg);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Подсказки и иконки состояния */
+.hint {
+  font-size: var(--font-size-xs);
+  color: var(--gray-color);
+  margin-top: var(--spacing-xs);
+  font-style: italic;
+}
+
+/* Стили для выпадающих списков */
+.select option {
+  background: var(--main-color);
+  color: var(--font-color);
+  padding: var(--spacing-sm);
+}
+
+/* Стили для полей с ошибками */
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--error-color);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs);
+}
+
+.errorIcon {
+  width: 14px;
+  height: 14px;
 }

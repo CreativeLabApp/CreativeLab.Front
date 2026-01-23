@@ -15,6 +15,7 @@ import CreatorProfilePage from "./pages/CreatorProfilePage/CreatorProfilePage";
 import CreateMasterClassPage from "./pages/CreateMasterClassPage/CreateMasterClassPage";
 import RatingPage from "./pages/RatingPage/RatingPage";
 import MessagesPage from "./pages/MessagesPage/MessagesPage";
+import CreateProduct from "./components/CreateProduct/CreateProduct";
 
 function App() {
   return (
@@ -41,7 +42,10 @@ function App() {
       <Route path="marketplace/product/:id" element={<Layout />}>
         <Route index element={<ProductDetailPage />} />
       </Route>
-      {/*<Route path="marketplace/add-product" element={<AddProductPage />} />*/}
+
+      <Route path="marketplace/add-product" element={<Layout />}>
+        <Route index element={<CreateProduct />} />
+      </Route>
 
       <Route path="creator/:id" element={<Layout />}>
         <Route index element={<CreatorProfilePage />} />

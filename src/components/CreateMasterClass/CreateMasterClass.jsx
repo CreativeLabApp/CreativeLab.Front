@@ -247,23 +247,14 @@ function CreateMasterClass() {
   // Если пользователь не авторизован, показываем сообщение
   if (!isAuthenticated() || !user) {
     return (
-      <div className={styles.container}>
-        <div className={styles.notAuthorized}>
-          <ExclamationTriangleIcon className={styles.warningIcon} />
-          <h2 className={styles.warningTitle}>Требуется авторизация</h2>
-          <p className={styles.warningText}>
-            Для создания мастер-класса необходимо войти в систему.
-          </p>
-          <button
-            onClick={() =>
-              navigate("/login", { state: { from: "/create-masterclass" } })
-            }
-            className={styles.loginButton}
-          >
-            Войти в систему
-          </button>
-        </div>
-      </div>
+      <button
+        onClick={() =>
+          navigate("/login", { state: { from: "/create-masterclass" } })
+        }
+        className={styles.loginButton}
+      >
+        Войти в систему
+      </button>
     );
   }
 
@@ -484,36 +475,6 @@ function CreateMasterClass() {
                 </div>
               </div>
             </div>
-
-            {/* Рейтинг (опционально) */}
-            <div className={styles.section}>
-              <h3 className={styles.sectionTitle}>
-                <TagIcon className={styles.sectionIcon} />
-                Начальный рейтинг
-              </h3>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>
-                  Стартовый рейтинг: {formData.rating} ⭐
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="5"
-                  step="0.5"
-                  value={formData.rating}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      rating: parseFloat(e.target.value),
-                    }))
-                  }
-                  className={styles.ratingSlider}
-                />
-                <div className={styles.hint}>
-                  Можно установить начальный рейтинг для нового мастер-класса
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -553,21 +514,6 @@ function CreateMasterClass() {
           </button>
         </div>
       </form>
-
-      {/* Информационная панель */}
-      <div className={styles.infoPanel}>
-        <h4 className={styles.infoTitle}>Советы по созданию:</h4>
-        <ul className={styles.infoList}>
-          <li>Придумайте четкое и понятное название</li>
-          <li>Добавьте качественное изображение для привлечения внимания</li>
-          <li>Подробно опишите, чему научатся участники</li>
-          <li>Выберите подходящую категорию для лучшего поиска</li>
-          <li>Добавьте релевантные теги</li>
-          <li>
-            Мастер-класс будет опубликован от вашего имени ({currentAuthor})
-          </li>
-        </ul>
-      </div>
     </div>
   );
 }

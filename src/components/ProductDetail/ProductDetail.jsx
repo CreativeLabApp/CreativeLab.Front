@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useMarketplaceStore } from "../../stores/marketplaceStore";
-import { useFavoritesStore } from "../../stores/favoritesStore"; // Добавляем импорт
+import { useFavoritesStore } from "../../stores/favoritesStore";
+import { useAuthStore } from "../../stores/authStore";
 import {
   ArrowLeftIcon,
   UserIcon,
@@ -16,6 +17,8 @@ import {
   CubeIcon,
   ScaleIcon,
   ChatBubbleLeftRightIcon,
+  PencilSquareIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import {
   StarIcon as StarIconSolid,
@@ -26,27 +29,31 @@ import Loader from "../common/Loader/Loader";
 import ProductGallery from "../ProductGallery/ProductGallery";
 import ProductCard from "../ProductCard/ProductCard";
 import Notification from "../common/Notification/Notification";
+import EditProductModal from "../EditProductModal/EditProductModal";
 
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { products, getProductsBySeller, getPopularProducts } =
+  const { products, getProductsBySeller, getPopularProducts, deleteProduct } =
     useMarketplaceStore();
-
-  // Используем favoritesStore для управления избранным
   const { toggleFavoriteProduct, isFavoriteProduct } = useFavoritesStore();
+  const { user } = useAuthStore(); // Получаем текущего пользователя
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showNotification1, setShowNotification1] = useState(false);
   const [showNotification2, setShowNotification2] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false); // Состояние модалки редактирования
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // Подтверждение удаления
+
+  // Проверяем, является ли текущий пользователь владельцем товара
+  const isOwner = user && product && user.id === product.sellerId;
 
   // Проверяем, находится ли товар в избранном
   const isInWish = isFavoriteProduct(parseInt(id));
 
   useEffect(() => {
-    // Имитация загрузки данных
     const timer = setTimeout(() => {
       const foundProduct = products.find((item) => item.id === parseInt(id));
 
@@ -90,13 +97,31 @@ function ProductDetail() {
     setShowNotification2(true);
   };
 
-  // Функция для перехода в чат с продавцом
+  // Функция для редактирования товара
+  const handleEditProduct = () => {
+    setShowEditModal(true);
+  };
+
+  // Функция для сохранения изменений
+  const handleSaveProduct = (updatedProduct) => {
+    // Здесь нужно обновить продукт в сторе
+    // Например: updateProduct(updatedProduct);
+    setProduct(updatedProduct);
+    setShowEditModal(false);
+  };
+
+  // Функция для удаления товара
+  const handleDeleteProduct = () => {
+    if (product) {
+      deleteProduct(product.id);
+      navigate("/marketplace");
+    }
+  };
+
   const handleMessageSeller = () => {
     if (product?.sellerId) {
-      // Переход на страницу сообщений с предварительно выбранным продавцом
       navigate(`/messages?creatorId=${product.sellerId}`);
     } else {
-      // Если нет sellerId, переходим просто в сообщения
       navigate("/messages");
     }
   };
@@ -164,29 +189,85 @@ function ProductDetail() {
       {showNotification2 && (
         <Notification>Ссылка скопирована в буфер обмена</Notification>
       )}
-      <div className={styles.container}>
-        {/* Навигация */}
-        <nav className={styles.navigation}>
-          <button onClick={() => navigate(-1)} className={styles.backButton}>
-            <ArrowLeftIcon className={styles.backIcon} />
-            Назад
-          </button>
-          <div className={styles.breadcrumbs}>
-            <span onClick={() => navigate("/")} className={styles.breadcrumb}>
-              Главная
-            </span>
-            <span className={styles.breadcrumbSeparator}>/</span>
-            <span
-              onClick={() => navigate("/marketplace")}
-              className={styles.breadcrumb}
-            >
-              Магазин
-            </span>
-            <span className={styles.breadcrumbSeparator}>/</span>
-            <span className={styles.breadcrumbActive}>{product.category}</span>
-            <span className={styles.breadcrumbSeparator}>/</span>
-            <span className={styles.breadcrumbActive}>{product.title}</span>
+
+      {/* Модалка редактирования товара */}
+      {showEditModal && (
+        <EditProductModal
+          product={product}
+          onSave={handleSaveProduct}
+          onClose={() => setShowEditModal(false)}
+        />
+      )}
+
+      {/* Подтверждение удаления */}
+      {showDeleteConfirm && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.deleteConfirmModal}>
+            <h3>Удалить товар?</h3>
+            <p>Вы уверены, что хотите удалить товар "{product.title}"?</p>
+            <p>Это действие нельзя отменить.</p>
+            <div className={styles.modalActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Отмена
+              </button>
+              <button
+                className={styles.deleteButton}
+                onClick={handleDeleteProduct}
+              >
+                Удалить
+              </button>
+            </div>
           </div>
+        </div>
+      )}
+
+      <div className={styles.container}>
+        {/* Навигация с кнопками владельца */}
+        <nav className={styles.navigation}>
+          <div className={styles.navigationLeft}>
+            <button onClick={() => navigate(-1)} className={styles.backButton}>
+              <ArrowLeftIcon className={styles.backIcon} />
+              Назад
+            </button>
+            <div className={styles.breadcrumbs}>
+              <span onClick={() => navigate("/")} className={styles.breadcrumb}>
+                Главная
+              </span>
+              <span className={styles.breadcrumbSeparator}>/</span>
+              <span
+                onClick={() => navigate("/marketplace")}
+                className={styles.breadcrumb}
+              >
+                Магазин
+              </span>
+              <span className={styles.breadcrumbSeparator}>/</span>
+              <span className={styles.breadcrumbActive}>
+                {product.category}
+              </span>
+              <span className={styles.breadcrumbSeparator}>/</span>
+              <span className={styles.breadcrumbActive}>{product.title}</span>
+            </div>
+          </div>
+
+          {/* Кнопки управления для владельца */}
+          {isOwner && (
+            <div className={styles.ownerActions}>
+              <button className={styles.editButton} onClick={handleEditProduct}>
+                <PencilSquareIcon className={styles.editIcon} />
+                Редактировать
+              </button>
+              <button
+                className={styles.deleteProductButton}
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <TrashIcon className={styles.deleteIcon} />
+                Удалить
+              </button>
+            </div>
+          )}
         </nav>
 
         <div className={styles.content}>
@@ -208,15 +289,37 @@ function ProductDetail() {
                 </div>
               )}
 
-              {/* Статус товара */}
-              <div
-                className={`${styles.statusBadge} ${styles[product.status]}`}
-              >
-                {product.status === "available"
-                  ? "В наличии"
-                  : product.status === "sold"
-                  ? "Продано"
-                  : "Забронировано"}
+              {/* Статус товара с возможностью изменения для владельца */}
+              <div className={styles.statusContainer}>
+                <div
+                  className={`${styles.statusBadge} ${styles[product.status]}`}
+                >
+                  {product.status === "available"
+                    ? "В наличии"
+                    : product.status === "sold"
+                    ? "Продано"
+                    : "Забронировано"}
+                </div>
+                {isOwner && product.status === "available" && (
+                  <div className={styles.statusActions}>
+                    <button
+                      className={styles.markAsSold}
+                      onClick={() => {
+                        /* Логика пометки как проданного */
+                      }}
+                    >
+                      Отметить как проданный
+                    </button>
+                    <button
+                      className={styles.markAsReserved}
+                      onClick={() => {
+                        /* Логика бронирования */
+                      }}
+                    >
+                      Забронировать
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -224,7 +327,17 @@ function ProductDetail() {
           {/* Центральная колонка - информация о товаре */}
           <div className={styles.centerColumn}>
             <div className={styles.productInfo}>
-              <h1 className={styles.title}>{product.title}</h1>
+              <div className={styles.titleSection}>
+                <h1 className={styles.title}>{product.title}</h1>
+                {isOwner && (
+                  <button
+                    className={styles.inlineEditButton}
+                    onClick={handleEditProduct}
+                  >
+                    <PencilSquareIcon className={styles.smallEditIcon} />
+                  </button>
+                )}
+              </div>
 
               <div className={styles.ratingSection}>
                 {renderRating(product.rating)}
@@ -242,7 +355,17 @@ function ProductDetail() {
               </div>
 
               <div className={styles.description}>
-                <h3>Описание</h3>
+                <div className={styles.descriptionHeader}>
+                  <h3>Описание</h3>
+                  {isOwner && (
+                    <button
+                      className={styles.editDescriptionButton}
+                      onClick={handleEditProduct}
+                    >
+                      <PencilSquareIcon className={styles.smallEditIcon} />
+                    </button>
+                  )}
+                </div>
                 <p>{product.description}</p>
               </div>
 
@@ -270,7 +393,17 @@ function ProductDetail() {
               </div>
 
               <div className={styles.specifications}>
-                <h3>Характеристики</h3>
+                <div className={styles.specificationsHeader}>
+                  <h3>Характеристики</h3>
+                  {isOwner && (
+                    <button
+                      className={styles.editSpecsButton}
+                      onClick={handleEditProduct}
+                    >
+                      <PencilSquareIcon className={styles.smallEditIcon} />
+                    </button>
+                  )}
+                </div>
                 <div className={styles.specGrid}>
                   <div className={styles.specItem}>
                     <CubeIcon className={styles.specIcon} />
@@ -310,7 +443,17 @@ function ProductDetail() {
               {/* Теги */}
               {product.tags && product.tags.length > 0 && (
                 <div className={styles.tagsSection}>
-                  <h3>Теги</h3>
+                  <div className={styles.tagsHeader}>
+                    <h3>Теги</h3>
+                    {isOwner && (
+                      <button
+                        className={styles.editTagsButton}
+                        onClick={handleEditProduct}
+                      >
+                        <PencilSquareIcon className={styles.smallEditIcon} />
+                      </button>
+                    )}
+                  </div>
                   <div className={styles.tagsList}>
                     {product.tags.map((tag, index) => (
                       <span key={index} className={styles.tag}>
@@ -330,13 +473,19 @@ function ProductDetail() {
                 <CurrencyDollarIcon className={styles.purchaseIcon} />
                 <h3>Купить товар</h3>
               </div>
-
               <div className={styles.priceDisplay}>
                 <div className={styles.displayPrice}>
                   {formatPrice(product.price)}
                 </div>
+                {isOwner && (
+                  <button
+                    className={styles.editPriceButton}
+                    onClick={handleEditProduct}
+                  >
+                    <PencilSquareIcon className={styles.smallEditIcon} />
+                  </button>
+                )}
               </div>
-
               <div className={styles.stockInfo}>
                 <div className={styles.stockLabel}>
                   {product.status === "available"
@@ -350,10 +499,32 @@ function ProductDetail() {
                   <span>{product.views} просмотров</span>
                 </div>
               </div>
-
               {/* Кнопки действий */}
               <div className={styles.actionButtons}>
-                {product.status === "available" ? (
+                {isOwner ? (
+                  <div className={styles.ownerActionButtons}>
+                    {product.status === "available" && (
+                      <>
+                        <button className={styles.markSoldButton}>
+                          Отметить как проданный
+                        </button>
+                        <button className={styles.markReservedButton}>
+                          Забронировать
+                        </button>
+                      </>
+                    )}
+                    {product.status === "sold" && (
+                      <button className={styles.makeAvailableButton}>
+                        Вернуть в продажу
+                      </button>
+                    )}
+                    {product.status === "reserved" && (
+                      <button className={styles.cancelReservationButton}>
+                        Снять бронь
+                      </button>
+                    )}
+                  </div>
+                ) : product.status === "available" ? (
                   <button
                     className={styles.buyButton}
                     onClick={handleMessageSeller}
@@ -369,7 +540,6 @@ function ProductDetail() {
                   </button>
                 )}
               </div>
-
               {/* Дополнительные действия */}
               <div className={styles.secondaryActions}>
                 <button
