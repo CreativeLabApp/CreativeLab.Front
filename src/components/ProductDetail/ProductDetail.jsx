@@ -300,26 +300,6 @@ function ProductDetail() {
                     ? "Продано"
                     : "Забронировано"}
                 </div>
-                {isOwner && product.status === "available" && (
-                  <div className={styles.statusActions}>
-                    <button
-                      className={styles.markAsSold}
-                      onClick={() => {
-                        /* Логика пометки как проданного */
-                      }}
-                    >
-                      Отметить как проданный
-                    </button>
-                    <button
-                      className={styles.markAsReserved}
-                      onClick={() => {
-                        /* Логика бронирования */
-                      }}
-                    >
-                      Забронировать
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -329,14 +309,6 @@ function ProductDetail() {
             <div className={styles.productInfo}>
               <div className={styles.titleSection}>
                 <h1 className={styles.title}>{product.title}</h1>
-                {isOwner && (
-                  <button
-                    className={styles.inlineEditButton}
-                    onClick={handleEditProduct}
-                  >
-                    <PencilSquareIcon className={styles.smallEditIcon} />
-                  </button>
-                )}
               </div>
 
               <div className={styles.ratingSection}>
@@ -357,14 +329,6 @@ function ProductDetail() {
               <div className={styles.description}>
                 <div className={styles.descriptionHeader}>
                   <h3>Описание</h3>
-                  {isOwner && (
-                    <button
-                      className={styles.editDescriptionButton}
-                      onClick={handleEditProduct}
-                    >
-                      <PencilSquareIcon className={styles.smallEditIcon} />
-                    </button>
-                  )}
                 </div>
                 <p>{product.description}</p>
               </div>
@@ -395,14 +359,6 @@ function ProductDetail() {
               <div className={styles.specifications}>
                 <div className={styles.specificationsHeader}>
                   <h3>Характеристики</h3>
-                  {isOwner && (
-                    <button
-                      className={styles.editSpecsButton}
-                      onClick={handleEditProduct}
-                    >
-                      <PencilSquareIcon className={styles.smallEditIcon} />
-                    </button>
-                  )}
                 </div>
                 <div className={styles.specGrid}>
                   <div className={styles.specItem}>
@@ -445,14 +401,6 @@ function ProductDetail() {
                 <div className={styles.tagsSection}>
                   <div className={styles.tagsHeader}>
                     <h3>Теги</h3>
-                    {isOwner && (
-                      <button
-                        className={styles.editTagsButton}
-                        onClick={handleEditProduct}
-                      >
-                        <PencilSquareIcon className={styles.smallEditIcon} />
-                      </button>
-                    )}
                   </div>
                   <div className={styles.tagsList}>
                     {product.tags.map((tag, index) => (
@@ -477,14 +425,6 @@ function ProductDetail() {
                 <div className={styles.displayPrice}>
                   {formatPrice(product.price)}
                 </div>
-                {isOwner && (
-                  <button
-                    className={styles.editPriceButton}
-                    onClick={handleEditProduct}
-                  >
-                    <PencilSquareIcon className={styles.smallEditIcon} />
-                  </button>
-                )}
               </div>
               <div className={styles.stockInfo}>
                 <div className={styles.stockLabel}>

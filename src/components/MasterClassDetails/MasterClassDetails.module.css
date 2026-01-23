@@ -87,3 +87,89 @@
     gap: var(--spacing-lg);
   }
 }
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.deleteConfirmModal {
+  background: var(--main-color);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.deleteConfirmModal h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--font-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.deleteConfirmModal p {
+  font-size: var(--font-size-base);
+  color: var(--font-color);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.5;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+}
+
+.cancelButton {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--main-color);
+  color: var(--font-color);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: var(--card-background);
+  border-color: var(--accent-color);
+}
+
+.deleteButton {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--border-radius);
+  background: var(--error-color);
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteButton:hover {
+  background: #dc2626;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

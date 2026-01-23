@@ -7,6 +7,12 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+.navigationLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
 .backButton {
   display: flex;
   align-items: center;
@@ -68,5 +74,86 @@
 
   .breadcrumbs {
     flex-wrap: wrap;
+  }
+}
+
+.ownerActions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.editButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--accent-color);
+  color: var(--font-color);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editButton:hover {
+  background: var(--hover-color);
+  transform: translateY(-1px);
+}
+
+.editIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.deleteButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteButton:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.deleteIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .navigation {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+
+  .ownerActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .ownerActions {
+    flex-direction: column;
+  }
+
+  .editButton,
+  .deleteButton {
+    width: 100%;
+    justify-content: center;
   }
 }

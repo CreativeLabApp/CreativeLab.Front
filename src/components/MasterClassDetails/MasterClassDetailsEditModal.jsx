@@ -3,27 +3,20 @@ import {
   XMarkIcon,
   PhotoIcon,
   TagIcon,
-  CurrencyDollarIcon,
-  CubeIcon,
-  InformationCircleIcon,
+  DocumentTextIcon,
+  PencilIcon,
   PlusIcon,
   TrashIcon,
-  PencilIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
-import styles from "./EditProductModal.module.css";
+import styles from "./MasterClassDetailsEditModal.module.css";
 
-function EditProductModal({ product, onSave, onClose }) {
+function MasterClassDetailsEditModal({ masterClass, onSave, onClose }) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    price: "",
-    originalPrice: "",
     category: "",
-    dimensions: "",
-    weight: "",
-    status: "available",
     tags: [],
     images: [],
   });
@@ -33,23 +26,42 @@ function EditProductModal({ product, onSave, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Инициализация формы данными продукта
+  // Инициализация формы данными мастер-класса
   useEffect(() => {
-    if (product) {
+    if (masterClass) {
       setFormData({
-        title: product.title || "",
-        description: product.description || "",
-        price: product.price || "",
-        originalPrice: product.originalPrice || "",
-        category: product.category || "",
-        dimensions: product.dimensions || "",
-        weight: product.weight || "",
-        status: product.status || "available",
-        tags: Array.isArray(product.tags) ? [...product.tags] : [],
-        images: Array.isArray(product.images) ? [...product.images] : [],
+        title: masterClass.title || "",
+        description: masterClass.description || "",
+        category: masterClass.category || "",
+        tags: Array.isArray(masterClass.tags) ? [...masterClass.tags] : [],
+        images: Array.isArray(masterClass.images)
+          ? [...masterClass.images]
+          : [],
       });
     }
-  }, [product]);
+  }, [masterClass]);
+
+  const categories = [
+    "Живопись",
+    "Столярное дело",
+    "Цифровое искусство",
+    "Керамика",
+    "Вязание",
+    "Каллиграфия",
+    "Фотография",
+    "Бижутерия",
+    "Декоративно-прикладное искусство",
+    "Рисование",
+    "Косметика",
+    "Дизайн",
+    "Лепка",
+    "Музыка",
+    "Декорирование",
+    "Интерьер",
+    "Рукоделие",
+    "Анимация",
+    "Флористика",
+  ];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -57,13 +69,12 @@ function EditProductModal({ product, onSave, onClose }) {
       ...prev,
       [name]: value,
     }));
-    // Очищаем ошибку при изменении поля
+
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  // Загрузка изображений через файлы
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -166,32 +177,17 @@ function EditProductModal({ product, onSave, onClose }) {
 
     if (!formData.title.trim()) {
       newErrors.title = "Название обязательно";
-    } else if (formData.title.length > 100) {
-      newErrors.title = "Название не должно превышать 100 символов";
+    } else if (formData.title.length < 3) {
+      newErrors.title = "Название должно быть не менее 3 символов";
     }
 
     if (!formData.description.trim()) {
       newErrors.description = "Описание обязательно";
-    } else if (formData.description.length < 10) {
-      newErrors.description = "Описание должно быть не менее 10 символов";
+    } else if (formData.description.length < 20) {
+      newErrors.description = "Описание должно быть не менее 20 символов";
     }
 
-    if (
-      !formData.price ||
-      isNaN(formData.price) ||
-      parseFloat(formData.price) <= 0
-    ) {
-      newErrors.price = "Укажите корректную цену";
-    }
-
-    if (
-      formData.originalPrice &&
-      (isNaN(formData.originalPrice) || parseFloat(formData.originalPrice) <= 0)
-    ) {
-      newErrors.originalPrice = "Укажите корректную цену";
-    }
-
-    if (!formData.category.trim()) {
+    if (!formData.category) {
       newErrors.category = "Категория обязательна";
     }
 
@@ -216,18 +212,13 @@ function EditProductModal({ product, onSave, onClose }) {
 
     setIsSubmitting(true);
     try {
-      // Форматируем данные для отправки
-      const updatedProduct = {
-        ...product,
+      const updatedMasterClass = {
+        ...masterClass,
         ...formData,
-        price: parseFloat(formData.price),
-        originalPrice: formData.originalPrice
-          ? parseFloat(formData.originalPrice)
-          : null,
         updatedAt: new Date().toISOString().split("T")[0],
       };
 
-      await onSave(updatedProduct);
+      await onSave(updatedMasterClass);
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
       setErrors({ submit: "Ошибка при сохранении. Попробуйте еще раз." });
@@ -236,16 +227,15 @@ function EditProductModal({ product, onSave, onClose }) {
     }
   };
 
-  if (!product) return null;
+  if (!masterClass) return null;
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        {/* Заголовок модалки */}
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>
             <PencilIcon className={styles.modalTitleIcon} />
-            Редактирование товара
+            Редактирование мастер-класса
           </h2>
           <button className={styles.closeButton} onClick={onClose}>
             <XMarkIcon className={styles.closeIcon} />
@@ -370,15 +360,14 @@ function EditProductModal({ product, onSave, onClose }) {
           {/* Основная информация */}
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>
-              <InformationCircleIcon className={styles.sectionIcon} />
+              <DocumentTextIcon className={styles.sectionIcon} />
               Основная информация
             </h3>
 
             <div className={styles.formGrid}>
-              {/* Название */}
               <div className={styles.formGroup}>
                 <label htmlFor="title" className={styles.label}>
-                  Название товара *
+                  Название *
                 </label>
                 <input
                   type="text"
@@ -389,7 +378,7 @@ function EditProductModal({ product, onSave, onClose }) {
                   className={`${styles.input} ${
                     errors.title ? styles.error : ""
                   }`}
-                  placeholder="Введите название товара"
+                  placeholder="Введите название мастер-класса"
                   maxLength={100}
                 />
                 {errors.title && (
@@ -400,34 +389,6 @@ function EditProductModal({ product, onSave, onClose }) {
                 </div>
               </div>
 
-              {/* Описание */}
-              <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-                <label htmlFor="description" className={styles.label}>
-                  Описание *
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  className={`${styles.textarea} ${
-                    errors.description ? styles.error : ""
-                  }`}
-                  placeholder="Опишите ваш товар подробно..."
-                  rows={4}
-                  maxLength={1000}
-                />
-                {errors.description && (
-                  <span className={styles.errorMessage}>
-                    {errors.description}
-                  </span>
-                )}
-                <div className={styles.charCount}>
-                  {formData.description.length}/1000
-                </div>
-              </div>
-
-              {/* Категория */}
               <div className={styles.formGroup}>
                 <label htmlFor="category" className={styles.label}>
                   Категория *
@@ -442,159 +403,41 @@ function EditProductModal({ product, onSave, onClose }) {
                   }`}
                 >
                   <option value="">Выберите категорию</option>
-                  <option value="Электроника">Электроника</option>
-                  <option value="Одежда">Одежда</option>
-                  <option value="Книги">Книги</option>
-                  <option value="Спорт">Спорт</option>
-                  <option value="Дом и сад">Дом и сад</option>
-                  <option value="Авто">Авто</option>
-                  <option value="Красота">Красота</option>
-                  <option value="Другое">Другое</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
                 </select>
                 {errors.category && (
                   <span className={styles.errorMessage}>{errors.category}</span>
                 )}
               </div>
-
-              {/* Статус */}
-              <div className={styles.formGroup}>
-                <label htmlFor="status" className={styles.label}>
-                  Статус
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleInputChange}
-                  className={styles.select}
-                >
-                  <option value="available">В наличии</option>
-                  <option value="reserved">Забронировано</option>
-                  <option value="sold">Продано</option>
-                </select>
-              </div>
             </div>
-          </div>
 
-          {/* Цены */}
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>
-              <CurrencyDollarIcon className={styles.sectionIcon} />
-              Цены
-            </h3>
-
-            <div className={styles.formGrid}>
-              {/* Текущая цена */}
-              <div className={styles.formGroup}>
-                <label htmlFor="price" className={styles.label}>
-                  Цена *
-                </label>
-                <div className={styles.priceInputContainer}>
-                  <input
-                    type="number"
-                    id="price"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    className={`${styles.input} ${
-                      errors.price ? styles.error : ""
-                    }`}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                  />
-                  <span className={styles.currency}>руб.</span>
-                </div>
-                {errors.price && (
-                  <span className={styles.errorMessage}>{errors.price}</span>
-                )}
-              </div>
-
-              {/* Старая цена */}
-              <div className={styles.formGroup}>
-                <label htmlFor="originalPrice" className={styles.label}>
-                  Старая цена (скидка)
-                </label>
-                <div className={styles.priceInputContainer}>
-                  <input
-                    type="number"
-                    id="originalPrice"
-                    name="originalPrice"
-                    value={formData.originalPrice}
-                    onChange={handleInputChange}
-                    className={`${styles.input} ${
-                      errors.originalPrice ? styles.error : ""
-                    }`}
-                    placeholder="0.00"
-                    min="0"
-                    step="0.01"
-                  />
-                  <span className={styles.currency}>руб.</span>
-                </div>
-                {errors.originalPrice && (
-                  <span className={styles.errorMessage}>
-                    {errors.originalPrice}
-                  </span>
-                )}
-                {formData.originalPrice && formData.price && (
-                  <div className={styles.discountInfo}>
-                    Скидка:{" "}
-                    {Math.round(
-                      (1 -
-                        parseFloat(formData.price) /
-                          parseFloat(formData.originalPrice)) *
-                        100
-                    )}
-                    %
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Характеристики */}
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>
-              <CubeIcon className={styles.sectionIcon} />
-              Характеристики
-            </h3>
-
-            <div className={styles.formGrid}>
-              {/* Размеры */}
-              <div className={styles.formGroup}>
-                <label htmlFor="dimensions" className={styles.label}>
-                  Размеры
-                </label>
-                <input
-                  type="text"
-                  id="dimensions"
-                  name="dimensions"
-                  value={formData.dimensions}
-                  onChange={handleInputChange}
-                  className={styles.input}
-                  placeholder="Например: 20x30x40 см"
-                />
-              </div>
-
-              {/* Вес */}
-              <div className={styles.formGroup}>
-                <label htmlFor="weight" className={styles.label}>
-                  Вес
-                </label>
-                <div className={styles.weightInputContainer}>
-                  <input
-                    type="number"
-                    id="weight"
-                    name="weight"
-                    value={formData.weight}
-                    onChange={handleInputChange}
-                    className={styles.input}
-                    placeholder="0"
-                    min="0"
-                    step="0.01"
-                  />
-                  <span className={styles.unit}>кг</span>
-                </div>
+            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+              <label htmlFor="description" className={styles.label}>
+                Описание *
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                className={`${styles.textarea} ${
+                  errors.description ? styles.error : ""
+                }`}
+                placeholder="Подробное описание мастер-класса..."
+                rows={4}
+                maxLength={500}
+              />
+              {errors.description && (
+                <span className={styles.errorMessage}>
+                  {errors.description}
+                </span>
+              )}
+              <div className={styles.charCount}>
+                {formData.description.length}/500
               </div>
             </div>
           </div>
@@ -676,4 +519,4 @@ function EditProductModal({ product, onSave, onClose }) {
   );
 }
 
-export default EditProductModal;
+export default MasterClassDetailsEditModal;
