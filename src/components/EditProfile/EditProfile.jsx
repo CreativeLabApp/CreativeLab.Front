@@ -101,7 +101,7 @@ function EditProfile() {
   };
 
   const handleCancel = () => {
-    navigate("/profile");
+    navigate(-1);
   };
 
   if (!user) {

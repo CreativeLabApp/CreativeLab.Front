@@ -8,9 +8,16 @@ export const useAuthStore = create(
       token: null,
 
       login: (userData, userToken) => {
-        console.log("Login called with:", { userData, userToken });
+        // Проверяем, является ли пользователь администратором
+        const adminEmails = ["artem.artusevskij01@gmail.com"]; // Список администраторов
+        const isAdmin = adminEmails.includes(userData.email);
+
         set({
-          user: userData,
+          user: {
+            ...userData,
+            role: isAdmin ? "admin" : "user",
+            isAdmin,
+          },
           token: userToken,
         });
       },
@@ -25,6 +32,11 @@ export const useAuthStore = create(
         return !!state.token;
       },
 
+      isAdmin: () => {
+        const { user } = get();
+        return user?.role === "admin" || user?.isAdmin === true;
+      },
+
       updateProfile: async (updatedData) => {
         console.log("Update profile called with:", updatedData);
 
@@ -36,51 +48,31 @@ export const useAuthStore = create(
         const updatedUser = {
           ...user,
           ...updatedData,
-          name: updatedData.name || user.name,
           username: updatedData.username || user.username,
-          email: updatedData.email || user.email,
-          bio: updatedData.bio || user.bio,
-          location: updatedData.location || user.location,
-          id: user.id,
-          createdAt: user.createdAt,
-        };
-
-        set({ user: updatedUser });
-
-        return Promise.resolve(updatedUser);
-      },
-
-      updateAvatar: async (avatarUrl) => {
-        const { user } = get();
-        if (!user) {
-          throw new Error("Пользователь не авторизован");
-        }
-
-        const updatedUser = {
-          ...user,
-          avatar: avatarUrl,
         };
 
         set({ user: updatedUser });
         return Promise.resolve(updatedUser);
       },
 
-      updateSocialLinks: async (socialLinks) => {
-        const { user } = get();
-        if (!user) {
-          throw new Error("Пользователь не авторизован");
-        }
+      getUsers: () => {
+        const state = get();
+        return state.users || [];
+      },
 
-        const updatedUser = {
-          ...user,
-          socialLinks: {
-            ...user.socialLinks,
-            ...socialLinks,
-          },
-        };
+      updateUserRole: (userId, newRole) => {
+        set((state) => ({
+          users:
+            state.users?.map((user) =>
+              user.id === userId ? { ...user, role: newRole } : user
+            ) || [],
+        }));
+      },
 
-        set({ user: updatedUser });
-        return Promise.resolve(updatedUser);
+      deleteUser: (userId) => {
+        set((state) => ({
+          users: state.users?.filter((user) => user.id !== userId) || [],
+        }));
       },
     }),
     {

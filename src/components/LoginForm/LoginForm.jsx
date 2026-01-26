@@ -19,7 +19,7 @@ function LoginForm() {
       id: 3,
       email: "",
       password: "",
-      role: "user",
+      role: "admin",
       name: "Артём Артюшевский",
     },
   });
@@ -40,9 +40,11 @@ function LoginForm() {
       login(data, mockToken);
 
       // Даем время на обновление состояния
-      setTimeout(() => {
+      if (data.role === "admin") {
+        navigate("/admin");
+      } else {
         navigate("/");
-      }, 100);
+      }
     } catch (error) {
       console.error("Login failed:", error);
       setError("Ошибка при входе. Проверьте данные.");

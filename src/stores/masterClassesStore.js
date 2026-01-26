@@ -64,9 +64,6 @@ export const useMasterClassesStore = create(
           const ratings = { ...state.userRatings };
           const key = `${masterClassId}_${userId}`;
 
-          // Проверяем, есть ли уже оценка от этого пользователя
-          const existingRating = ratings[key];
-
           // Обновляем или создаем новую оценку
           ratings[key] = {
             rating,
@@ -75,16 +72,10 @@ export const useMasterClassesStore = create(
             userName,
             date: new Date().toISOString().split("T")[0],
             timestamp: Date.now(),
+            status: "pending", // По умолчанию комментарий на модерации
+            reported: false,
+            reportReason: "",
           };
-
-          // Находим все оценки для этого мастер-класса
-          const allRatingsForMasterClass = Object.entries(ratings)
-            .filter(([ratingKey, ratingData]) => {
-              // Извлекаем masterClassId из ключа
-              const [id] = ratingKey.split("_");
-              return parseInt(id) === masterClassId;
-            })
-            .map(([_, ratingData]) => ratingData.rating);
 
           // Находим мастер-класс
           const masterClass = state.masterClasses.find(
@@ -92,16 +83,26 @@ export const useMasterClassesStore = create(
           );
           if (!masterClass) return { userRatings: ratings };
 
-          // Пересчитываем средний рейтинг
+          // Пересчитываем средний рейтинг только по одобренным комментариям
+          const approvedRatings = Object.entries(ratings)
+            .filter(([ratingKey, ratingData]) => {
+              const [id] = ratingKey.split("_");
+              return (
+                parseInt(id) === masterClassId &&
+                ratingData.status === "approved"
+              );
+            })
+            .map(([_, ratingData]) => ratingData.rating);
+
           let newRating = 0;
           const ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
 
-          if (allRatingsForMasterClass.length > 0) {
-            const sum = allRatingsForMasterClass.reduce((a, b) => a + b, 0);
-            newRating = sum / allRatingsForMasterClass.length;
+          if (approvedRatings.length > 0) {
+            const sum = approvedRatings.reduce((a, b) => a + b, 0);
+            newRating = sum / approvedRatings.length;
 
             // Обновляем распределение оценок
-            allRatingsForMasterClass.forEach((r) => {
+            approvedRatings.forEach((r) => {
               const rounded = Math.round(r);
               ratingDistribution[rounded] =
                 (ratingDistribution[rounded] || 0) + 1;
@@ -110,33 +111,32 @@ export const useMasterClassesStore = create(
             // Конвертируем в проценты
             Object.keys(ratingDistribution).forEach((key) => {
               ratingDistribution[key] = Math.round(
-                (ratingDistribution[key] / allRatingsForMasterClass.length) *
-                  100
+                (ratingDistribution[key] / approvedRatings.length) * 100
               );
             });
           }
 
-          // Подготавливаем обновленный список отзывов
+          // Подготавливаем обновленный список отзывов (только одобренные)
           let updatedReviews = [...(masterClass.reviews || [])];
 
-          if (existingRating) {
-            // Удаляем старый отзыв пользователя
-            updatedReviews = updatedReviews.filter(
-              (review) => !(review.userId === userId)
-            );
+          // Удаляем старый отзыв пользователя, если есть
+          updatedReviews = updatedReviews.filter(
+            (review) => !(review.userId === userId)
+          );
+
+          // Добавляем новый отзыв только если он одобрен
+          if (ratings[key].status === "approved") {
+            const newReview = {
+              id: Date.now(),
+              userId,
+              userName,
+              rating,
+              comment,
+              date: new Date().toISOString().split("T")[0],
+            };
+
+            updatedReviews.push(newReview);
           }
-
-          // Добавляем новый/обновленный отзыв
-          const newReview = {
-            id: Date.now(),
-            userId,
-            userName,
-            rating,
-            comment,
-            date: new Date().toISOString().split("T")[0],
-          };
-
-          updatedReviews.push(newReview);
 
           // Оставляем только последние 10 отзывов
           const finalReviews = updatedReviews.slice(-10);
@@ -148,11 +148,9 @@ export const useMasterClassesStore = create(
                 ? {
                     ...item,
                     rating: parseFloat(newRating.toFixed(1)),
-                    ratingCount: allRatingsForMasterClass.length,
+                    ratingCount: approvedRatings.length,
                     ratingDistribution:
-                      allRatingsForMasterClass.length > 0
-                        ? ratingDistribution
-                        : null,
+                      approvedRatings.length > 0 ? ratingDistribution : null,
                     reviews: finalReviews,
                   }
                 : item
@@ -171,32 +169,26 @@ export const useMasterClassesStore = create(
             delete ratings[key];
           }
 
-          // Пересчитываем общий рейтинг
-          const masterClass = state.masterClasses.find(
-            (item) => item.id === masterClassId
-          );
-          if (!masterClass) return { userRatings: ratings };
-
-          // Находим все оставшиеся оценки для этого мастер-класса
-          const allRatingsForMasterClass = Object.values(ratings)
-            .filter((r) => {
-              const [id] =
-                Object.keys(state.userRatings)
-                  .find((k) => k === `${masterClassId}_${userId}`)
-                  ?.split("_") || [];
-              return parseInt(id) === masterClassId;
+          // Пересчитываем общий рейтинг по одобренным комментариям
+          const approvedRatings = Object.entries(ratings)
+            .filter(([ratingKey, ratingData]) => {
+              const [id] = ratingKey.split("_");
+              return (
+                parseInt(id) === masterClassId &&
+                ratingData.status === "approved"
+              );
             })
-            .map((r) => r.rating);
+            .map(([_, ratingData]) => ratingData.rating);
 
           let newRating = 0;
           let ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
 
-          if (allRatingsForMasterClass.length > 0) {
-            const sum = allRatingsForMasterClass.reduce((a, b) => a + b, 0);
-            newRating = sum / allRatingsForMasterClass.length;
+          if (approvedRatings.length > 0) {
+            const sum = approvedRatings.reduce((a, b) => a + b, 0);
+            newRating = sum / approvedRatings.length;
 
             // Обновляем распределение оценок
-            allRatingsForMasterClass.forEach((r) => {
+            approvedRatings.forEach((r) => {
               const rounded = Math.round(r);
               ratingDistribution[rounded] =
                 (ratingDistribution[rounded] || 0) + 1;
@@ -205,8 +197,7 @@ export const useMasterClassesStore = create(
             // Конвертируем в проценты
             Object.keys(ratingDistribution).forEach((key) => {
               ratingDistribution[key] = Math.round(
-                (ratingDistribution[key] / allRatingsForMasterClass.length) *
-                  100
+                (ratingDistribution[key] / approvedRatings.length) * 100
               );
             });
           }
@@ -217,11 +208,9 @@ export const useMasterClassesStore = create(
               ? {
                   ...item,
                   rating: parseFloat(newRating.toFixed(1)),
-                  ratingCount: allRatingsForMasterClass.length,
+                  ratingCount: approvedRatings.length,
                   ratingDistribution:
-                    allRatingsForMasterClass.length > 0
-                      ? ratingDistribution
-                      : null,
+                    approvedRatings.length > 0 ? ratingDistribution : null,
                   reviews: (item.reviews || []).filter(
                     (review) => review.userId !== userId
                   ),
@@ -345,6 +334,237 @@ export const useMasterClassesStore = create(
           .slice(0, limit);
       },
 
+      // Методы для модерации комментариев
+
+      // Получить все комментарии
+      getAllComments: () => {
+        const ratings = get().userRatings;
+        const comments = [];
+
+        Object.entries(ratings).forEach(([key, rating]) => {
+          const [masterClassId] = key.split("_");
+
+          if (rating.comment) {
+            const masterClass = get().masterClasses.find(
+              (item) => item.id === parseInt(masterClassId)
+            );
+
+            comments.push({
+              id: key,
+              masterClassId: parseInt(masterClassId),
+              masterClassTitle:
+                masterClass?.title || "Неизвестный мастер-класс",
+              masterClassAuthor: masterClass?.author || "Неизвестный автор",
+              userId: rating.userId,
+              userName: rating.userName,
+              rating: rating.rating,
+              comment: rating.comment,
+              date:
+                rating.date ||
+                new Date(rating.timestamp).toISOString().split("T")[0],
+              timestamp: rating.timestamp,
+              status: rating.status || "pending",
+              reported: rating.reported || false,
+              reportReason: rating.reportReason || "",
+            });
+          }
+        });
+
+        return comments;
+      },
+
+      // Удалить комментарий
+      deleteComment: (commentId) => {
+        set((state) => {
+          const newUserRatings = { ...state.userRatings };
+
+          if (newUserRatings[commentId]) {
+            const [masterClassId, userId] = commentId.split("_");
+
+            // Удаляем комментарий из хранилища
+            delete newUserRatings[commentId];
+
+            // Обновляем список отзывов в мастер-классе
+            const updatedMasterClasses = state.masterClasses.map((item) => {
+              if (item.id === parseInt(masterClassId)) {
+                // Удаляем отзыв из списка reviews
+                const updatedReviews = (item.reviews || []).filter(
+                  (review) => review.userId !== parseInt(userId)
+                );
+
+                // Пересчитываем рейтинг
+                const approvedRatings = Object.entries(newUserRatings)
+                  .filter(([key, rating]) => {
+                    const [id] = key.split("_");
+                    return (
+                      parseInt(id) === item.id && rating.status === "approved"
+                    );
+                  })
+                  .map(([_, rating]) => rating.rating);
+
+                let newRating = 0;
+                const ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
+                if (approvedRatings.length > 0) {
+                  const sum = approvedRatings.reduce((a, b) => a + b, 0);
+                  newRating = sum / approvedRatings.length;
+
+                  // Обновляем распределение оценок
+                  approvedRatings.forEach((r) => {
+                    const rounded = Math.round(r);
+                    ratingDistribution[rounded] =
+                      (ratingDistribution[rounded] || 0) + 1;
+                  });
+
+                  // Конвертируем в проценты
+                  Object.keys(ratingDistribution).forEach((key) => {
+                    ratingDistribution[key] = Math.round(
+                      (ratingDistribution[key] / approvedRatings.length) * 100
+                    );
+                  });
+                }
+
+                return {
+                  ...item,
+                  rating: parseFloat(newRating.toFixed(1)),
+                  ratingCount: approvedRatings.length,
+                  ratingDistribution:
+                    approvedRatings.length > 0 ? ratingDistribution : null,
+                  reviews: updatedReviews,
+                };
+              }
+              return item;
+            });
+
+            return {
+              userRatings: newUserRatings,
+              masterClasses: updatedMasterClasses,
+            };
+          }
+
+          return state;
+        });
+      },
+
+      // Обновить статус комментария
+      updateCommentStatus: (commentId, status) => {
+        set((state) => {
+          const ratings = { ...state.userRatings };
+
+          if (ratings[commentId]) {
+            const [masterClassId, userId] = commentId.split("_");
+
+            // Обновляем статус комментария
+            ratings[commentId] = {
+              ...ratings[commentId],
+              status: status,
+            };
+
+            // Обновляем список отзывов в мастер-классе
+            const updatedMasterClasses = state.masterClasses.map((item) => {
+              if (item.id === parseInt(masterClassId)) {
+                // Создаем/обновляем отзыв в списке reviews если статус одобрен
+                let updatedReviews = [...(item.reviews || [])];
+
+                // Удаляем старый отзыв пользователя, если есть
+                updatedReviews = updatedReviews.filter(
+                  (review) => !(review.userId === parseInt(userId))
+                );
+
+                // Если комментарий одобрен, добавляем его в отзывы
+                if (status === "approved") {
+                  const newReview = {
+                    id: Date.now(),
+                    userId: parseInt(userId),
+                    userName: ratings[commentId].userName,
+                    rating: ratings[commentId].rating,
+                    comment: ratings[commentId].comment,
+                    date: ratings[commentId].date,
+                  };
+                  updatedReviews.push(newReview);
+                }
+
+                // Пересчитываем рейтинг по одобренным комментариям
+                const approvedRatings = Object.entries(ratings)
+                  .filter(([key, rating]) => {
+                    const [id] = key.split("_");
+                    return (
+                      parseInt(id) === item.id && rating.status === "approved"
+                    );
+                  })
+                  .map(([_, rating]) => rating.rating);
+
+                let newRating = 0;
+                const ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
+                if (approvedRatings.length > 0) {
+                  const sum = approvedRatings.reduce((a, b) => a + b, 0);
+                  newRating = sum / approvedRatings.length;
+
+                  // Обновляем распределение оценок
+                  approvedRatings.forEach((r) => {
+                    const rounded = Math.round(r);
+                    ratingDistribution[rounded] =
+                      (ratingDistribution[rounded] || 0) + 1;
+                  });
+
+                  // Конвертируем в проценты
+                  Object.keys(ratingDistribution).forEach((key) => {
+                    ratingDistribution[key] = Math.round(
+                      (ratingDistribution[key] / approvedRatings.length) * 100
+                    );
+                  });
+                }
+
+                return {
+                  ...item,
+                  rating: parseFloat(newRating.toFixed(1)),
+                  ratingCount: approvedRatings.length,
+                  ratingDistribution:
+                    approvedRatings.length > 0 ? ratingDistribution : null,
+                  reviews: updatedReviews.slice(-10), // Ограничиваем 10 отзывами
+                };
+              }
+              return item;
+            });
+
+            return {
+              userRatings: ratings,
+              masterClasses: updatedMasterClasses,
+            };
+          }
+
+          return state;
+        });
+      },
+
+      // Пожаловаться на комментарий
+      reportComment: (commentId, reason) => {
+        set((state) => ({
+          userRatings: {
+            ...state.userRatings,
+            [commentId]: {
+              ...state.userRatings[commentId],
+              reported: true,
+              reportReason: reason,
+            },
+          },
+        }));
+      },
+
+      // Получить статистику по комментариям
+      getCommentsStats: () => {
+        const allComments = get().getAllComments();
+
+        return {
+          total: allComments.length,
+          pending: allComments.filter((c) => c.status === "pending").length,
+          approved: allComments.filter((c) => c.status === "approved").length,
+          rejected: allComments.filter((c) => c.status === "rejected").length,
+          reported: allComments.filter((c) => c.reported).length,
+        };
+      },
+
       // Сбросить все оценки (для отладки)
       clearAllRatings: () => {
         set({ userRatings: {} });
@@ -357,6 +577,22 @@ export const useMasterClassesStore = create(
         if (!persistedState.userRatings) {
           persistedState.userRatings = {};
         }
+
+        // Миграция: добавляем статусы к существующим комментариям
+        if (persistedState.userRatings) {
+          Object.keys(persistedState.userRatings).forEach((key) => {
+            if (!persistedState.userRatings[key].status) {
+              persistedState.userRatings[key].status = "approved"; // Старые комментарии считаем одобренными
+            }
+            if (persistedState.userRatings[key].reported === undefined) {
+              persistedState.userRatings[key].reported = false;
+            }
+            if (persistedState.userRatings[key].reportReason === undefined) {
+              persistedState.userRatings[key].reportReason = "";
+            }
+          });
+        }
+
         return persistedState;
       },
     }

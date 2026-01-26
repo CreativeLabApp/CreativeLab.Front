@@ -17,6 +17,7 @@ import RatingPage from "./pages/RatingPage/RatingPage";
 import MessagesPage from "./pages/MessagesPage/MessagesPage";
 import CreateProduct from "./components/CreateProduct/CreateProduct";
 import EditProfilePage from "./pages/EditProfilePage/EditProfilePage";
+import AdminPanel from "./components/AdminPanel/AdminPanel";
 
 function App() {
   return (
@@ -69,6 +70,8 @@ function App() {
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
+
+      <Route path="/admin" element={<AdminPanel />} />
     </Routes>
   );
 }

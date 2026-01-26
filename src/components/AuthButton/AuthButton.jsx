@@ -12,7 +12,11 @@ function AuthButton() {
 
   const handleClick = () => {
     if (isAuthenticated && user) {
-      navigate("/creator/" + user.id);
+      if (user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/creator/" + user.id);
+      }
     } else {
       navigate("/login");
     }
@@ -20,9 +24,9 @@ function AuthButton() {
 
   const buttonText =
     isAuthenticated && user
-      ? user.email
+      ? user.role === "user"
         ? `${user.email.slice(0, 7)}...`
-        : "Профиль"
+        : "Панель администратора"
       : "Войти";
 
   return (
@@ -30,6 +34,7 @@ function AuthButton() {
       <button className={styles.login} onClick={handleClick}>
         {buttonText}
       </button>
+
       <button className={styles.exit} onClick={() => logout()}>
         <ArrowRightStartOnRectangleIcon className={styles.icon} />
       </button>
