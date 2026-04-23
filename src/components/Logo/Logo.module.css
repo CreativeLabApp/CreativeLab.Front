@@ -12,7 +12,9 @@
   height: 100%;
   width: auto;
   fill: var(--accent-color);
-  transition: transform 0.25s ease, filter 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
 }
 
 .logo:hover svg {

@@ -1,7 +1,5 @@
 .grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 320px));
   gap: var(--spacing-xxl);
-  justify-content: flex-start;
-  height: 30%;
 }

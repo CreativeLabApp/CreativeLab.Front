@@ -1,17 +1,19 @@
 .formBottom {
-  margin-top: 16px;
+  margin-top: var(--spacing-sm);
   text-align: center;
-  color: #666;
-  font-size: var(--font-size-md);
+  color: var(--gray-color);
+  font-size: var(--font-size-sm);
 }
 
 .registerLink {
-  color: var(--accent-color);
+  color: var(--font-color);
   text-decoration: none;
-  font-weight: 500;
-  margin-left: 4px;
+  font-weight: 600;
+  margin-left: var(--spacing-xs);
+  border-bottom: 1px solid var(--accent-color);
+  transition: color var(--transition-base);
 }
 
 .registerLink:hover {
-  text-decoration: underline;
+  color: var(--accent-color);
 }

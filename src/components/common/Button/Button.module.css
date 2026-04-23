@@ -2,51 +2,54 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-lg);
-  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  padding: var(--spacing-sm) var(--spacing-lg);
   font-weight: 600;
   border: 1px solid transparent;
   border-radius: var(--border-radius);
   cursor: pointer;
-  transition: transform 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+  transition:
+    transform var(--transition-base),
+    background-color var(--transition-base),
+    color var(--transition-base),
+    box-shadow var(--transition-base);
   width: 100%;
-  height: 3rem;
+  height: 2.75rem;
+  white-space: nowrap;
 }
 
 .button:hover {
   transform: scale(1.02);
-  border: 1px solid var(--font-color);
 }
 
 .button:active {
-  transform: scale(0.95);
+  transform: scale(0.97);
 }
 
 .primary {
   background-color: var(--accent-color);
-  color: var(--main-color);
+  color: var(--font-color);
 }
 
 .primary:hover:not(.disabled):not([disabled]) {
-  background-color: var(--main-color);
-  color: var(--font-color);
+  background-color: var(--hover-color);
+  box-shadow: 0 4px 12px rgba(255, 214, 0, 0.35);
 }
 
 .secondary {
-  border: 1px solid var(--font-color);
+  border: 1px solid var(--border-color);
   background-color: var(--main-color);
   color: var(--font-color);
 }
 
-.secondary:hover {
-  border: 1px solid transparent;
-  background-color: var(--accent-color);
-  color: var(--main-color);
+.secondary:hover:not(.disabled):not([disabled]) {
+  border-color: var(--accent-color);
+  background-color: var(--card-background);
 }
 
 .disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: not-allowed;
-  transform: none;
+  transform: none !important;
   pointer-events: none;
 }

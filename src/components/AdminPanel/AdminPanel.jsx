@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
-import { useMasterClassesStore } from "../../stores/masterClassesStore";
 import { useMarketplaceStore } from "../../stores/marketplaceStore";
+import { masterclassApi } from "../../api/masterclassApi";
 import creatorsData from "../../sources/creators";
 import {
   ShieldCheckIcon,
@@ -30,15 +30,44 @@ function AdminPanel() {
   const navigate = useNavigate();
   const { user, isAdmin, getUsers, updateUserRole, deleteUser } =
     useAuthStore();
-  const {
-    masterClasses,
-    deleteMasterClass,
-    updateMasterClass,
-    addMasterClass,
-    userRatings, // Добавляем доступ к комментариям
-    deleteComment, // Добавляем функцию удаления комментария
-    updateCommentStatus, // Добавляем функцию изменения статуса комментария
-  } = useMasterClassesStore();
+  const [masterClasses, setMasterClasses] = useState([]);
+
+  useEffect(() => {
+    masterclassApi
+      .getAll(false)
+      .then((data) => {
+        const mapped = data.masterclasses.map((m) => ({
+          id: m.id,
+          title: m.title,
+          author: m.authorName || m.authorId,
+          description: m.shortDescription || m.description || "",
+          category: m.categoryName || m.categoryId,
+          rating: Number(m.rating) || 0,
+          views: m.views || 0,
+          isPublished: m.isPublished,
+          createdAt: m.createdAt,
+        }));
+        setMasterClasses(mapped);
+      })
+      .catch(() => {});
+  }, []);
+
+  const deleteMasterClass = async (id) => {
+    await masterclassApi.delete(id);
+    setMasterClasses((prev) => prev.filter((m) => m.id !== id));
+  };
+
+  const updateMasterClass = async (id, data) => {
+    await masterclassApi.update({ id, ...data });
+    setMasterClasses((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, ...data } : m)),
+    );
+  };
+
+  const addMasterClass = async (dto) => {
+    const created = await masterclassApi.create(dto);
+    setMasterClasses((prev) => [...prev, created]);
+  };
 
   const {
     products,
@@ -105,36 +134,8 @@ function AdminPanel() {
 
   // Получение всех комментариев с информацией о мастер-классе
   const getAllComments = () => {
-    const comments = [];
-
-    // Проходим по всем мастер-классам
-    masterClasses.forEach((masterClass) => {
-      // Ищем комментарии для этого мастер-класса
-      Object.entries(userRatings || {}).forEach(([key, rating]) => {
-        // Ключ формата "masterClassId_userId"
-        const [masterClassId] = key.split("_").map(Number);
-
-        if (masterClassId === masterClass.id && rating.comment) {
-          comments.push({
-            id: key, // Используем ключ как уникальный идентификатор
-            masterClassId,
-            masterClassTitle: masterClass.title,
-            masterClassAuthor: masterClass.author,
-            userId: rating.userId,
-            userName: rating.userName,
-            rating: rating.rating,
-            comment: rating.comment,
-            date: rating.date || rating.timestamp,
-            timestamp: rating.timestamp,
-            status: rating.status || "pending", // pending, approved, rejected
-            reported: rating.reported || false,
-            reportReason: rating.reportReason || "",
-          });
-        }
-      });
-    });
-
-    return comments;
+    // Комментарии будут загружаться через API когда появится эндпоинт
+    return [];
   };
 
   const allComments = getAllComments();
@@ -267,14 +268,14 @@ function AdminPanel() {
     const newStatus = !currentStatus;
     if (
       window.confirm(
-        `${newStatus ? "Активировать" : "Деактивировать"} пользователя?`
+        `${newStatus ? "Активировать" : "Деактивировать"} пользователя?`,
       )
     ) {
       // В реальном приложении здесь будет вызов API
       alert(
         `Статус пользователя ${userId} изменен на ${
           newStatus ? "активен" : "неактивен"
-        }`
+        }`,
       );
     }
   };
@@ -284,7 +285,7 @@ function AdminPanel() {
     if (window.confirm("Удалить этот мастер-класс?")) {
       deleteMasterClass(id);
       setSelectedMasterClasses(
-        selectedMasterClasses.filter((masterClassId) => masterClassId !== id)
+        selectedMasterClasses.filter((masterClassId) => masterClassId !== id),
       );
     }
   };
@@ -323,7 +324,7 @@ function AdminPanel() {
     if (window.confirm("Удалить этот товар?")) {
       deleteProduct(id);
       setSelectedProducts(
-        selectedProducts.filter((productId) => productId !== id)
+        selectedProducts.filter((productId) => productId !== id),
       );
     }
   };
@@ -363,48 +364,36 @@ function AdminPanel() {
   // Обработчики комментариев
   const handleApproveComment = (commentId) => {
     if (window.confirm("Одобрить этот комментарий?")) {
-      updateCommentStatus(commentId, "approved");
       setSelectedComments(selectedComments.filter((id) => id !== commentId));
     }
   };
 
   const handleRejectComment = (commentId) => {
     if (window.confirm("Отклонить этот комментарий?")) {
-      updateCommentStatus(commentId, "rejected");
       setSelectedComments(selectedComments.filter((id) => id !== commentId));
     }
   };
 
   const handleDeleteComment = (commentId) => {
     if (window.confirm("Удалить этот комментарий?")) {
-      deleteComment(commentId);
       setSelectedComments(selectedComments.filter((id) => id !== commentId));
     }
   };
 
   const handleBulkApproveComments = () => {
     if (window.confirm(`Одобрить ${selectedComments.length} комментариев?`)) {
-      selectedComments.forEach((commentId) => {
-        updateCommentStatus(commentId, "approved");
-      });
       setSelectedComments([]);
     }
   };
 
   const handleBulkRejectComments = () => {
     if (window.confirm(`Отклонить ${selectedComments.length} комментариев?`)) {
-      selectedComments.forEach((commentId) => {
-        updateCommentStatus(commentId, "rejected");
-      });
       setSelectedComments([]);
     }
   };
 
   const handleBulkDeleteComments = () => {
     if (window.confirm(`Удалить ${selectedComments.length} комментариев?`)) {
-      selectedComments.forEach((commentId) => {
-        deleteComment(commentId);
-      });
       setSelectedComments([]);
     }
   };
@@ -660,7 +649,7 @@ function AdminPanel() {
                         setSelectedUsers([...selectedUsers, userItem.id]);
                       } else {
                         setSelectedUsers(
-                          selectedUsers.filter((id) => id !== userItem.id)
+                          selectedUsers.filter((id) => id !== userItem.id),
                         );
                       }
                     }}
@@ -691,8 +680,8 @@ function AdminPanel() {
                     {userItem.role === "admin"
                       ? "Админ"
                       : userItem.role === "creator"
-                      ? "Создатель"
-                      : "Пользователь"}
+                        ? "Создатель"
+                        : "Пользователь"}
                   </span>
                 </td>
                 <td>
@@ -818,7 +807,7 @@ function AdminPanel() {
                     ]);
                   } else {
                     setSelectedMasterClasses(
-                      selectedMasterClasses.filter((id) => id !== item.id)
+                      selectedMasterClasses.filter((id) => id !== item.id),
                     );
                   }
                 }}
@@ -876,7 +865,7 @@ function AdminPanel() {
                 onClick={() =>
                   handleToggleMasterClassStatus(
                     item.id,
-                    item.status || "active"
+                    item.status || "active",
                   )
                 }
                 className={styles.editButton}
@@ -1005,7 +994,7 @@ function AdminPanel() {
                         setSelectedProducts([...selectedProducts, product.id]);
                       } else {
                         setSelectedProducts(
-                          selectedProducts.filter((id) => id !== product.id)
+                          selectedProducts.filter((id) => id !== product.id),
                         );
                       }
                     }}
@@ -1168,7 +1157,7 @@ function AdminPanel() {
                       setSelectedComments([...selectedComments, comment.id]);
                     } else {
                       setSelectedComments(
-                        selectedComments.filter((id) => id !== comment.id)
+                        selectedComments.filter((id) => id !== comment.id),
                       );
                     }
                   }}
@@ -1203,15 +1192,15 @@ function AdminPanel() {
                       comment.status === "approved"
                         ? styles.approved
                         : comment.status === "rejected"
-                        ? styles.rejected
-                        : styles.pending
+                          ? styles.rejected
+                          : styles.pending
                     }`}
                   >
                     {comment.status === "approved"
                       ? "Одобрен"
                       : comment.status === "rejected"
-                      ? "Отклонен"
-                      : "На модерации"}
+                        ? "Отклонен"
+                        : "На модерации"}
                   </span>
                 </div>
               </div>

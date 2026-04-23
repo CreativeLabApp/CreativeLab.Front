@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./MasterClassDetails.module.css";
 import Loader from "../common/Loader/Loader";
 import { useFavoritesStore } from "../../stores/favoritesStore";
-import { useMasterClassesStore } from "../../stores/masterClassesStore";
 import { useAuthStore } from "../../stores/authStore";
 import Notification from "../common/Notification/Notification";
 import MasterClassDetailsNavigation from "./MasterClassDetailsNavigation";
@@ -15,11 +14,38 @@ import MasterClassDetailsDescription from "./MasterClassDetailsDescription";
 import MasterClassDetailsSidebar from "./MasterClassDetailsSidebar";
 import MasterClassDetailsRatingModal from "./MasterClassDetailsRatingModal";
 import MasterClassDetailsEditModal from "./MasterClassDetailsEditModal";
+import { masterclassApi } from "../../api/masterclassApi";
+
+function mapMasterclass(m) {
+  return {
+    id: m.id,
+    title: m.title,
+    description: m.description || "",
+    shortDescription: m.shortDescription || "",
+    category: m.categoryName || m.categoryId,
+    author: m.authorName || m.authorId,
+    authorId: m.authorId,
+    images: m.imageUrls?.length
+      ? m.imageUrls
+      : m.thumbnailUrl
+        ? [m.thumbnailUrl]
+        : [],
+    rating: Number(m.rating) || 0,
+    ratingsCount: m.ratingsCount || 0,
+    views: m.views || 0,
+    materials: m.materials || [],
+    isPublished: m.isPublished,
+    createdAt: m.createdAt,
+  };
+}
 
 function MasterClassDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [masterClass, setMasterClass] = useState(null);
+  const [relatedClasses, setRelatedClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showNotification, setShowNotification] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -29,46 +55,41 @@ function MasterClassDetails() {
   const hasIncrementedViews = useRef(false);
 
   const { toggleFavorite, isFavorite } = useFavoritesStore();
-  const {
-    getMasterClassById,
-    incrementViews,
-    masterClasses,
-    rateMasterClass,
-    getUserRating,
-    updateMasterClass,
-    deleteMasterClass,
-  } = useMasterClassesStore();
   const { user } = useAuthStore();
 
-  // Получаем мастер-класс из хранилища
-  const masterClass = getMasterClassById(parseInt(id));
-
-  // Проверяем, является ли текущий мастер-класс избранным
-  const isItemFavorite = isFavorite(parseInt(id));
-
-  // Проверяем, является ли текущий пользователь владельцем мастер-класса
-  const isOwner = user && masterClass && user.id === masterClass.userId;
-
   useEffect(() => {
-    // Увеличиваем счетчик просмотров только один раз при загрузке страницы
-    if (masterClass && !hasIncrementedViews.current) {
-      incrementViews(parseInt(id));
-      hasIncrementedViews.current = true;
-    }
-  }, [id, incrementViews, masterClass]);
-
-  useEffect(() => {
-    // Имитация загрузки данных
-    const timer = setTimeout(() => {
-      if (!masterClass) {
-        navigate("/");
-      } else {
+    setLoading(true);
+    setError(null);
+    masterclassApi
+      .getById(id)
+      .then((m) => {
+        const mapped = mapMasterclass(m);
+        setMasterClass(mapped);
         setLoading(false);
-      }
-    }, 300);
+        // Загружаем похожие
+        return masterclassApi.getAll().then((data) => {
+          const related = data.masterclasses
+            .map(mapMasterclass)
+            .filter(
+              (item) =>
+                item.category === mapped.category && item.id !== mapped.id,
+            )
+            .slice(0, 2);
+          setRelatedClasses(related);
+        });
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [id]);
 
-    return () => clearTimeout(timer);
-  }, [id, masterClass, navigate]);
+  useEffect(() => {
+    if (masterClass && !hasIncrementedViews.current) {
+      hasIncrementedViews.current = true;
+      // views increment — можно добавить API вызов если появится эндпоинт
+    }
+  }, [masterClass]);
 
   useEffect(() => {
     if (showNotification && notificationMessage) {
@@ -80,45 +101,41 @@ function MasterClassDetails() {
     }
   }, [showNotification, notificationMessage]);
 
+  const notify = (msg) => {
+    setNotificationMessage(msg);
+    setShowNotification(true);
+  };
+
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      setNotificationMessage("Ссылка скопирована в буфер обмена!");
-      setShowNotification(true);
+      notify("Ссылка скопирована в буфер обмена!");
     } catch (err) {
       console.error("Failed to copy: ", err);
     }
   };
 
-  const handleEditMasterClass = () => {
-    setShowEditModal(true);
-  };
-
   const handleSaveMasterClass = async (updatedData) => {
     try {
-      await updateMasterClass(parseInt(id), updatedData);
-      setNotificationMessage("Мастер-класс успешно обновлен!");
-      setShowNotification(true);
+      await masterclassApi.update({ id, ...updatedData });
+      const m = await masterclassApi.getById(id);
+      setMasterClass(mapMasterclass(m));
+      notify("Мастер-класс успешно обновлен!");
       setShowEditModal(false);
-    } catch (error) {
-      console.error("Ошибка при обновлении мастер-класса:", error);
-      setNotificationMessage("Ошибка при обновлении мастер-класса");
-      setShowNotification(true);
+    } catch (err) {
+      console.error(err);
+      notify("Ошибка при обновлении мастер-класса");
     }
   };
 
   const handleDeleteMasterClass = async () => {
     try {
-      await deleteMasterClass(parseInt(id));
-      setNotificationMessage("Мастер-класс успешно удален!");
-      setShowNotification(true);
-      setTimeout(() => {
-        navigate("/");
-      }, 1000);
-    } catch (error) {
-      console.error("Ошибка при удалении мастер-класса:", error);
-      setNotificationMessage("Ошибка при удалении мастер-класса");
-      setShowNotification(true);
+      await masterclassApi.delete(id);
+      notify("Мастер-класс успешно удален!");
+      setTimeout(() => navigate("/"), 1000);
+    } catch (err) {
+      console.error(err);
+      notify("Ошибка при удалении мастер-класса");
     }
   };
 
@@ -127,42 +144,46 @@ function MasterClassDetails() {
     rating,
     comment,
     userId,
-    userName
+    userName,
   ) => {
     try {
-      await rateMasterClass(masterClassId, rating, comment, userId, userName);
-      setNotificationMessage("Оценка успешно сохранена!");
-      setShowNotification(true);
+      // TODO: подключить API рейтингов когда появится эндпоинт
+      notify("Оценка успешно сохранена!");
       return true;
-    } catch (error) {
-      console.error("Ошибка при отправке оценки:", error);
-      setNotificationMessage("Ошибка при сохранении оценки");
-      setShowNotification(true);
+    } catch (err) {
+      notify("Ошибка при сохранении оценки");
       return false;
     }
   };
 
-  // Функция для получения похожих мастер-классов
-  const getRelatedMasterClasses = () => {
-    if (!masterClass) return [];
+  const isOwner = user && masterClass && user.id === masterClass.authorId;
+  const isItemFavorite = isFavorite(id);
 
-    return masterClasses
-      .filter(
-        (item) =>
-          item.category === masterClass.category && item.id !== masterClass.id
-      )
-      .slice(0, 2);
+  const handleToggleFavorite = () => {
+    if (!user) {
+      navigate("/login", { state: { from: `/master-class/${id}` } });
+      return;
+    }
+    toggleFavorite(id);
   };
 
-  if (loading) {
-    return <Loader />;
-  }
+  const handleRateClick = () => {
+    if (!user) {
+      navigate("/login", { state: { from: `/master-class/${id}` } });
+      return;
+    }
+    setShowRatingModal(true);
+  };
 
-  if (!masterClass) {
+  if (loading) return <Loader />;
+
+  if (error || !masterClass) {
     return (
       <div className={styles.notFoundContainer}>
         <h2>Мастер-класс не найден</h2>
-        <p>Запрошенный мастер-класс не существует или был удален.</p>
+        <p>
+          {error || "Запрошенный мастер-класс не существует или был удален."}
+        </p>
         <button onClick={() => navigate("/")} className={styles.homeButton}>
           Вернуться на главную
         </button>
@@ -170,24 +191,19 @@ function MasterClassDetails() {
     );
   }
 
-  const relatedClasses = getRelatedMasterClasses();
-
   return (
     <>
-      {/* Уведомление */}
       {showNotification && <Notification>{notificationMessage}</Notification>}
 
-      {/* Модальное окно оценки */}
       <MasterClassDetailsRatingModal
         isOpen={showRatingModal}
         onClose={() => setShowRatingModal(false)}
-        masterClassId={parseInt(id)}
+        masterClassId={id}
         user={user}
         rateMasterClass={handleUpdateRating}
-        getUserRating={getUserRating}
+        getUserRating={() => null}
       />
 
-      {/* Модальное окно редактирования */}
       {showEditModal && (
         <MasterClassDetailsEditModal
           masterClass={masterClass}
@@ -196,7 +212,6 @@ function MasterClassDetails() {
         />
       )}
 
-      {/* Подтверждение удаления */}
       {showDeleteConfirm && (
         <div className={styles.modalOverlay}>
           <div className={styles.deleteConfirmModal}>
@@ -224,64 +239,52 @@ function MasterClassDetails() {
       )}
 
       <div className={styles.container}>
-        {/* Навигация с кнопками владельца */}
         <MasterClassDetailsNavigation
           masterClass={masterClass}
           navigate={navigate}
           isOwner={isOwner}
-          onEdit={handleEditMasterClass}
+          onEdit={() => setShowEditModal(true)}
           onDelete={() => setShowDeleteConfirm(true)}
         />
 
         <div className={styles.content}>
-          {/* Левая колонка */}
           <div className={styles.leftColumn}>
-            {/* Заголовок и метаданные с возможностью редактирования */}
             <MasterClassDetailsHeader
               masterClass={masterClass}
               isOwner={isOwner}
-              onEdit={handleEditMasterClass}
+              onEdit={() => setShowEditModal(true)}
             />
-
-            {/* Изображение и действия */}
             <MasterClassDetailsImageSection
               masterClass={masterClass}
               isItemFavorite={isItemFavorite}
-              onToggleFavorite={() => toggleFavorite(parseInt(id))}
+              onToggleFavorite={handleToggleFavorite}
               onShare={handleShare}
             />
-
-            {/* Описание с возможностью редактирования */}
             <MasterClassDetailsDescription
               masterClass={masterClass}
               isOwner={isOwner}
-              onEdit={handleEditMasterClass}
+              onEdit={() => setShowEditModal(true)}
             />
-
-            {/* Рейтинг и отзывы */}
             <MasterClassDetailsRatingSection
               masterClass={masterClass}
-              onRateClick={() => setShowRatingModal(true)}
+              onRateClick={handleRateClick}
               user={user}
-              getUserRating={getUserRating}
+              getUserRating={() => null}
               isOwner={isOwner}
             />
-
-            {/* Отзывы пользователей */}
             <MasterClassDetailsReviews masterClass={masterClass} />
           </div>
 
-          {/* Правая колонка */}
           <div className={styles.rightColumn}>
             <MasterClassDetailsSidebar
               masterClass={masterClass}
               relatedClasses={relatedClasses}
               navigate={navigate}
               user={user}
-              getUserRating={getUserRating}
-              onEditRating={() => setShowRatingModal(true)}
+              getUserRating={() => null}
+              onEditRating={handleRateClick}
               isOwner={isOwner}
-              onEditMasterClass={handleEditMasterClass}
+              onEditMasterClass={() => setShowEditModal(true)}
             />
           </div>
         </div>

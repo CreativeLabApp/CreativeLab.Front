@@ -264,6 +264,7 @@
   margin-top: var(--spacing-lg);
   padding-top: var(--spacing-lg);
   border-top: 1px solid var(--border-color);
+  animation: slideIn 0.3s ease 0.2s both;
 }
 
 .activeTags {

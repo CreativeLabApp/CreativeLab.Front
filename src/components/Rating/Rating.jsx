@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useMarketplaceStore } from "../../stores/marketplaceStore";
-import { useMasterClassesStore } from "../../stores/masterClassesStore";
+import { masterclassApi } from "../../api/masterclassApi";
 import styles from "./Rating.module.css";
 import {
   StarIcon,
@@ -18,7 +18,29 @@ import creatorsData from "../../sources/creators";
 
 function Rating() {
   const { products } = useMarketplaceStore();
-  const { masterClasses } = useMasterClassesStore();
+  const [masterClasses, setMasterClasses] = useState([]);
+
+  useEffect(() => {
+    masterclassApi
+      .getAll()
+      .then((data) => {
+        const mapped = data.masterclasses.map((m) => ({
+          id: m.id,
+          title: m.title,
+          category: m.categoryName || m.categoryId,
+          author: m.authorName || m.authorId,
+          images: m.imageUrls?.length
+            ? m.imageUrls
+            : m.thumbnailUrl
+              ? [m.thumbnailUrl]
+              : [],
+          rating: Number(m.rating) || 0,
+          views: m.views || 0,
+        }));
+        setMasterClasses(mapped);
+      })
+      .catch(() => {});
+  }, []);
 
   const [activeCategory, setActiveCategory] = useState("all");
   const [timePeriod, setTimePeriod] = useState("all");
@@ -338,7 +360,7 @@ function Rating() {
               </div>
               <div className={styles.ratingList}>
                 {currentData.products.map((product, index) =>
-                  renderProductCard(product, index)
+                  renderProductCard(product, index),
                 )}
               </div>
             </div>
@@ -356,7 +378,7 @@ function Rating() {
               </div>
               <div className={styles.ratingList}>
                 {currentData.masterClasses.map((masterClass, index) =>
-                  renderMasterClassCard(masterClass, index)
+                  renderMasterClassCard(masterClass, index),
                 )}
               </div>
             </div>
@@ -374,7 +396,7 @@ function Rating() {
               </div>
               <div className={styles.ratingList}>
                 {currentData.creators.map((creator, index) =>
-                  renderCreatorCard(creator, index)
+                  renderCreatorCard(creator, index),
                 )}
               </div>
             </div>
@@ -395,15 +417,15 @@ function Rating() {
             <div className={styles.ratingList}>
               {activeCategory === "products" &&
                 currentData.map((product, index) =>
-                  renderProductCard(product, index)
+                  renderProductCard(product, index),
                 )}
               {activeCategory === "masterclasses" &&
                 currentData.map((masterClass, index) =>
-                  renderMasterClassCard(masterClass, index)
+                  renderMasterClassCard(masterClass, index),
                 )}
               {activeCategory === "creators" &&
                 currentData.map((creator, index) =>
-                  renderCreatorCard(creator, index)
+                  renderCreatorCard(creator, index),
                 )}
             </div>
           </div>

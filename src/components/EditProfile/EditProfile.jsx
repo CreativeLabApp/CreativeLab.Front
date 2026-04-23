@@ -1,11 +1,11 @@
-// pages/EditProfilePage.jsx
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { userApi } from "../../api/userApi";
 import {
   UserIcon,
   EnvelopeIcon,
-  MapPinIcon,
+  LockClosedIcon,
 } from "@heroicons/react/24/outline";
 import styles from "./EditProfile.module.css";
 
@@ -15,93 +15,82 @@ function EditProfile() {
 
   const [formData, setFormData] = useState({
     name: "",
+    surname: "",
     email: "",
-    bio: "",
-    location: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Инициализация формы данными пользователя
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || user.username || user.email.split("@")[0],
+        name: user.name || "",
+        surname: user.surname || "",
         email: user.email || "",
-        bio: user.bio || "",
-        location: user.location || "",
+        password: "",
+        confirmPassword: "",
       });
     }
   }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Очищаем ошибку при изменении поля
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Имя обязательно";
-    } else if (formData.name.length > 50) {
-      newErrors.name = "Имя не должно превышать 50 символов";
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = "Email обязателен";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Введите корректный email";
-    }
-
-    if (formData.bio.length > 500) {
-      newErrors.bio = "Биография не должна превышать 500 символов";
-    }
-
-    if (formData.location.length > 100) {
-      newErrors.location = "Местоположение не должно превышать 100 символов";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const validate = () => {
+    const errs = {};
+    if (!formData.name.trim()) errs.name = "Имя обязательно";
+    if (
+      !formData.email.trim() ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+    )
+      errs.email = "Введите корректный email";
+    if (formData.password && formData.password.length < 6)
+      errs.password = "Пароль должен быть минимум 6 символов";
+    if (formData.password && formData.password !== formData.confirmPassword)
+      errs.confirmPassword = "Пароли не совпадают";
+    return errs;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
       return;
     }
 
     setIsSubmitting(true);
+    setSaveSuccess(false);
     try {
-      const updatedData = {
-        ...formData,
-        username: formData.name,
-      };
+      await userApi.update({
+        id: user.id,
+        name: formData.name,
+        surname: formData.surname,
+        email: formData.email,
+        password: formData.password || null,
+      });
 
-      await updateProfile(updatedData);
+      // Обновляем локальный store
+      await updateProfile({
+        name: formData.name,
+        surname: formData.surname,
+        email: formData.email,
+      });
+
       setSaveSuccess(true);
-    } catch (error) {
-      console.error("Ошибка при сохранении:", error);
-      setErrors({ submit: "Ошибка при сохранении. Попробуйте еще раз." });
+      setFormData((prev) => ({ ...prev, password: "", confirmPassword: "" }));
+    } catch (err) {
+      setErrors({ submit: err.message || "Ошибка при сохранении" });
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleCancel = () => {
-    navigate(-1);
   };
 
   if (!user) {
@@ -128,20 +117,18 @@ function EditProfile() {
       </div>
 
       {saveSuccess && (
-        <div className={styles.successMessage}>Профиль успешно сохранен!</div>
+        <div className={styles.successMessage}>Профиль успешно сохранён!</div>
       )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        {/* Основная информация */}
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>Основная информация</h3>
 
           <div className={styles.formGrid}>
-            {/* Имя */}
             <div className={styles.formGroup}>
               <label htmlFor="name" className={styles.label}>
                 <UserIcon className={styles.labelIcon} />
-                Имя и фамилия *
+                Имя *
               </label>
               <input
                 type="text"
@@ -150,16 +137,31 @@ function EditProfile() {
                 value={formData.name}
                 onChange={handleInputChange}
                 className={`${styles.input} ${errors.name ? styles.error : ""}`}
-                placeholder="Ваше имя и фамилия"
+                placeholder="Ваше имя"
                 maxLength={50}
               />
               {errors.name && (
                 <span className={styles.errorMessage}>{errors.name}</span>
               )}
-              <div className={styles.charCount}>{formData.name.length}/50</div>
             </div>
 
-            {/* Email */}
+            <div className={styles.formGroup}>
+              <label htmlFor="surname" className={styles.label}>
+                <UserIcon className={styles.labelIcon} />
+                Фамилия
+              </label>
+              <input
+                type="text"
+                id="surname"
+                name="surname"
+                value={formData.surname}
+                onChange={handleInputChange}
+                className={styles.input}
+                placeholder="Ваша фамилия"
+                maxLength={50}
+              />
+            </div>
+
             <div className={styles.formGroup}>
               <label htmlFor="email" className={styles.label}>
                 <EnvelopeIcon className={styles.labelIcon} />
@@ -171,70 +173,73 @@ function EditProfile() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className={`${styles.input} ${
-                  errors.email ? styles.error : ""
-                }`}
+                className={`${styles.input} ${errors.email ? styles.error : ""}`}
                 placeholder="your@email.com"
               />
               {errors.email && (
                 <span className={styles.errorMessage}>{errors.email}</span>
               )}
             </div>
-
-            {/* Местоположение */}
-            <div className={styles.formGroup}>
-              <label htmlFor="location" className={styles.label}>
-                <MapPinIcon className={styles.labelIcon} />
-                Местоположение
-              </label>
-              <input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                className={`${styles.input} ${
-                  errors.location ? styles.error : ""
-                }`}
-                placeholder="Город, страна"
-                maxLength={100}
-              />
-              {errors.location && (
-                <span className={styles.errorMessage}>{errors.location}</span>
-              )}
-              <div className={styles.charCount}>
-                {formData.location.length}/100
-              </div>
-            </div>
-          </div>
-
-          {/* Биография */}
-          <div className={styles.formGroup}>
-            <label htmlFor="bio" className={styles.label}>
-              О себе
-            </label>
-            <textarea
-              id="bio"
-              name="bio"
-              value={formData.bio}
-              onChange={handleInputChange}
-              className={`${styles.textarea} ${errors.bio ? styles.error : ""}`}
-              placeholder="Расскажите о себе, своих увлечениях и опыте..."
-              rows={5}
-              maxLength={500}
-            />
-            {errors.bio && (
-              <span className={styles.errorMessage}>{errors.bio}</span>
-            )}
-            <div className={styles.charCount}>{formData.bio.length}/500</div>
           </div>
         </div>
 
-        {/* Кнопки */}
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>Смена пароля</h3>
+          <p className={styles.sectionHint}>
+            Оставьте пустым, если не хотите менять пароль
+          </p>
+
+          <div className={styles.formGrid}>
+            <div className={styles.formGroup}>
+              <label htmlFor="password" className={styles.label}>
+                <LockClosedIcon className={styles.labelIcon} />
+                Новый пароль
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className={`${styles.input} ${errors.password ? styles.error : ""}`}
+                placeholder="Минимум 6 символов"
+              />
+              {errors.password && (
+                <span className={styles.errorMessage}>{errors.password}</span>
+              )}
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="confirmPassword" className={styles.label}>
+                <LockClosedIcon className={styles.labelIcon} />
+                Подтверждение пароля
+              </label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                className={`${styles.input} ${errors.confirmPassword ? styles.error : ""}`}
+                placeholder="Повторите пароль"
+              />
+              {errors.confirmPassword && (
+                <span className={styles.errorMessage}>
+                  {errors.confirmPassword}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {errors.submit && (
+          <div className={styles.submitError}>{errors.submit}</div>
+        )}
+
         <div className={styles.formActions}>
           <button
             type="button"
-            onClick={handleCancel}
+            onClick={() => navigate(-1)}
             className={styles.cancelButton}
             disabled={isSubmitting}
           >
@@ -248,10 +253,6 @@ function EditProfile() {
             {isSubmitting ? "Сохранение..." : "Сохранить изменения"}
           </button>
         </div>
-
-        {errors.submit && (
-          <div className={styles.submitError}>{errors.submit}</div>
-        )}
       </form>
     </div>
   );

@@ -1,11 +1,86 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import popularClasses from "../sources/popularClasses";
+import { masterclassApi } from "../api/masterclassApi";
 
 export const useMasterClassesStore = create(
   persist(
     (set, get) => ({
       masterClasses: popularClasses,
+      isLoading: false,
+      fetchError: null,
+
+      // Загрузить один мастер-класс по id с сервера
+      fetchMasterClassById: async (id) => {
+        set({ isLoading: true, fetchError: null });
+        try {
+          const m = await masterclassApi.getById(id);
+          const mapped = {
+            id: m.id,
+            title: m.title,
+            description: m.description || "",
+            shortDescription: m.shortDescription || "",
+            category: m.categoryName || m.categoryId,
+            author: m.authorName || m.authorId,
+            images: m.imageUrls?.length
+              ? m.imageUrls
+              : m.thumbnailUrl
+                ? [m.thumbnailUrl]
+                : [],
+            rating: Number(m.rating) || 0,
+            views: m.views || 0,
+            tags: [],
+            materials: m.materials || [],
+            isPublished: m.isPublished,
+            createdAt: m.createdAt,
+          };
+          set((state) => {
+            const exists = state.masterClasses.find(
+              (item) => item.id === mapped.id,
+            );
+            return {
+              masterClasses: exists
+                ? state.masterClasses.map((item) =>
+                    item.id === mapped.id ? mapped : item,
+                  )
+                : [...state.masterClasses, mapped],
+              isLoading: false,
+            };
+          });
+          return mapped;
+        } catch (err) {
+          set({ fetchError: err.message, isLoading: false });
+          return null;
+        }
+      },
+
+      // Загрузить мастер-классы с сервера
+      fetchMasterClasses: async () => {
+        set({ isLoading: true, fetchError: null });
+        try {
+          const data = await masterclassApi.getAll();
+          // Маппим поля сервера к полям, которые ожидают компоненты
+          const mapped = data.masterclasses.map((m) => ({
+            id: m.id,
+            title: m.title,
+            description: m.shortDescription || m.description || "",
+            category: m.categoryName || m.categoryId,
+            author: m.authorName || m.authorId,
+            images: m.imageUrls?.length
+              ? m.imageUrls
+              : m.thumbnailUrl
+                ? [m.thumbnailUrl]
+                : [],
+            rating: Number(m.rating) || 0,
+            views: m.views || 0,
+            tags: [],
+            materials: m.materials || [],
+          }));
+          set({ masterClasses: mapped, isLoading: false });
+        } catch (err) {
+          set({ fetchError: err.message, isLoading: false });
+        }
+      },
 
       // Хранилище пользовательских оценок
       userRatings: {},
@@ -19,7 +94,7 @@ export const useMasterClassesStore = create(
       updateMasterClass: (id, updatedData) => {
         set((state) => ({
           masterClasses: state.masterClasses.map((item) =>
-            item.id === id ? { ...item, ...updatedData } : item
+            item.id === id ? { ...item, ...updatedData } : item,
           ),
         }));
       },
@@ -37,7 +112,7 @@ export const useMasterClassesStore = create(
       incrementViews: (id) => {
         set((state) => ({
           masterClasses: state.masterClasses.map((item) =>
-            item.id === id ? { ...item, views: (item.views || 0) + 1 } : item
+            item.id === id ? { ...item, views: (item.views || 0) + 1 } : item,
           ),
         }));
       },
@@ -57,7 +132,7 @@ export const useMasterClassesStore = create(
         rating,
         comment = "",
         userId,
-        userName = "Аноним"
+        userName = "Аноним",
       ) => {
         set((state) => {
           // Обновляем оценку пользователя
@@ -79,7 +154,7 @@ export const useMasterClassesStore = create(
 
           // Находим мастер-класс
           const masterClass = state.masterClasses.find(
-            (item) => item.id === masterClassId
+            (item) => item.id === masterClassId,
           );
           if (!masterClass) return { userRatings: ratings };
 
@@ -111,7 +186,7 @@ export const useMasterClassesStore = create(
             // Конвертируем в проценты
             Object.keys(ratingDistribution).forEach((key) => {
               ratingDistribution[key] = Math.round(
-                (ratingDistribution[key] / approvedRatings.length) * 100
+                (ratingDistribution[key] / approvedRatings.length) * 100,
               );
             });
           }
@@ -121,7 +196,7 @@ export const useMasterClassesStore = create(
 
           // Удаляем старый отзыв пользователя, если есть
           updatedReviews = updatedReviews.filter(
-            (review) => !(review.userId === userId)
+            (review) => !(review.userId === userId),
           );
 
           // Добавляем новый отзыв только если он одобрен
@@ -153,7 +228,7 @@ export const useMasterClassesStore = create(
                       approvedRatings.length > 0 ? ratingDistribution : null,
                     reviews: finalReviews,
                   }
-                : item
+                : item,
             ),
           };
         });
@@ -197,7 +272,7 @@ export const useMasterClassesStore = create(
             // Конвертируем в проценты
             Object.keys(ratingDistribution).forEach((key) => {
               ratingDistribution[key] = Math.round(
-                (ratingDistribution[key] / approvedRatings.length) * 100
+                (ratingDistribution[key] / approvedRatings.length) * 100,
               );
             });
           }
@@ -212,10 +287,10 @@ export const useMasterClassesStore = create(
                   ratingDistribution:
                     approvedRatings.length > 0 ? ratingDistribution : null,
                   reviews: (item.reviews || []).filter(
-                    (review) => review.userId !== userId
+                    (review) => review.userId !== userId,
                   ),
                 }
-              : item
+              : item,
           );
 
           return {
@@ -270,7 +345,9 @@ export const useMasterClassesStore = create(
             item.title.toLowerCase().includes(searchTerm) ||
             item.author.toLowerCase().includes(searchTerm) ||
             item.description.toLowerCase().includes(searchTerm) ||
-            item.tags.some((tag) => tag.toLowerCase().includes(searchTerm))
+            (item.tags || []).some((tag) =>
+              tag.toLowerCase().includes(searchTerm),
+            ),
         );
       },
 
@@ -281,7 +358,7 @@ export const useMasterClassesStore = create(
       // Получить мастер-классы с фильтрацией по рейтингу
       getMasterClassesByRating: (minRating = 0, maxRating = 5) => {
         return get().masterClasses.filter(
-          (item) => item.rating >= minRating && item.rating <= maxRating
+          (item) => item.rating >= minRating && item.rating <= maxRating,
         );
       },
 
@@ -298,7 +375,7 @@ export const useMasterClassesStore = create(
         const totalClasses = classes.length;
         const totalRatings = classes.reduce(
           (sum, item) => sum + (item.ratingCount || 0),
-          0
+          0,
         );
         const averageRating =
           classes.reduce((sum, item) => sum + item.rating, 0) / totalClasses;
@@ -313,7 +390,7 @@ export const useMasterClassesStore = create(
               dist[rounded] = (dist[rounded] || 0) + 1;
               return dist;
             },
-            { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+            { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
           ),
         };
       },
@@ -326,7 +403,7 @@ export const useMasterClassesStore = create(
             masterClassId: item.id,
             masterClassTitle: item.title,
             masterClassImage: item.image,
-          }))
+          })),
         );
 
         return allReviews
@@ -346,7 +423,7 @@ export const useMasterClassesStore = create(
 
           if (rating.comment) {
             const masterClass = get().masterClasses.find(
-              (item) => item.id === parseInt(masterClassId)
+              (item) => item.id === parseInt(masterClassId),
             );
 
             comments.push({
@@ -389,7 +466,7 @@ export const useMasterClassesStore = create(
               if (item.id === parseInt(masterClassId)) {
                 // Удаляем отзыв из списка reviews
                 const updatedReviews = (item.reviews || []).filter(
-                  (review) => review.userId !== parseInt(userId)
+                  (review) => review.userId !== parseInt(userId),
                 );
 
                 // Пересчитываем рейтинг
@@ -419,7 +496,7 @@ export const useMasterClassesStore = create(
                   // Конвертируем в проценты
                   Object.keys(ratingDistribution).forEach((key) => {
                     ratingDistribution[key] = Math.round(
-                      (ratingDistribution[key] / approvedRatings.length) * 100
+                      (ratingDistribution[key] / approvedRatings.length) * 100,
                     );
                   });
                 }
@@ -468,7 +545,7 @@ export const useMasterClassesStore = create(
 
                 // Удаляем старый отзыв пользователя, если есть
                 updatedReviews = updatedReviews.filter(
-                  (review) => !(review.userId === parseInt(userId))
+                  (review) => !(review.userId === parseInt(userId)),
                 );
 
                 // Если комментарий одобрен, добавляем его в отзывы
@@ -511,7 +588,7 @@ export const useMasterClassesStore = create(
                   // Конвертируем в проценты
                   Object.keys(ratingDistribution).forEach((key) => {
                     ratingDistribution[key] = Math.round(
-                      (ratingDistribution[key] / approvedRatings.length) * 100
+                      (ratingDistribution[key] / approvedRatings.length) * 100,
                     );
                   });
                 }
@@ -595,6 +672,6 @@ export const useMasterClassesStore = create(
 
         return persistedState;
       },
-    }
-  )
+    },
+  ),
 );

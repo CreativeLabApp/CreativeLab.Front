@@ -7,15 +7,19 @@ function MasterClassDetailsSidebar({ masterClass, relatedClasses, navigate }) {
     <div className={styles.sidebarCard}>
       <h3 className={styles.sidebarTitle}>Информация</h3>
 
-      {/* Теги */}
+      {/* Материалы */}
       <div className={styles.tagsSection}>
-        <h4 className={styles.tagsTitle}>Теги</h4>
+        <h4 className={styles.tagsTitle}>Материалы</h4>
         <div className={styles.tagsList}>
-          {masterClass.tags.map((tag, index) => (
-            <span key={index} className={styles.tag}>
-              {tag}
-            </span>
-          ))}
+          {masterClass.materials && masterClass.materials.length > 0 ? (
+            masterClass.materials.map((material, index) => (
+              <span key={index} className={styles.tag}>
+                {material}
+              </span>
+            ))
+          ) : (
+            <p className={styles.noRelatedText}>Материалы не указаны</p>
+          )}
         </div>
       </div>
 

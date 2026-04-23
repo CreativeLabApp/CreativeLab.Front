@@ -23,7 +23,7 @@ function CreateProduct() {
     title: "",
     description: "",
     price: "",
-    sellerId: "", // ID текущего пользователя как продавца
+    sellerId: "",
     category: "",
     images: [],
     tags: [],

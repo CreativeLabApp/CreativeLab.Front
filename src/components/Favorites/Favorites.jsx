@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useFavoritesStore } from "../../stores/favoritesStore";
 import { useMarketplaceStore } from "../../stores/marketplaceStore";
-import { useMasterClassesStore } from "../../stores/masterClassesStore"; // Добавляем импорт
+import { masterclassApi } from "../../api/masterclassApi";
 import MasterClassesCard from "../MasterClassesCard/MasterClassesCard";
 import ProductCard from "../ProductCard/ProductCard";
 import styles from "./Favorites.module.css";
@@ -16,8 +16,8 @@ import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 
 function Favorites() {
   const {
-    favorites, // Это массив ID мастер-классов
-    favoriteProducts, // Это массив ID товаров
+    favorites,
+    favoriteProducts,
     removeFromFavorites,
     toggleFavoriteProduct,
     clearFavorites,
@@ -27,27 +27,43 @@ function Favorites() {
   } = useFavoritesStore();
 
   const { products, getProductById } = useMarketplaceStore();
-  const { getMasterClassById } = useMasterClassesStore(); // Добавляем
+  const [allMasterClasses, setAllMasterClasses] = useState([]);
+
+  useEffect(() => {
+    masterclassApi
+      .getAll()
+      .then((data) => {
+        const mapped = data.masterclasses.map((m) => ({
+          id: m.id,
+          title: m.title,
+          description: m.shortDescription || m.description || "",
+          category: m.categoryName || m.categoryId,
+          author: m.authorName || m.authorId,
+          images: m.imageUrls?.length
+            ? m.imageUrls
+            : m.thumbnailUrl
+              ? [m.thumbnailUrl]
+              : [],
+          rating: Number(m.rating) || 0,
+          views: m.views || 0,
+          materials: m.materials || [],
+        }));
+        setAllMasterClasses(mapped);
+      })
+      .catch(() => {});
+  }, []);
 
   const [activeTab, setActiveTab] = useState("masterclasses");
 
-  // Получаем полные объекты мастер-классов по их ID
   const favoriteMasterClasses = favorites
-    .map((id) => {
-      const item = getMasterClassById(id);
-      return item ? { ...item, id } : null;
-    })
-    .filter((item) => item !== null);
+    .map((id) => allMasterClasses.find((item) => item.id === id))
+    .filter(Boolean);
 
-  // Получаем полные объекты товаров по их ID
   const favoriteProductsData = favoriteProducts
-    .map((id) => {
-      const product = getProductById
-        ? getProductById(id)
-        : products.find((p) => p.id === id);
-      return product ? { ...product, id } : null;
-    })
-    .filter((product) => product !== null);
+    .map((id) =>
+      getProductById ? getProductById(id) : products.find((p) => p.id === id),
+    )
+    .filter(Boolean);
 
   const favoritesCount = getAllFavoritesCount();
   const masterClassesCount = getFavoritesCount();

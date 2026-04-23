@@ -289,7 +289,7 @@
 .masterClassesGrid,
 .productsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 320px));
   gap: var(--spacing-xl);
   animation: fadeIn 0.3s ease;
 }
@@ -385,6 +385,7 @@
   gap: var(--spacing-lg);
   cursor: pointer;
   transition: all 0.2s ease;
+  width: 100%;
 }
 
 .creatorCard:hover {
@@ -548,7 +549,7 @@
 
   .masterClassesGrid,
   .productsGrid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(240px, 280px));
     gap: var(--spacing-lg);
   }
 
@@ -593,4 +594,24 @@
     bottom: 0;
     width: 100%;
   }
+}
+
+.cardWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.unpublishedBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  letter-spacing: 0.3px;
 }

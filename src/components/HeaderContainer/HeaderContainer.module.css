@@ -1,11 +1,21 @@
 .container {
-  height: 9rem;
+  height: 100px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: var(--spacing-xxl);
-  border-bottom: 1px solid var(--gray-color);
+  padding: 0 var(--spacing-xxl);
+  border-bottom: 1px solid var(--border-color);
   background-color: var(--main-color);
-  justify-content: space-around;
+  justify-content: space-between;
   position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 8px var(--shadow-color);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--spacing-lg);
+    height: 4rem;
+  }
 }

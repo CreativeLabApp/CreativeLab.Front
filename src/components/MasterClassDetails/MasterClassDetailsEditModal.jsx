@@ -1,227 +1,183 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   XMarkIcon,
   PhotoIcon,
   TagIcon,
   DocumentTextIcon,
   PencilIcon,
-  PlusIcon,
   TrashIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import styles from "./MasterClassDetailsEditModal.module.css";
+import { categoryApi } from "../../api/categoryApi";
+import { masterclassApi } from "../../api/masterclassApi";
 
 function MasterClassDetailsEditModal({ masterClass, onSave, onClose }) {
+  const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "",
-    tags: [],
-    images: [],
+    shortDescription: "",
+    categoryId: "",
+    // Существующие URL-ы с сервера
+    existingUrls: [],
+    // Новые файлы для загрузки
+    newFiles: [],
+    newPreviews: [],
+    isPublished: true,
   });
-
-  const [newTag, setNewTag] = useState("");
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Инициализация формы данными мастер-класса
+  // Загружаем категории
   useEffect(() => {
-    if (masterClass) {
-      setFormData({
-        title: masterClass.title || "",
-        description: masterClass.description || "",
-        category: masterClass.category || "",
-        tags: Array.isArray(masterClass.tags) ? [...masterClass.tags] : [],
-        images: Array.isArray(masterClass.images)
-          ? [...masterClass.images]
-          : [],
-      });
-    }
+    categoryApi
+      .getAll()
+      .then(setCategories)
+      .catch(() => {});
+  }, []);
+
+  // Инициализируем форму данными мастер-класса
+  useEffect(() => {
+    if (!masterClass) return;
+    setFormData({
+      title: masterClass.title || "",
+      description: masterClass.description || "",
+      shortDescription: masterClass.shortDescription || "",
+      categoryId: masterClass.categoryId || "",
+      existingUrls: Array.isArray(masterClass.images)
+        ? [...masterClass.images]
+        : [],
+      newFiles: [],
+      newPreviews: [],
+      isPublished: masterClass.isPublished ?? true,
+    });
   }, [masterClass]);
 
-  const categories = [
-    "Живопись",
-    "Столярное дело",
-    "Цифровое искусство",
-    "Керамика",
-    "Вязание",
-    "Каллиграфия",
-    "Фотография",
-    "Бижутерия",
-    "Декоративно-прикладное искусство",
-    "Рисование",
-    "Косметика",
-    "Дизайн",
-    "Лепка",
-    "Музыка",
-    "Декорирование",
-    "Интерьер",
-    "Рукоделие",
-    "Анимация",
-    "Флористика",
-  ];
+  // Когда категории загрузились — находим categoryId по названию если он не задан
+  useEffect(() => {
+    if (!categories.length || !masterClass || formData.categoryId) return;
+    if (masterClass.category) {
+      const found = categories.find(
+        (c) => c.name.toLowerCase() === masterClass.category.toLowerCase(),
+      );
+      if (found) {
+        setFormData((prev) => ({ ...prev, categoryId: found.id }));
+      }
+    }
+  }, [categories, masterClass, formData.categoryId]);
+
+  const allPreviews = [...formData.existingUrls, ...formData.newPreviews];
+  const totalImages = formData.existingUrls.length + formData.newFiles.length;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+    if (!files.length) return;
 
-    if (formData.images.length + files.length > 10) {
+    if (totalImages + files.length > 10) {
+      setErrors((prev) => ({ ...prev, images: "Максимум 10 изображений" }));
+      return;
+    }
+
+    const invalid = files.filter(
+      (f) => f.size > 5 * 1024 * 1024 || !f.type.match("image.*"),
+    );
+    if (invalid.length) {
       setErrors((prev) => ({
         ...prev,
-        images: "Максимум 10 изображений",
+        images: "Некоторые файлы недопустимы (макс. 5MB)",
       }));
       return;
     }
 
-    const validFiles = files.filter(
-      (file) => file.size <= 5 * 1024 * 1024 && file.type.match("image.*")
-    );
-
-    const readers = validFiles.map((file) => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(file);
-      });
-    });
-
-    Promise.all(readers).then((images) => {
+    Promise.all(
+      files.map(
+        (file) =>
+          new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+          }),
+      ),
+    ).then((previews) => {
       setFormData((prev) => ({
         ...prev,
-        images: [...prev.images, ...images],
+        newFiles: [...prev.newFiles, ...files],
+        newPreviews: [...prev.newPreviews, ...previews],
       }));
-
-      if (errors.images) {
-        setErrors((prev) => ({
-          ...prev,
-          images: "",
-        }));
-      }
+      setErrors((prev) => ({ ...prev, images: "" }));
     });
   };
 
   const handleRemoveImage = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }));
-
-    if (currentImageIndex >= index && currentImageIndex > 0) {
-      setCurrentImageIndex((prev) => Math.max(0, prev - 1));
-    }
-  };
-
-  const handleMoveImage = (fromIndex, toIndex) => {
-    const newImages = [...formData.images];
-    const [movedImage] = newImages.splice(fromIndex, 1);
-    newImages.splice(toIndex, 0, movedImage);
-
-    setFormData((prev) => ({
-      ...prev,
-      images: newImages,
-    }));
-  };
-
-  const handleAddTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      if (formData.tags.length >= 5) {
-        setErrors((prev) => ({
-          ...prev,
-          tags: "Максимум 5 тегов",
-        }));
-        return;
-      }
-
+    const existingCount = formData.existingUrls.length;
+    if (index < existingCount) {
+      // Удаляем существующий URL
       setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, newTag.trim()],
+        existingUrls: prev.existingUrls.filter((_, i) => i !== index),
       }));
-      setNewTag("");
-
-      if (errors.tags) {
-        setErrors((prev) => ({ ...prev, tags: "" }));
-      }
+    } else {
+      // Удаляем новый файл
+      const newIndex = index - existingCount;
+      setFormData((prev) => ({
+        ...prev,
+        newFiles: prev.newFiles.filter((_, i) => i !== newIndex),
+        newPreviews: prev.newPreviews.filter((_, i) => i !== newIndex),
+      }));
+    }
+    if (currentImageIndex >= allPreviews.length - 1 && currentImageIndex > 0) {
+      setCurrentImageIndex((p) => p - 1);
     }
   };
 
-  const handleRemoveTag = (tagToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      tags: prev.tags.filter((tag) => tag !== tagToRemove),
-    }));
-  };
-
-  const handleKeyPress = (e, action) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      action();
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.title.trim()) {
-      newErrors.title = "Название обязательно";
-    } else if (formData.title.length < 3) {
-      newErrors.title = "Название должно быть не менее 3 символов";
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = "Описание обязательно";
-    } else if (formData.description.length < 20) {
-      newErrors.description = "Описание должно быть не менее 20 символов";
-    }
-
-    if (!formData.category) {
-      newErrors.category = "Категория обязательна";
-    }
-
-    if (formData.tags.length === 0) {
-      newErrors.tags = "Добавьте хотя бы один тег";
-    }
-
-    if (formData.images.length === 0) {
-      newErrors.images = "Добавьте хотя бы одно изображение";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const validate = () => {
+    const errs = {};
+    if (!formData.title.trim() || formData.title.length < 3)
+      errs.title = "Название должно быть не менее 3 символов";
+    if (!formData.description.trim() || formData.description.length < 20)
+      errs.description = "Описание должно быть не менее 20 символов";
+    if (!formData.categoryId) errs.categoryId = "Категория обязательна";
+    return errs;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const updatedMasterClass = {
-        ...masterClass,
-        ...formData,
-        updatedAt: new Date().toISOString().split("T")[0],
-      };
+      // Загружаем новые файлы если есть
+      let uploadedUrls = [];
+      if (formData.newFiles.length > 0) {
+        uploadedUrls = await masterclassApi.uploadImages(formData.newFiles);
+      }
 
-      await onSave(updatedMasterClass);
-    } catch (error) {
-      console.error("Ошибка при сохранении:", error);
-      setErrors({ submit: "Ошибка при сохранении. Попробуйте еще раз." });
+      const allUrls = [...formData.existingUrls, ...uploadedUrls];
+
+      await onSave({
+        title: formData.title,
+        description: formData.description,
+        shortDescription: formData.shortDescription || null,
+        categoryId: formData.categoryId,
+        imageUrls: allUrls,
+        thumbnailUrl: allUrls[0] || null,
+        isPublished: formData.isPublished,
+      });
+    } catch (err) {
+      setErrors({ submit: err.message || "Ошибка при сохранении" });
     } finally {
       setIsSubmitting(false);
     }
@@ -237,7 +193,11 @@ function MasterClassDetailsEditModal({ masterClass, onSave, onClose }) {
             <PencilIcon className={styles.modalTitleIcon} />
             Редактирование мастер-класса
           </h2>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button
+            className={styles.closeButton}
+            onClick={onClose}
+            aria-label="Закрыть"
+          >
             <XMarkIcon className={styles.closeIcon} />
           </button>
         </div>
@@ -250,82 +210,67 @@ function MasterClassDetailsEditModal({ masterClass, onSave, onClose }) {
               Изображения
             </h3>
 
-            {/* Галерея */}
-            {formData.images.length > 0 && (
+            {allPreviews.length > 0 && (
               <div className={styles.imageGallery}>
                 <div className={styles.mainImageContainer}>
                   <img
-                    src={formData.images[currentImageIndex]}
+                    src={allPreviews[currentImageIndex]}
                     alt={`Изображение ${currentImageIndex + 1}`}
                     className={styles.mainImage}
                   />
-
-                  {formData.images.length > 1 && (
+                  {allPreviews.length > 1 && (
                     <>
                       <button
                         type="button"
+                        className={styles.navButton}
                         onClick={() =>
-                          setCurrentImageIndex((prev) =>
-                            prev === 0 ? formData.images.length - 1 : prev - 1
+                          setCurrentImageIndex((p) =>
+                            p === 0 ? allPreviews.length - 1 : p - 1,
                           )
                         }
-                        className={styles.navButton}
                       >
                         <ChevronLeftIcon className={styles.navIcon} />
                       </button>
                       <button
                         type="button"
+                        className={`${styles.navButton} ${styles.nextButton}`}
                         onClick={() =>
-                          setCurrentImageIndex((prev) =>
-                            prev === formData.images.length - 1 ? 0 : prev + 1
+                          setCurrentImageIndex((p) =>
+                            p === allPreviews.length - 1 ? 0 : p + 1,
                           )
                         }
-                        className={`${styles.navButton} ${styles.nextButton}`}
                       >
                         <ChevronRightIcon className={styles.navIcon} />
                       </button>
-
                       <div className={styles.imageCounter}>
-                        {currentImageIndex + 1} / {formData.images.length}
+                        {currentImageIndex + 1} / {allPreviews.length}
                       </div>
                     </>
                   )}
                 </div>
 
                 <div className={styles.thumbnails}>
-                  {formData.images.map((image, index) => (
-                    <div key={index} className={styles.thumbnailWrapper}>
+                  {allPreviews.map((src, i) => (
+                    <div key={i} className={styles.thumbnailWrapper}>
                       <button
                         type="button"
-                        onClick={() => setCurrentImageIndex(index)}
-                        className={`${styles.thumbnailButton} ${
-                          currentImageIndex === index ? styles.active : ""
-                        }`}
+                        onClick={() => setCurrentImageIndex(i)}
+                        className={`${styles.thumbnailButton} ${currentImageIndex === i ? styles.active : ""}`}
                       >
                         <img
-                          src={image}
+                          src={src}
                           alt=""
                           className={styles.thumbnailImage}
                         />
                       </button>
-                      <div className={styles.thumbnailActions}>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(index)}
-                          className={styles.deleteImageButton}
-                        >
-                          <TrashIcon className={styles.deleteIcon} />
-                        </button>
-                        {index > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => handleMoveImage(index, index - 1)}
-                            className={styles.moveButton}
-                          >
-                            ↑
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(i)}
+                        className={styles.deleteImageButton}
+                        aria-label="Удалить"
+                      >
+                        <TrashIcon className={styles.deleteIcon} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -337,18 +282,18 @@ function MasterClassDetailsEditModal({ masterClass, onSave, onClose }) {
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleImageChange}
                   className={styles.imageInput}
-                  multiple
                 />
                 <PhotoIcon className={styles.uploadIcon} />
                 <span className={styles.uploadText}>
-                  {formData.images.length === 0
+                  {totalImages === 0
                     ? "Добавить изображения"
-                    : "Добавить еще изображения"}
+                    : `Добавить ещё (${totalImages}/10)`}
                 </span>
                 <span className={styles.uploadHint}>
-                  До 10 изображений, первое будет главным
+                  До 10 изображений, макс. 5MB каждое
                 </span>
               </label>
               {errors.images && (
@@ -375,123 +320,111 @@ function MasterClassDetailsEditModal({ masterClass, onSave, onClose }) {
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  className={`${styles.input} ${
-                    errors.title ? styles.error : ""
-                  }`}
-                  placeholder="Введите название мастер-класса"
+                  className={`${styles.input} ${errors.title ? styles.errorInput : ""}`}
+                  placeholder="Название мастер-класса"
                   maxLength={100}
                 />
-                {errors.title && (
-                  <span className={styles.errorMessage}>{errors.title}</span>
-                )}
                 <div className={styles.charCount}>
                   {formData.title.length}/100
                 </div>
+                {errors.title && (
+                  <span className={styles.errorMessage}>{errors.title}</span>
+                )}
               </div>
 
               <div className={styles.formGroup}>
-                <label htmlFor="category" className={styles.label}>
+                <label htmlFor="categoryId" className={styles.label}>
                   Категория *
                 </label>
                 <select
-                  id="category"
-                  name="category"
-                  value={formData.category}
+                  id="categoryId"
+                  name="categoryId"
+                  value={formData.categoryId}
                   onChange={handleInputChange}
-                  className={`${styles.select} ${
-                    errors.category ? styles.error : ""
-                  }`}
+                  className={`${styles.select} ${errors.categoryId ? styles.errorInput : ""}`}
                 >
                   <option value="">Выберите категорию</option>
                   {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
                     </option>
                   ))}
                 </select>
-                {errors.category && (
-                  <span className={styles.errorMessage}>{errors.category}</span>
+                {errors.categoryId && (
+                  <span className={styles.errorMessage}>
+                    {errors.categoryId}
+                  </span>
                 )}
               </div>
             </div>
 
             <div className={`${styles.formGroup} ${styles.fullWidth}`}>
+              <label htmlFor="shortDescription" className={styles.label}>
+                Краткое описание
+              </label>
+              <input
+                type="text"
+                id="shortDescription"
+                name="shortDescription"
+                value={formData.shortDescription}
+                onChange={handleInputChange}
+                className={styles.input}
+                placeholder="Одна строка для превью"
+                maxLength={200}
+              />
+            </div>
+
+            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
               <label htmlFor="description" className={styles.label}>
-                Описание *
+                Полное описание *
               </label>
               <textarea
                 id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                className={`${styles.textarea} ${
-                  errors.description ? styles.error : ""
-                }`}
+                className={`${styles.textarea} ${errors.description ? styles.errorInput : ""}`}
                 placeholder="Подробное описание мастер-класса..."
-                rows={4}
-                maxLength={500}
+                rows={5}
+                maxLength={2000}
               />
+              <div className={styles.charCount}>
+                {formData.description.length}/2000
+              </div>
               {errors.description && (
                 <span className={styles.errorMessage}>
                   {errors.description}
                 </span>
               )}
-              <div className={styles.charCount}>
-                {formData.description.length}/500
-              </div>
             </div>
           </div>
 
-          {/* Теги */}
+          {/* Публикация */}
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>
               <TagIcon className={styles.sectionIcon} />
-              Теги
+              Настройки
             </h3>
-
-            <div className={styles.formGroup}>
-              <div className={styles.tagInputContainer}>
-                <input
-                  type="text"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={(e) => handleKeyPress(e, handleAddTag)}
-                  className={styles.tagInput}
-                  placeholder="Добавить тег"
-                  maxLength={20}
-                />
-                <button
-                  type="button"
-                  onClick={handleAddTag}
-                  className={styles.addTagButton}
-                  disabled={!newTag.trim()}
-                >
-                  <PlusIcon className={styles.addIcon} />
-                </button>
-              </div>
-
-              <div className={styles.tagsList}>
-                {formData.tags.map((tag, index) => (
-                  <div key={index} className={styles.tagItem}>
-                    <span className={styles.tagText}>#{tag}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className={styles.removeTagButton}
-                    >
-                      <TrashIcon className={styles.removeIcon} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {errors.tags && (
-                <span className={styles.errorMessage}>{errors.tags}</span>
-              )}
-            </div>
+            <label className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={formData.isPublished}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    isPublished: e.target.checked,
+                  }))
+                }
+                className={styles.checkbox}
+              />
+              Опубликован
+            </label>
           </div>
 
-          {/* Кнопки */}
+          {errors.submit && (
+            <div className={styles.submitError}>{errors.submit}</div>
+          )}
+
           <div className={styles.formActions}>
             <button
               type="button"
@@ -509,10 +442,6 @@ function MasterClassDetailsEditModal({ masterClass, onSave, onClose }) {
               {isSubmitting ? "Сохранение..." : "Сохранить изменения"}
             </button>
           </div>
-
-          {errors.submit && (
-            <div className={styles.submitError}>{errors.submit}</div>
-          )}
         </form>
       </div>
     </div>

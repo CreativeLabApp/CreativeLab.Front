@@ -1,12 +1,10 @@
-// pages/CreatorProfilePage.jsx
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { useMarketplaceStore } from "../../stores/marketplaceStore";
-import { useMasterClassesStore } from "../../stores/masterClassesStore";
+import { masterclassApi } from "../../api/masterclassApi";
+import { userApi } from "../../api/userApi";
 import {
-  UserIcon,
-  StarIcon,
   EnvelopeIcon,
   CalendarDaysIcon,
   PencilIcon,
@@ -14,148 +12,125 @@ import {
   ShoppingBagIcon,
   VideoCameraIcon,
 } from "@heroicons/react/24/outline";
-import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import MasterClassesCard from "../MasterClassesCard/MasterClassesCard";
 import ProductCard from "../ProductCard/ProductCard";
 import Loader from "../common/Loader/Loader";
 import Notification from "../common/Notification/Notification";
 import styles from "./CreatorProfile.module.css";
-import creatorsData from "../../sources/creators";
 
 function CreatorProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user: currentUser } = useAuthStore();
   const { getProductsBySeller } = useMarketplaceStore();
-  const { masterClasses } = useMasterClassesStore();
 
   const [creator, setCreator] = useState(null);
+  const [allMasterClasses, setAllMasterClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("masterclasses");
   const [showNotification, setShowNotification] = useState(false);
 
-  const creatorId = parseInt(id);
-  const isOwnProfile = currentUser && currentUser.id === creatorId;
+  const isOwnProfile = currentUser && currentUser.id === id;
 
-  // Получаем мастер-классы этого креатора из хранилища
-  const creatorMasterClasses = useMemo(() => {
-    if (!creator?.name) return [];
-    return masterClasses.filter((item) => {
-      // Сравниваем без учета регистра и с возможными вариациями
-      const creatorName = creator.name.toLowerCase().trim();
-      const itemAuthor = item.author?.toLowerCase().trim();
-      return itemAuthor === creatorName;
-    });
-  }, [masterClasses, creator]);
-
-  // Получаем товары этого креатора
-  const creatorProducts = getProductsBySeller(creatorId);
-
+  // Загружаем пользователя с сервера
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const foundCreator = creatorsData.find((c) => c.id === creatorId);
+    setLoading(true);
+    setError(null);
+    userApi
+      .getById(id)
+      .then((data) => {
+        setCreator(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        // Если это собственный профиль и сервер не нашёл — показываем данные из store
+        if (isOwnProfile && currentUser) {
+          setCreator({
+            id: currentUser.id,
+            name: currentUser.name || currentUser.email.split("@")[0],
+            surname: currentUser.surname || "",
+            email: currentUser.email,
+            createdAt: new Date().toISOString(),
+            masterclassesCount: 0,
+          });
+          setLoading(false);
+        } else {
+          setError(err.message);
+          setLoading(false);
+        }
+      });
+  }, [id, isOwnProfile, currentUser]);
 
-      if (foundCreator) {
-        setCreator(foundCreator);
-      } else if (isOwnProfile && currentUser) {
-        // Если это профиль текущего пользователя, создаем объект из его данных
-        setCreator({
-          id: currentUser.id,
-          name:
-            currentUser.name ||
-            currentUser.username ||
-            currentUser.email.split("@")[0],
-          email: currentUser.email,
-          bio: currentUser.bio || "Расскажите о себе в настройках профиля",
-          avatar: currentUser.avatar,
-          rating: 4.5,
-          followers: 0,
-          following: 0,
-          location: currentUser.location || "Не указано",
-          website: "",
-          joined: new Date().toISOString().split("T")[0],
-          specialization: [],
-          social: {},
-          stats: {
-            masterClasses: 0,
-            products: 0,
-            students: 0,
-            sales: 0,
-          },
-          isVerified: false,
-        });
-      }
-
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [id, isOwnProfile, currentUser, creatorId]);
+  // Загружаем мастер-классы автора (все — для своего профиля, только опубликованные — для чужого)
+  useEffect(() => {
+    if (!id) return;
+    const onlyPublished = !isOwnProfile;
+    masterclassApi
+      .getByAuthor(id, onlyPublished)
+      .then((data) => {
+        const mapped = data.masterclasses.map((m) => ({
+          id: m.id,
+          title: m.title,
+          description: m.shortDescription || m.description || "",
+          category: m.categoryName || m.categoryId,
+          author: m.authorName || m.authorId,
+          authorId: m.authorId,
+          images: m.imageUrls?.length
+            ? m.imageUrls
+            : m.thumbnailUrl
+              ? [m.thumbnailUrl]
+              : [],
+          rating: Number(m.rating) || 0,
+          views: m.views || 0,
+          materials: m.materials || [],
+          isPublished: m.isPublished,
+        }));
+        setAllMasterClasses(mapped);
+      })
+      .catch(() => {});
+  }, [id, isOwnProfile]);
 
   useEffect(() => {
     if (showNotification) {
-      const timer = setTimeout(() => {
-        setShowNotification(false);
-      }, 3000);
+      const timer = setTimeout(() => setShowNotification(false), 3000);
       return () => clearTimeout(timer);
     }
   }, [showNotification]);
+
+  // Мастер-классы уже отфильтрованы по автору на сервере
+  const creatorMasterClasses = allMasterClasses;
+
+  const creatorProducts = getProductsBySeller(id);
 
   const handleShare = async () => {
     await navigator.clipboard.writeText(window.location.href);
     setShowNotification(true);
   };
 
-  const handleContact = () => {
-    // В реальном приложении здесь будет открытие формы сообщения
-    alert(`Связь с ${creator?.name}`);
-  };
-
-  const renderRating = (rating) => {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-
-    return (
-      <div className={styles.ratingStars}>
-        {[...Array(5)].map((_, i) => {
-          if (i < fullStars) {
-            return <StarIconSolid key={i} className={styles.starIcon} />;
-          } else if (i === fullStars && hasHalfStar) {
-            return (
-              <StarIconSolid
-                key={i}
-                className={`${styles.starIcon} ${styles.halfStar}`}
-              />
-            );
-          } else {
-            return <StarIcon key={i} className={styles.starIcon} />;
-          }
-        })}
-        <span className={styles.ratingValue}>{rating}</span>
-      </div>
-    );
-  };
-
   const formatDate = (dateString) => {
-    const options = { year: "numeric", month: "long", day: "numeric" };
-    return new Date(dateString).toLocaleDateString("ru-RU", options);
+    return new Date(dateString).toLocaleDateString("ru-RU", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   };
 
-  if (loading) {
-    return <Loader />;
-  }
+  if (loading) return <Loader />;
 
-  if (!creator) {
+  if (error || !creator) {
     return (
       <div className={styles.notFoundContainer}>
         <h2>Профиль не найден</h2>
-        <p>Запрошенный профиль не существует или был удален.</p>
+        <p>{error || "Запрошенный профиль не существует или был удален."}</p>
         <button onClick={() => navigate("/")} className={styles.homeButton}>
           Вернуться на главную
         </button>
       </div>
     );
   }
+
+  const fullName = `${creator.name} ${creator.surname || ""}`.trim();
 
   return (
     <>
@@ -177,7 +152,7 @@ function CreatorProfile() {
                 <div className={styles.profileActions}>
                   <button
                     className={styles.messageButton}
-                    onClick={handleContact}
+                    onClick={() => alert(`Связь с ${fullName}`)}
                   >
                     <EnvelopeIcon className={styles.messageIcon} />
                     Написать
@@ -189,26 +164,27 @@ function CreatorProfile() {
 
           <div className={styles.profileDetails}>
             <div className={styles.nameSection}>
-              <h1 className={styles.name}>{creator.name}</h1>
+              <h1 className={styles.name}>{fullName}</h1>
             </div>
-
-            <div className={styles.ratingSection}>
-              {renderRating(creator.rating)}
-              <span className={styles.ratingText}>
-                Рейтинг на основе отзывов учеников
-              </span>
-            </div>
-
-            <p className={styles.bio}>{creator.bio}</p>
 
             <div className={styles.metaInfo}>
               <div className={styles.metaItem}>
+                <EnvelopeIcon className={styles.metaIcon} />
+                <span>{creator.email}</span>
+              </div>
+              <div className={styles.metaItem}>
                 <CalendarDaysIcon className={styles.metaIcon} />
-                <span>На сайте с {formatDate(creator.joined)}</span>
+                <span>На сайте с {formatDate(creator.createdAt)}</span>
+              </div>
+              <div className={styles.metaItem}>
+                <VideoCameraIcon className={styles.metaIcon} />
+                <span>
+                  {creator.masterclassesCount ?? creatorMasterClasses.length}{" "}
+                  мастер-классов
+                </span>
               </div>
             </div>
 
-            {/* Кнопка поделиться */}
             <button className={styles.shareProfileButton} onClick={handleShare}>
               <ShareIcon className={styles.shareIcon} />
               Поделиться профилем
@@ -219,9 +195,7 @@ function CreatorProfile() {
         {/* Навигация по контенту */}
         <div className={styles.contentNavigation}>
           <button
-            className={`${styles.navButton} ${
-              activeTab === "masterclasses" ? styles.active : ""
-            }`}
+            className={`${styles.navButton} ${activeTab === "masterclasses" ? styles.active : ""}`}
             onClick={() => setActiveTab("masterclasses")}
           >
             <VideoCameraIcon className={styles.navIcon} />
@@ -231,9 +205,7 @@ function CreatorProfile() {
             </span>
           </button>
           <button
-            className={`${styles.navButton} ${
-              activeTab === "products" ? styles.active : ""
-            }`}
+            className={`${styles.navButton} ${activeTab === "products" ? styles.active : ""}`}
             onClick={() => setActiveTab("products")}
           >
             <ShoppingBagIcon className={styles.navIcon} />
@@ -248,7 +220,14 @@ function CreatorProfile() {
             creatorMasterClasses.length > 0 ? (
               <div className={styles.masterClassesGrid}>
                 {creatorMasterClasses.map((item) => (
-                  <MasterClassesCard key={item.id} item={item} />
+                  <div key={item.id} className={styles.cardWrapper}>
+                    {isOwnProfile && !item.isPublished && (
+                      <div className={styles.unpublishedBadge}>
+                        Не опубликован
+                      </div>
+                    )}
+                    <MasterClassesCard item={item} />
+                  </div>
                 ))}
               </div>
             ) : (
@@ -258,7 +237,7 @@ function CreatorProfile() {
                 <p>
                   {isOwnProfile
                     ? "Создайте свой первый мастер-класс и поделитесь знаниями!"
-                    : `${creator.name} пока не создал мастер-классы`}
+                    : `${fullName} пока не создал мастер-классы`}
                 </p>
                 {isOwnProfile && (
                   <Link
@@ -283,7 +262,7 @@ function CreatorProfile() {
               <p>
                 {isOwnProfile
                   ? "Добавьте свои товары для продажи в маркетплейсе!"
-                  : `${creator.name} пока не добавил товары`}
+                  : `${fullName} пока не добавил товары`}
               </p>
               {isOwnProfile && (
                 <Link
@@ -296,77 +275,6 @@ function CreatorProfile() {
             </div>
           )}
         </div>
-
-        {/* Если это не ваш профиль, показываем похожих креаторов */}
-        {!isOwnProfile && creatorsData.length > 1 && (
-          <div className={styles.similarCreators}>
-            <h3 className={styles.similarTitle}>Похожие авторы</h3>
-            <div className={styles.creatorsList}>
-              {creatorsData
-                .filter(
-                  (c) =>
-                    c.id !== creator.id &&
-                    c.specialization?.some((skill) =>
-                      creator.specialization?.includes(skill)
-                    )
-                )
-                .slice(0, 3)
-                .map((similarCreator) => {
-                  // Получаем реальное количество мастер-классов для похожего автора
-                  const similarMasterClasses = masterClasses.filter((item) => {
-                    const creatorName = similarCreator.name
-                      .toLowerCase()
-                      .trim();
-                    const itemAuthor = item.author?.toLowerCase().trim();
-                    return itemAuthor === creatorName;
-                  });
-
-                  return (
-                    <div
-                      key={similarCreator.id}
-                      className={styles.creatorCard}
-                      onClick={() => navigate(`/creator/${similarCreator.id}`)}
-                    >
-                      <div className={styles.creatorAvatar}>
-                        {similarCreator.avatar ? (
-                          <img
-                            src={similarCreator.avatar}
-                            alt={similarCreator.name}
-                          />
-                        ) : (
-                          <UserIcon className={styles.creatorAvatarIcon} />
-                        )}
-                      </div>
-                      <div className={styles.creatorInfo}>
-                        <h4 className={styles.creatorName}>
-                          {similarCreator.name}
-                        </h4>
-                        {similarCreator.specialization && (
-                          <div className={styles.creatorSpecialization}>
-                            {similarCreator.specialization
-                              .slice(0, 2)
-                              .map((skill) => (
-                                <span
-                                  key={skill}
-                                  className={styles.creatorSkill}
-                                >
-                                  {skill}
-                                </span>
-                              ))}
-                          </div>
-                        )}
-                        <div className={styles.creatorStats}>
-                          <span>
-                            {similarMasterClasses.length} мастер-классов
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        )}
       </div>
     </>
   );

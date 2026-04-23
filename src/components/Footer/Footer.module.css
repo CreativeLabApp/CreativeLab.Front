@@ -4,7 +4,8 @@
   justify-content: space-around;
   background-color: var(--main-color);
   color: var(--font-color);
-  padding: var(--spacing-xl) 0;
+  padding: var(--spacing-xxl) 0;
   font-size: var(--font-size-sm);
-  border-top: 1px solid var(--gray-color);
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -1px 8px var(--shadow-color);
 }
