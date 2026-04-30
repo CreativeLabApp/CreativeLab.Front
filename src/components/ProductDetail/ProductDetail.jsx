@@ -1,15 +1,12 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useMarketplaceStore } from "../../stores/marketplaceStore";
 import { useFavoritesStore } from "../../stores/favoritesStore";
 import { useAuthStore } from "../../stores/authStore";
 import {
   ArrowLeftIcon,
   UserIcon,
-  StarIcon,
   TagIcon,
   PhotoIcon,
-  EyeIcon,
   HeartIcon,
   ShareIcon,
   CurrencyDollarIcon,
@@ -19,151 +16,124 @@ import {
   ChatBubbleLeftRightIcon,
   PencilSquareIcon,
   TrashIcon,
+  StarIcon,
 } from "@heroicons/react/24/outline";
 import {
-  StarIcon as StarIconSolid,
   HeartIcon as HeartIconSolid,
+  StarIcon as StarIconSolid,
 } from "@heroicons/react/24/solid";
 import styles from "./ProductDetail.module.css";
 import Loader from "../common/Loader/Loader";
 import ProductGallery from "../ProductGallery/ProductGallery";
 import ProductCard from "../ProductCard/ProductCard";
 import Notification from "../common/Notification/Notification";
-import EditProductModal from "../EditProductModal/EditProductModal";
+import { productApi } from "../../api/productApi";
 
 function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { products, getProductsBySeller, getPopularProducts, deleteProduct } =
-    useMarketplaceStore();
   const { toggleFavoriteProduct, isFavoriteProduct } = useFavoritesStore();
-  const { user } = useAuthStore(); // Получаем текущего пользователя
+  const { user } = useAuthStore();
 
   const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [showNotification1, setShowNotification1] = useState(false);
-  const [showNotification2, setShowNotification2] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false); // Состояние модалки редактирования
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // Подтверждение удаления
+  const [notification, setNotification] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userScore, setUserScore] = useState(0);
+  const [hoverScore, setHoverScore] = useState(0);
+  const [isRating, setIsRating] = useState(false);
 
-  // Проверяем, является ли текущий пользователь владельцем товара
   const isOwner = user && product && user.id === product.sellerId;
-
-  // Проверяем, находится ли товар в избранном
-  const isInWish = isFavoriteProduct(parseInt(id));
+  const isInWish = isFavoriteProduct(id);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const foundProduct = products.find((item) => item.id === parseInt(id));
+    setLoading(true);
+    productApi
+      .getById(id)
+      .then((product) => {
+        setProduct(product);
+        setLoading(false);
+        return productApi.getBySeller(product.sellerId);
+      })
+      .then((related) => {
+        setRelatedProducts(related.filter((p) => p.id !== id).slice(0, 4));
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [id]);
 
-      if (foundProduct) {
-        setProduct(foundProduct);
-      } else {
-        navigate("/marketplace");
-      }
+  const notify = (msg) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(""), 3000);
+  };
 
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [id, navigate, products]);
-
-  useEffect(() => {
-    if (showNotification1) {
-      const timer = setTimeout(() => {
-        setShowNotification1(false);
-      }, 3000);
-      return () => clearTimeout(timer);
+  const handleToggleFavorite = () => {
+    if (!user) {
+      navigate("/login", { state: { from: `/marketplace/product/${id}` } });
+      return;
     }
-  }, [showNotification1]);
-
-  useEffect(() => {
-    if (showNotification2) {
-      const timer = setTimeout(() => {
-        setShowNotification2(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [showNotification2]);
-
-  const handleToggleWishlist = () => {
-    toggleFavoriteProduct(parseInt(id));
-    if (!isInWish) setShowNotification1(true);
+    toggleFavoriteProduct(user.id, product);
+    if (!isInWish) notify("Товар добавлен в избранное");
   };
 
   const handleShare = async () => {
     await navigator.clipboard.writeText(window.location.href);
-    setShowNotification2(true);
+    notify("Ссылка скопирована в буфер обмена");
   };
 
-  // Функция для редактирования товара
-  const handleEditProduct = () => {
-    setShowEditModal(true);
+  const handleRate = async (score) => {
+    if (!user) {
+      navigate("/login", { state: { from: `/marketplace/product/${id}` } });
+      return;
+    }
+    setIsRating(true);
+    try {
+      const { rating } = await productApi.rate(id, score);
+      setProduct((prev) => ({
+        ...prev,
+        rating,
+        ratingsCount: (prev.ratingsCount || 0) + 1,
+      }));
+      setUserScore(score);
+      notify("Оценка сохранена!");
+    } catch {
+      notify("Ошибка при сохранении оценки");
+    } finally {
+      setIsRating(false);
+    }
   };
 
-  // Функция для сохранения изменений
-  const handleSaveProduct = (updatedProduct) => {
-    // Здесь нужно обновить продукт в сторе
-    // Например: updateProduct(updatedProduct);
-    setProduct(updatedProduct);
-    setShowEditModal(false);
-  };
-
-  // Функция для удаления товара
-  const handleDeleteProduct = () => {
-    if (product) {
-      deleteProduct(product.id);
+  const handleDelete = async () => {
+    try {
+      await productApi.delete(id);
       navigate("/marketplace");
+    } catch (err) {
+      notify("Ошибка при удалении товара");
     }
   };
 
-  const handleMessageSeller = () => {
-    if (product?.sellerId) {
-      navigate(`/messages?creatorId=${product.sellerId}`);
-    } else {
-      navigate("/messages");
-    }
-  };
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("be-BY").format(price) + " Br";
 
-  const renderRating = (rating) => {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString("ru-RU", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
 
-    return (
-      <div className={styles.ratingStars}>
-        {[...Array(5)].map((_, i) => {
-          if (i < fullStars) {
-            return <StarIconSolid key={i} className={styles.starIcon} />;
-          } else if (i === fullStars && hasHalfStar) {
-            return (
-              <StarIconSolid
-                key={i}
-                className={`${styles.starIcon} ${styles.halfStar}`}
-              />
-            );
-          } else {
-            return <StarIcon key={i} className={styles.starIcon} />;
-          }
-        })}
-        <span className={styles.ratingValue}>{rating}</span>
-      </div>
-    );
-  };
+  if (loading) return <Loader />;
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("by-BY").format(price) + " руб.";
-  };
-
-  if (loading) {
-    return <Loader />;
-  }
-
-  if (!product) {
+  if (error || !product) {
     return (
       <div className={styles.notFoundContainer}>
         <h2>Товар не найден</h2>
-        <p>Запрошенный товар не существует или был удален.</p>
+        <p>{error || "Запрошенный товар не существует или был удалён."}</p>
         <button
           onClick={() => navigate("/marketplace")}
           className={styles.homeButton}
@@ -174,37 +144,15 @@ function ProductDetail() {
     );
   }
 
-  const sellerProducts = getProductsBySeller(product.sellerId).filter(
-    (p) => p.id !== product.id
-  );
-  const popularProducts = getPopularProducts(4).filter(
-    (p) => p.id !== product.id
-  );
-
   return (
     <>
-      {showNotification1 && (
-        <Notification>Товар добавлен в избранное</Notification>
-      )}
-      {showNotification2 && (
-        <Notification>Ссылка скопирована в буфер обмена</Notification>
-      )}
+      {notification && <Notification>{notification}</Notification>}
 
-      {/* Модалка редактирования товара */}
-      {showEditModal && (
-        <EditProductModal
-          product={product}
-          onSave={handleSaveProduct}
-          onClose={() => setShowEditModal(false)}
-        />
-      )}
-
-      {/* Подтверждение удаления */}
       {showDeleteConfirm && (
         <div className={styles.modalOverlay}>
           <div className={styles.deleteConfirmModal}>
             <h3>Удалить товар?</h3>
-            <p>Вы уверены, что хотите удалить товар "{product.title}"?</p>
+            <p>Вы уверены, что хотите удалить «{product.title}»?</p>
             <p>Это действие нельзя отменить.</p>
             <div className={styles.modalActions}>
               <button
@@ -213,10 +161,7 @@ function ProductDetail() {
               >
                 Отмена
               </button>
-              <button
-                className={styles.deleteButton}
-                onClick={handleDeleteProduct}
-              >
+              <button className={styles.deleteButton} onClick={handleDelete}>
                 Удалить
               </button>
             </div>
@@ -225,7 +170,7 @@ function ProductDetail() {
       )}
 
       <div className={styles.container}>
-        {/* Навигация с кнопками владельца */}
+        {/* Навигация */}
         <nav className={styles.navigation}>
           <div className={styles.navigationLeft}>
             <button onClick={() => navigate(-1)} className={styles.backButton}>
@@ -244,21 +189,11 @@ function ProductDetail() {
                 Магазин
               </span>
               <span className={styles.breadcrumbSeparator}>/</span>
-              <span className={styles.breadcrumbActive}>
-                {product.category}
-              </span>
-              <span className={styles.breadcrumbSeparator}>/</span>
               <span className={styles.breadcrumbActive}>{product.title}</span>
             </div>
           </div>
-
-          {/* Кнопки управления для владельца */}
           {isOwner && (
             <div className={styles.ownerActions}>
-              <button className={styles.editButton} onClick={handleEditProduct}>
-                <PencilSquareIcon className={styles.editIcon} />
-                Редактировать
-              </button>
               <button
                 className={styles.deleteProductButton}
                 onClick={() => setShowDeleteConfirm(true)}
@@ -271,82 +206,55 @@ function ProductDetail() {
         </nav>
 
         <div className={styles.content}>
-          {/* Левая колонка - изображения */}
+          {/* Левая колонка — галерея */}
           <div className={styles.leftColumn}>
-            <div className={styles.imageSection}>
-              {product.images && product.images.length > 0 ? (
-                <ProductGallery
-                  images={product.images}
-                  selectedIndex={selectedImageIndex}
-                  onSelect={setSelectedImageIndex}
-                />
-              ) : (
-                <div className={styles.mainImagePlaceholder}>
-                  <PhotoIcon className={styles.placeholderIcon} />
-                  <span className={styles.placeholderText}>
-                    {product.category}
-                  </span>
-                </div>
-              )}
-
-              {/* Статус товара с возможностью изменения для владельца */}
-              <div className={styles.statusContainer}>
-                <div
-                  className={`${styles.statusBadge} ${styles[product.status]}`}
-                >
-                  {product.status === "available"
-                    ? "В наличии"
-                    : product.status === "sold"
-                    ? "Продано"
-                    : "Забронировано"}
-                </div>
+            {product.images.length > 0 ? (
+              <ProductGallery
+                images={product.images}
+                selectedIndex={selectedImageIndex}
+                onSelect={setSelectedImageIndex}
+              />
+            ) : (
+              <div className={styles.mainImagePlaceholder}>
+                <PhotoIcon className={styles.placeholderIcon} />
+                <span className={styles.placeholderText}>
+                  {product.category}
+                </span>
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Центральная колонка - информация о товаре */}
+          {/* Центральная колонка — детали */}
           <div className={styles.centerColumn}>
             <div className={styles.productInfo}>
-              <div className={styles.titleSection}>
-                <h1 className={styles.title}>{product.title}</h1>
-              </div>
+              <h1 className={styles.title}>{product.title}</h1>
 
-              <div className={styles.ratingSection}>
-                {renderRating(product.rating)}
-              </div>
+              {product.shortDescription && (
+                <p className={styles.shortDesc}>{product.shortDescription}</p>
+              )}
 
               <div className={styles.priceSection}>
                 <div className={styles.currentPrice}>
                   {formatPrice(product.price)}
                 </div>
-                {product.originalPrice && (
+                {product.discountPrice && (
                   <div className={styles.originalPrice}>
-                    {formatPrice(product.originalPrice)}
+                    {formatPrice(product.discountPrice)}
                   </div>
                 )}
               </div>
 
               <div className={styles.description}>
-                <div className={styles.descriptionHeader}>
-                  <h3>Описание</h3>
-                </div>
+                <h3>Описание</h3>
                 <p>{product.description}</p>
               </div>
 
+              {/* Продавец */}
               <div className={styles.sellerInfo}>
                 <h3>Продавец</h3>
                 <div className={styles.sellerDetails}>
                   <UserIcon className={styles.sellerIcon} />
-                  <div>
-                    <div className={styles.sellerName}>{product.seller}</div>
-                    <div className={styles.sellerRating}>
-                      <StarIconSolid className={styles.sellerStarIcon} />
-                      <span>4.9</span>
-                      <span className={styles.sellerReviews}>
-                        ({Math.floor(Math.random() * 50)} продаж)
-                      </span>
-                    </div>
-                  </div>
+                  <div className={styles.sellerName}>{product.seller}</div>
                   <button
                     className={styles.contactSellerButton}
                     onClick={() => navigate(`/creator/${product.sellerId}`)}
@@ -356,27 +264,32 @@ function ProductDetail() {
                 </div>
               </div>
 
+              {/* Характеристики */}
               <div className={styles.specifications}>
-                <div className={styles.specificationsHeader}>
-                  <h3>Характеристики</h3>
-                </div>
+                <h3>Характеристики</h3>
                 <div className={styles.specGrid}>
-                  <div className={styles.specItem}>
-                    <CubeIcon className={styles.specIcon} />
-                    <div>
-                      <div className={styles.specLabel}>Размеры</div>
-                      <div className={styles.specValue}>
-                        {product.dimensions}
+                  {product.dimensions && (
+                    <div className={styles.specItem}>
+                      <CubeIcon className={styles.specIcon} />
+                      <div>
+                        <div className={styles.specLabel}>Размеры</div>
+                        <div className={styles.specValue}>
+                          {product.dimensions}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className={styles.specItem}>
-                    <ScaleIcon className={styles.specIcon} />
-                    <div>
-                      <div className={styles.specLabel}>Вес</div>
-                      <div className={styles.specValue}>{product.weight}</div>
+                  )}
+                  {product.weight && (
+                    <div className={styles.specItem}>
+                      <ScaleIcon className={styles.specIcon} />
+                      <div>
+                        <div className={styles.specLabel}>Вес</div>
+                        <div className={styles.specValue}>
+                          {product.weight} кг
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <div className={styles.specItem}>
                     <TagIcon className={styles.specIcon} />
                     <div>
@@ -389,23 +302,65 @@ function ProductDetail() {
                     <div>
                       <div className={styles.specLabel}>Добавлено</div>
                       <div className={styles.specValue}>
-                        {product.createdAt}
+                        {formatDate(product.createdAt)}
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Теги */}
-              {product.tags && product.tags.length > 0 && (
-                <div className={styles.tagsSection}>
-                  <div className={styles.tagsHeader}>
-                    <h3>Теги</h3>
+              {/* Рейтинг */}
+              <div className={styles.ratingSection}>
+                <h3>Рейтинг</h3>
+                <div className={styles.ratingOverview}>
+                  <span className={styles.ratingScore}>
+                    {(product.rating || 0).toFixed(1)}
+                  </span>
+                  <div className={styles.ratingStars}>
+                    {[1, 2, 3, 4, 5].map((s) =>
+                      s <= Math.round(product.rating || 0) ? (
+                        <StarIconSolid key={s} className={styles.starFilled} />
+                      ) : (
+                        <StarIcon key={s} className={styles.starEmpty} />
+                      ),
+                    )}
                   </div>
+                  <span className={styles.ratingCount}>
+                    {product.ratingsCount || 0} оценок
+                  </span>
+                </div>
+                {!isOwner && (
+                  <div className={styles.rateRow}>
+                    <span className={styles.rateLabel}>Ваша оценка:</span>
+                    <div className={styles.ratingStars}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <button
+                          key={s}
+                          className={styles.starButton}
+                          onMouseEnter={() => setHoverScore(s)}
+                          onMouseLeave={() => setHoverScore(0)}
+                          onClick={() => handleRate(s)}
+                          disabled={isRating}
+                          aria-label={`Оценить на ${s}`}
+                        >
+                          {s <= (hoverScore || userScore) ? (
+                            <StarIconSolid className={styles.starFilled} />
+                          ) : (
+                            <StarIcon className={styles.starEmpty} />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {product.materials.length > 0 && (
+                <div className={styles.tagsSection}>
+                  <h3>Материалы</h3>
                   <div className={styles.tagsList}>
-                    {product.tags.map((tag, index) => (
-                      <span key={index} className={styles.tag}>
-                        {tag}
+                    {product.materials.map((m, i) => (
+                      <span key={i} className={styles.tag}>
+                        {m}
                       </span>
                     ))}
                   </div>
@@ -414,7 +369,7 @@ function ProductDetail() {
             </div>
           </div>
 
-          {/* Правая колонка */}
+          {/* Правая колонка — покупка */}
           <div className={styles.rightColumn}>
             <div className={styles.purchaseCard}>
               <div className={styles.purchaseHeader}>
@@ -428,65 +383,44 @@ function ProductDetail() {
               </div>
               <div className={styles.stockInfo}>
                 <div className={styles.stockLabel}>
-                  {product.status === "available"
-                    ? "В наличии"
-                    : product.status === "sold"
-                    ? "Нет в наличии"
-                    : "Забронировано"}
-                </div>
-                <div className={styles.views}>
-                  <EyeIcon className={styles.viewsIcon} />
-                  <span>{product.views} просмотров</span>
+                  {product.isAvailable
+                    ? `В наличии: ${product.stockQuantity} шт.`
+                    : "Нет в наличии"}
                 </div>
               </div>
-              {/* Кнопки действий */}
+
               <div className={styles.actionButtons}>
-                {isOwner ? (
-                  <div className={styles.ownerActionButtons}>
-                    {product.status === "available" && (
-                      <>
-                        <button className={styles.markSoldButton}>
-                          Отметить как проданный
-                        </button>
-                        <button className={styles.markReservedButton}>
-                          Забронировать
-                        </button>
-                      </>
-                    )}
-                    {product.status === "sold" && (
-                      <button className={styles.makeAvailableButton}>
-                        Вернуть в продажу
-                      </button>
-                    )}
-                    {product.status === "reserved" && (
-                      <button className={styles.cancelReservationButton}>
-                        Снять бронь
-                      </button>
-                    )}
-                  </div>
-                ) : product.status === "available" ? (
+                {!isOwner && product.isAvailable && (
                   <button
                     className={styles.buyButton}
-                    onClick={handleMessageSeller}
+                    onClick={() =>
+                      navigate(`/messages?creatorId=${product.sellerId}`)
+                    }
                   >
                     <ChatBubbleLeftRightIcon className={styles.buyIcon} />
                     Написать продавцу
                   </button>
-                ) : (
+                )}
+                {!isOwner && !product.isAvailable && (
                   <button className={styles.soldButton} disabled>
-                    {product.status === "sold"
-                      ? "Товар продан"
-                      : "Товар забронирован"}
+                    Нет в наличии
+                  </button>
+                )}
+                {isOwner && (
+                  <button
+                    className={styles.editButton}
+                    onClick={() => navigate(`/marketplace/edit-product/${id}`)}
+                  >
+                    <PencilSquareIcon className={styles.editIcon} />
+                    Редактировать
                   </button>
                 )}
               </div>
-              {/* Дополнительные действия */}
+
               <div className={styles.secondaryActions}>
                 <button
-                  className={`${styles.wishlistButton} ${
-                    isInWish ? styles.active : ""
-                  }`}
-                  onClick={handleToggleWishlist}
+                  className={`${styles.wishlistButton} ${isInWish ? styles.active : ""}`}
+                  onClick={handleToggleFavorite}
                 >
                   {isInWish ? (
                     <HeartIconSolid className={styles.wishlistIcon} />
@@ -495,7 +429,6 @@ function ProductDetail() {
                   )}
                   {isInWish ? "В избранном" : "В избранное"}
                 </button>
-
                 <button className={styles.shareButton} onClick={handleShare}>
                   <ShareIcon className={styles.shareIcon} />
                   Поделиться
@@ -506,33 +439,16 @@ function ProductDetail() {
         </div>
 
         {/* Похожие товары */}
-        {(sellerProducts.length > 0 || popularProducts.length > 0) && (
+        {relatedProducts.length > 0 && (
           <div className={styles.relatedSection}>
-            <h2 className={styles.relatedTitle}>Вам может понравиться</h2>
-
-            {sellerProducts.length > 0 && (
-              <div className={styles.relatedSubsection}>
-                <h3 className={styles.relatedSubtitle}>
-                  Другие товары от {product.seller}
-                </h3>
-                <div className={styles.relatedGrid}>
-                  {sellerProducts.slice(0, 4).map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {popularProducts.length > 0 && (
-              <div className={styles.relatedSubsection}>
-                <h3 className={styles.relatedSubtitle}>Популярные товары</h3>
-                <div className={styles.relatedGrid}>
-                  {popularProducts.slice(0, 4).map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
-              </div>
-            )}
+            <h2 className={styles.relatedTitle}>
+              Другие товары от {product.seller}
+            </h2>
+            <div className={styles.relatedGrid}>
+              {relatedProducts.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
           </div>
         )}
       </div>

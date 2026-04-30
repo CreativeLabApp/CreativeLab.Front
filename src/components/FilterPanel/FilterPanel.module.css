@@ -369,3 +369,65 @@
   animation: slideIn 0.3s ease 0.2s forwards;
   opacity: 0;
 }
+
+.materialSearchWrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.materialSearch {
+  width: 100%;
+  padding: 6px 10px;
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  background: var(--main-color);
+  color: var(--font-color);
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.materialSearch:focus {
+  border-color: var(--accent-color);
+}
+
+.noResults {
+  font-size: var(--font-size-sm);
+  color: var(--gray-color);
+  padding: var(--spacing-xs) 0;
+}
+
+.sortButton {
+  margin-bottom: var(--spacing-sm);
+  padding: 4px 6px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: var(--main-color);
+  color: var(--gray-color);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sortButton:hover {
+  border-color: var(--accent-color);
+  color: var(--font-color);
+}
+
+.sortActive {
+  border-color: var(--accent-color);
+  background: var(--accent-color);
+  color: var(--font-color);
+}
+
+.sortIcon {
+  width: 16px;
+  height: 16px;
+}

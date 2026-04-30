@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
-import { useMarketplaceStore } from "../../stores/marketplaceStore";
 import { masterclassApi } from "../../api/masterclassApi";
 import { userApi } from "../../api/userApi";
+import { productApi } from "../../api/productApi";
 import {
   EnvelopeIcon,
   CalendarDaysIcon,
@@ -22,10 +22,10 @@ function CreatorProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user: currentUser } = useAuthStore();
-  const { getProductsBySeller } = useMarketplaceStore();
 
   const [creator, setCreator] = useState(null);
   const [allMasterClasses, setAllMasterClasses] = useState([]);
+  const [creatorProducts, setCreatorProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("masterclasses");
@@ -101,7 +101,15 @@ function CreatorProfile() {
   // Мастер-классы уже отфильтрованы по автору на сервере
   const creatorMasterClasses = allMasterClasses;
 
-  const creatorProducts = getProductsBySeller(id);
+  // Загружаем товары автора
+  useEffect(() => {
+    if (!id) return;
+    const onlyAvailable = !isOwnProfile;
+    productApi
+      .getBySeller(id, onlyAvailable)
+      .then(setCreatorProducts)
+      .catch(() => {});
+  }, [id, isOwnProfile]);
 
   const handleShare = async () => {
     await navigator.clipboard.writeText(window.location.href);

@@ -169,7 +169,7 @@ function Rating() {
                 Продано: {formatNumber(product.sales || 0)}
               </span>
               <span className={styles.price}>
-                {formatNumber(product.price)}₽
+                {formatNumber(product.price)} Br
               </span>
             </div>
           </div>

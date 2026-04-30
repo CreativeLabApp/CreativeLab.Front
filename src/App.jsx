@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect } from "react";
 import HomePage from "./pages/HomePage/HomePage";
 import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout/Layout";
@@ -18,8 +18,30 @@ import MessagesPage from "./pages/MessagesPage/MessagesPage";
 import CreateProduct from "./components/CreateProduct/CreateProduct";
 import EditProfilePage from "./pages/EditProfilePage/EditProfilePage";
 import AdminPanel from "./components/AdminPanel/AdminPanel";
+import AdminEditUser from "./components/AdminEditUser/AdminEditUser";
+import { useAuthStore } from "./stores/authStore";
+import { authApi } from "./api/authApi";
+import { useFavoritesStore } from "./stores/favoritesStore";
 
 function App() {
+  const { token, logout, login, user } = useAuthStore();
+  const { load } = useFavoritesStore();
+
+  // При старте проверяем валидность токена
+  useEffect(() => {
+    if (!token) return;
+    authApi.me(token).then((u) => {
+      if (!u) {
+        logout();
+      }
+    });
+  }, [logout, login, token]);
+
+  // Загружаем избранное при наличии авторизованного пользователя
+  useEffect(() => {
+    if (user?.id) load(user.id);
+  }, [user?.id]);
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
@@ -72,6 +94,7 @@ function App() {
       <Route path="*" element={<NotFoundPage />} />
 
       <Route path="/admin" element={<AdminPanel />} />
+      <Route path="/admin/edit-user/:id" element={<AdminEditUser />} />
     </Routes>
   );
 }

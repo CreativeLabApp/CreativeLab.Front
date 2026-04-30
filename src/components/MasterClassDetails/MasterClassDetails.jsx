@@ -51,6 +51,9 @@ function MasterClassDetails() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
+  const [userScore, setUserScore] = useState(null);
+  const [userComment, setUserComment] = useState(null);
+  const [ratings, setRatings] = useState([]);
 
   const hasIncrementedViews = useRef(false);
 
@@ -66,6 +69,21 @@ function MasterClassDetails() {
         const mapped = mapMasterclass(m);
         setMasterClass(mapped);
         setLoading(false);
+        // Загружаем оценку текущего пользователя
+        if (user?.id) {
+          masterclassApi
+            .getUserRating(m.id, user.id)
+            .then(({ score, comment }) => {
+              setUserScore(score);
+              setUserComment(comment ?? null);
+            })
+            .catch(() => {});
+        }
+        // Загружаем отзывы
+        masterclassApi
+          .getRatings(m.id)
+          .then((data) => setRatings(data))
+          .catch(() => {});
         // Загружаем похожие
         return masterclassApi.getAll().then((data) => {
           const related = data.masterclasses
@@ -139,18 +157,38 @@ function MasterClassDetails() {
     }
   };
 
-  const handleUpdateRating = async (
-    masterClassId,
-    rating,
-    comment,
-    userId,
-    userName,
-  ) => {
+  const handleUpdateRating = async (masterClassId, rating, comment) => {
     try {
-      // TODO: подключить API рейтингов когда появится эндпоинт
+      const result = await masterclassApi.rate(
+        masterClassId,
+        user.id,
+        rating,
+        comment,
+      );
+      setMasterClass((prev) => ({
+        ...prev,
+        rating: result.rating,
+        ratingsCount: result.ratingsCount,
+      }));
+      setUserScore(result.userScore);
+      setUserComment(comment || null);
+      setRatings((prev) => {
+        const filtered = prev.filter((r) => r.userId !== user.id);
+        return [
+          {
+            userId: user.id,
+            userName: `${user.name} ${user.surname || ""}`.trim(),
+            score: result.userScore,
+            comment: comment || null,
+            createdAt: new Date().toISOString(),
+            updatedAt: null,
+          },
+          ...filtered,
+        ];
+      });
       notify("Оценка успешно сохранена!");
       return true;
-    } catch (err) {
+    } catch {
       notify("Ошибка при сохранении оценки");
       return false;
     }
@@ -164,7 +202,7 @@ function MasterClassDetails() {
       navigate("/login", { state: { from: `/master-class/${id}` } });
       return;
     }
-    toggleFavorite(id);
+    toggleFavorite(user.id, masterClass);
   };
 
   const handleRateClick = () => {
@@ -201,7 +239,7 @@ function MasterClassDetails() {
         masterClassId={id}
         user={user}
         rateMasterClass={handleUpdateRating}
-        getUserRating={() => null}
+        getUserRating={() => (userScore ? { rating: userScore, comment: userComment } : null)}
       />
 
       {showEditModal && (
@@ -269,10 +307,11 @@ function MasterClassDetails() {
               masterClass={masterClass}
               onRateClick={handleRateClick}
               user={user}
-              getUserRating={() => null}
+              getUserRating={() => (userScore ? { rating: userScore, comment: userComment } : null)}
               isOwner={isOwner}
+              ratingsCount={ratings.length}
             />
-            <MasterClassDetailsReviews masterClass={masterClass} />
+            <MasterClassDetailsReviews ratings={ratings} />
           </div>
 
           <div className={styles.rightColumn}>
@@ -281,7 +320,7 @@ function MasterClassDetails() {
               relatedClasses={relatedClasses}
               navigate={navigate}
               user={user}
-              getUserRating={() => null}
+              getUserRating={() => (userScore ? { rating: userScore, comment: userComment } : null)}
               onEditRating={handleRateClick}
               isOwner={isOwner}
               onEditMasterClass={() => setShowEditModal(true)}

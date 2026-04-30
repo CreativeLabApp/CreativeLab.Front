@@ -676,3 +676,65 @@
   width: 14px;
   height: 14px;
 }
+
+.categoryDivider {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--gray-color);
+  margin: var(--spacing-sm) 0;
+  position: relative;
+}
+
+.categoryDivider::before,
+.categoryDivider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 35%;
+  height: 1px;
+  background: var(--border-color);
+}
+
+.categoryDivider::before {
+  left: 0;
+}
+.categoryDivider::after {
+  right: 0;
+}
+
+.statusButtons {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.statusBtn {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  background: var(--main-color);
+  color: var(--gray-color);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.statusBtn:hover {
+  border-color: var(--accent-color);
+  color: var(--font-color);
+}
+
+.statusBtnActive {
+  border-color: #22c55e;
+  background: #22c55e20;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.statusBtnUnavailable {
+  border-color: #ef4444;
+  background: #ef444420;
+  color: #dc2626;
+  font-weight: 600;
+}

@@ -2,7 +2,19 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { authApi } from "../api/authApi";
 
-const ADMIN_EMAILS = ["artem.artusevskij01@gmail.com"];
+const ADMIN_EMAILS = ["admin@creativelab.com"];
+
+const mapUser = (data) => {
+  const isAdmin = ADMIN_EMAILS.includes(data.email);
+  return {
+    id: data.id,
+    name: data.name,
+    surname: data.surname,
+    email: data.email,
+    role: isAdmin ? "admin" : "user",
+    isAdmin,
+  };
+};
 
 export const useAuthStore = create(
   persist(
@@ -10,39 +22,21 @@ export const useAuthStore = create(
       user: null,
       token: null,
 
+      setToken: (token) => set({ token }),
+
       register: async ({ name, surname, email, password }) => {
         const data = await authApi.register({ name, surname, email, password });
-        const isAdmin = ADMIN_EMAILS.includes(data.email);
-        set({
-          token: data.token,
-          user: {
-            id: data.id,
-            name: data.name,
-            surname: data.surname,
-            email: data.email,
-            role: isAdmin ? "admin" : "user",
-            isAdmin,
-          },
-        });
+        set({ token: data.accessToken, user: mapUser(data) });
       },
 
       login: async ({ email, password }) => {
         const data = await authApi.login({ email, password });
-        const isAdmin = ADMIN_EMAILS.includes(data.email);
-        set({
-          token: data.token,
-          user: {
-            id: data.id,
-            name: data.name,
-            surname: data.surname,
-            email: data.email,
-            role: isAdmin ? "admin" : "user",
-            isAdmin,
-          },
-        });
+        set({ token: data.accessToken, user: mapUser(data) });
       },
 
-      logout: () => {
+      logout: async () => {
+        const { token } = get();
+        await authApi.logout(token);
         set({ user: null, token: null });
       },
 

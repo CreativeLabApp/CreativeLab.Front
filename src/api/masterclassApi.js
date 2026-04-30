@@ -59,6 +59,30 @@ export const masterclassApi = {
     if (!res.ok) throw new Error("Failed to delete masterclass");
   },
 
+  rate: async (id, userId, score, comment = null) => {
+    const params = new URLSearchParams({ id, userId, score });
+    if (comment) params.append("comment", comment);
+    const res = await fetch(`${BASE_URL}/masterclass/rate?${params}`, {
+      method: "PATCH",
+    });
+    if (!res.ok) throw new Error("Failed to rate masterclass");
+    return res.json(); // { rating, ratingsCount, userScore }
+  },
+
+  getUserRating: async (id, userId) => {
+    const res = await fetch(
+      `${BASE_URL}/masterclass/getuserrating?id=${id}&userId=${userId}`,
+    );
+    if (!res.ok) throw new Error("Failed to get user rating");
+    return res.json(); // { score: int | null }
+  },
+
+  getRatings: async (id) => {
+    const res = await fetch(`${BASE_URL}/masterclass/getratings?id=${id}`);
+    if (!res.ok) throw new Error("Failed to get ratings");
+    return res.json(); // [{ userId, userName, score, createdAt, updatedAt }]
+  },
+
   create: async (dto) => {
     const res = await fetch(`${BASE_URL}/masterclass/create`, {
       method: "POST",

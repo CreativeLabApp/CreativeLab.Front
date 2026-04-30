@@ -8,6 +8,7 @@ function MasterClassDetailsRatingSection({
   onRateClick,
   user,
   getUserRating,
+  ratingsCount,
 }) {
   const [hasUserRated, setHasUserRated] = useState(false);
 
@@ -85,7 +86,7 @@ function MasterClassDetailsRatingSection({
           </div>
           <div className={styles.ratingStats}>
             <span className={styles.ratingCount}>
-              {masterClass.ratingCount || 0} оценок
+              {ratingsCount ?? masterClass.ratingsCount ?? 0} оценок
             </span>
           </div>
         </div>

@@ -91,6 +91,11 @@
   color: white;
 }
 
+.statusBadge.unavailable {
+  background: rgba(120, 120, 120, 0.9);
+  color: white;
+}
+
 /* Кнопки действий */
 .actionButtons {
   position: absolute;

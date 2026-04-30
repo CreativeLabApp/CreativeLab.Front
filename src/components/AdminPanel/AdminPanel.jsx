@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
-import { useMarketplaceStore } from "../../stores/marketplaceStore";
 import { masterclassApi } from "../../api/masterclassApi";
-import creatorsData from "../../sources/creators";
+import { productApi } from "../../api/productApi";
+import { userApi } from "../../api/userApi";
 import {
   ShieldCheckIcon,
   VideoCameraIcon,
@@ -14,7 +14,6 @@ import {
   TrashIcon,
   PencilIcon,
   ChartBarIcon,
-  PlusIcon,
   MagnifyingGlassIcon,
   CalendarIcon,
   StarIcon,
@@ -28,9 +27,32 @@ import styles from "./AdminPanel.module.css";
 
 function AdminPanel() {
   const navigate = useNavigate();
-  const { user, isAdmin, getUsers, updateUserRole, deleteUser } =
-    useAuthStore();
+  const { user, isAdmin } = useAuthStore();
   const [masterClasses, setMasterClasses] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    userApi
+      .getAll()
+      .then((data) => {
+        setAllUsers(
+          data
+            .filter((u) => !u.isAdmin)
+            .map((u) => ({
+              id: u.id,
+              name: `${u.name} ${u.surname}`.trim(),
+              email: u.email,
+              role: u.isAdmin ? "admin" : "user",
+              isActive: u.isActive,
+              registrationDate: u.createdAt?.split("T")[0] || "",
+              masterclassesCount: u.masterclassesCount,
+              productsCount: u.productsCount,
+            })),
+        );
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     masterclassApi
@@ -57,24 +79,12 @@ function AdminPanel() {
     setMasterClasses((prev) => prev.filter((m) => m.id !== id));
   };
 
-  const updateMasterClass = async (id, data) => {
-    await masterclassApi.update({ id, ...data });
-    setMasterClasses((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, ...data } : m)),
-    );
-  };
-
-  const addMasterClass = async (dto) => {
-    const created = await masterclassApi.create(dto);
-    setMasterClasses((prev) => [...prev, created]);
-  };
-
-  const {
-    products,
-    deleteProduct,
-    addProduct: addMarketplaceProduct,
-    updateProductStatus,
-  } = useMarketplaceStore();
+  useEffect(() => {
+    productApi
+      .getAll(false)
+      .then((data) => setProducts(data))
+      .catch(() => {});
+  }, []);
 
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,6 +92,10 @@ function AdminPanel() {
   const [selectedMasterClasses, setSelectedMasterClasses] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [selectedComments, setSelectedComments] = useState([]);
+  const [toggleActiveTarget, setToggleActiveTarget] = useState(null); // { id, isActive, name }
+  const [deleteUserTarget, setDeleteUserTarget] = useState(null); // { id, name }
+  const [deleteMasterClassTarget, setDeleteMasterClassTarget] = useState(null); // { id, title }
+  const [deleteProductTarget, setDeleteProductTarget] = useState(null); // { id, title }
 
   // Фильтры
   const [userFilter, setUserFilter] = useState("all");
@@ -111,26 +125,6 @@ function AdminPanel() {
       navigate("/");
     }
   }, [user, isAdmin, navigate]);
-
-  // Получение всех пользователей
-  const allUsers = [
-    ...creatorsData.map((creator) => ({
-      ...creator,
-      type: "creator",
-      role: "creator",
-      isActive: true,
-      lastLogin: "2024-01-20",
-      registrationDate: creator.joined,
-    })),
-    ...(getUsers?.() || []).map((user) => ({
-      ...user,
-      type: "user",
-      role: user.role || "user",
-      isActive: true,
-      lastLogin: new Date().toISOString().split("T")[0],
-      registrationDate: user.createdAt || "2024-01-01",
-    })),
-  ];
 
   // Получение всех комментариев с информацией о мастер-классе
   const getAllComments = () => {
@@ -208,9 +202,8 @@ function AdminPanel() {
 
       const matchesFilter =
         productFilter === "all" ||
-        (productFilter === "available" && product.status === "available") ||
-        (productFilter === "sold" && product.status === "sold") ||
-        (productFilter === "reserved" && product.status === "reserved");
+        (productFilter === "available" && product.isAvailable) ||
+        (productFilter === "unavailable" && !product.isAvailable);
 
       return matchesSearch && matchesFilter;
     })
@@ -250,115 +243,107 @@ function AdminPanel() {
     .sort((a, b) => b.timestamp - a.timestamp); // Сортировка по дате (новые сначала)
 
   // Обработчики пользователей
-  const handleDeleteUser = (userId) => {
-    if (window.confirm(`Удалить пользователя с ID ${userId}?`)) {
-      deleteUser(userId);
-      setSelectedUsers(selectedUsers.filter((id) => id !== userId));
-    }
+  const handleDeleteUser = async (userId, name) => {
+    setDeleteUserTarget({ id: userId, name });
   };
 
-  const handleToggleUserRole = (userId, currentRole) => {
-    const newRole = currentRole === "user" ? "admin" : "user";
-    if (window.confirm(`Изменить роль пользователя на "${newRole}"?`)) {
-      updateUserRole(userId, newRole);
-    }
-  };
-
-  const handleToggleUserActive = (userId, currentStatus) => {
-    const newStatus = !currentStatus;
-    if (
-      window.confirm(
-        `${newStatus ? "Активировать" : "Деактивировать"} пользователя?`,
-      )
-    ) {
-      // В реальном приложении здесь будет вызов API
-      alert(
-        `Статус пользователя ${userId} изменен на ${
-          newStatus ? "активен" : "неактивен"
-        }`,
+  const confirmDeleteUser = async () => {
+    if (!deleteUserTarget) return;
+    try {
+      await userApi.delete(deleteUserTarget.id);
+      setAllUsers((prev) => prev.filter((u) => u.id !== deleteUserTarget.id));
+      setSelectedUsers(
+        selectedUsers.filter((id) => id !== deleteUserTarget.id),
       );
+    } catch {
+      alert("Ошибка при удалении пользователя");
+    } finally {
+      setDeleteUserTarget(null);
+    }
+  };
+
+  const handleToggleUserActive = async (userId, currentStatus, name) => {
+    setToggleActiveTarget({ id: userId, isActive: currentStatus, name });
+  };
+
+  const confirmToggleActive = async () => {
+    if (!toggleActiveTarget) return;
+    try {
+      const { isActive } = await userApi.toggleActive(toggleActiveTarget.id);
+      setAllUsers((prev) =>
+        prev.map((u) =>
+          u.id === toggleActiveTarget.id ? { ...u, isActive } : u,
+        ),
+      );
+    } catch {
+      alert("Ошибка при изменении статуса пользователя");
+    } finally {
+      setToggleActiveTarget(null);
     }
   };
 
   // Обработчики мастер-классов
-  const handleDeleteMasterClass = (id) => {
-    if (window.confirm("Удалить этот мастер-класс?")) {
-      deleteMasterClass(id);
+  const handleDeleteMasterClass = (id, title) => {
+    setDeleteMasterClassTarget({ id, title });
+  };
+
+  const confirmDeleteMasterClass = async () => {
+    if (!deleteMasterClassTarget) return;
+    try {
+      await deleteMasterClass(deleteMasterClassTarget.id);
       setSelectedMasterClasses(
-        selectedMasterClasses.filter((masterClassId) => masterClassId !== id),
+        selectedMasterClasses.filter(
+          (masterClassId) => masterClassId !== deleteMasterClassTarget.id,
+        ),
       );
+    } catch {
+      alert("Ошибка при удалении мастер-класса");
+    } finally {
+      setDeleteMasterClassTarget(null);
     }
-  };
-
-  const handleToggleMasterClassStatus = (id, currentStatus) => {
-    const newStatus = currentStatus === "active" ? "archived" : "active";
-    if (window.confirm(`Изменить статус мастер-класса на "${newStatus}"?`)) {
-      updateMasterClass(id, { status: newStatus });
-    }
-  };
-
-  const handleAddTestMasterClass = () => {
-    const newId = Math.max(...masterClasses.map((m) => m.id)) + 1;
-    const testMasterClass = {
-      id: newId,
-      title: "Тестовый мастер-класс",
-      author: "Администратор",
-      description: "Мастер-класс созданный для тестирования",
-      image:
-        "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&auto=format&fit=crop",
-      rating: 5.0,
-      views: 0,
-      duration: "1 час",
-      category: "Тест",
-      tags: ["тест", "админ"],
-      price: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-      status: "active",
-    };
-    addMasterClass(testMasterClass);
-    alert("Тестовый мастер-класс добавлен");
   };
 
   // Обработчики товаров
-  const handleDeleteProduct = (id) => {
-    if (window.confirm("Удалить этот товар?")) {
-      deleteProduct(id);
-      setSelectedProducts(
-        selectedProducts.filter((productId) => productId !== id),
+  const handleDeleteProduct = (id, title) => {
+    setDeleteProductTarget({ id, title });
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!deleteProductTarget) return;
+    try {
+      await productApi.delete(deleteProductTarget.id);
+      setProducts((prev) =>
+        prev.filter((p) => p.id !== deleteProductTarget.id),
       );
+      setSelectedProducts(
+        selectedProducts.filter((id) => id !== deleteProductTarget.id),
+      );
+    } catch {
+      alert("Ошибка при удалении товара");
+    } finally {
+      setDeleteProductTarget(null);
     }
   };
 
-  const handleUpdateProductStatus = (id, newStatus) => {
-    if (window.confirm(`Изменить статус товара на "${newStatus}"?`)) {
-      updateProductStatus(id, newStatus);
+  const handleUpdateProductStatus = async (id, isAvailable) => {
+    try {
+      const product = products.find((p) => p.id === id);
+      if (!product) return;
+      await productApi.update({ ...product, isAvailable });
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === id
+            ? {
+                ...p,
+                isAvailable,
+                status: isAvailable ? "available" : "unavailable",
+              }
+            : p,
+        ),
+      );
+    } catch {
+      alert("Ошибка при изменении статуса товара");
     }
-  };
-
-  const handleAddTestProduct = () => {
-    const newId = Math.max(...products.map((p) => p.id)) + 1;
-    const testProduct = {
-      id: newId,
-      title: "Тестовый товар",
-      description: "Товар созданный для тестирования",
-      price: 1000,
-      seller: "Администратор",
-      sellerId: user.id,
-      category: "Тест",
-      images: [
-        "https://images.unsplash.com/photo-1579762715118-a6f1d4b934f1?w=800&auto=format&fit=crop",
-      ],
-      rating: 5.0,
-      views: 0,
-      createdAt: new Date().toISOString().split("T")[0],
-      tags: ["тест", "админ"],
-      status: "available",
-      materials: ["тестовые"],
-      dimensions: "10x10 см",
-      weight: "0.1 кг",
-    };
-    addMarketplaceProduct(testProduct);
-    alert("Тестовый товар добавлен");
   };
 
   // Обработчики комментариев
@@ -399,25 +384,41 @@ function AdminPanel() {
   };
 
   // Массовые операции
-  const handleBulkDeleteUsers = () => {
+  const handleBulkDeleteUsers = async () => {
     if (window.confirm(`Удалить ${selectedUsers.length} пользователей?`)) {
-      selectedUsers.forEach((userId) => deleteUser(userId));
+      await Promise.all(
+        selectedUsers.map((id) => userApi.delete(id).catch(() => {})),
+      );
+      setAllUsers((prev) => prev.filter((u) => !selectedUsers.includes(u.id)));
       setSelectedUsers([]);
     }
   };
 
-  const handleBulkDeleteMasterClasses = () => {
+  const handleBulkDeleteMasterClasses = async () => {
     if (
       window.confirm(`Удалить ${selectedMasterClasses.length} мастер-классов?`)
     ) {
-      selectedMasterClasses.forEach((id) => deleteMasterClass(id));
-      setSelectedMasterClasses([]);
+      try {
+        await Promise.all(
+          selectedMasterClasses.map((id) =>
+            deleteMasterClass(id).catch(() => {}),
+          ),
+        );
+        setSelectedMasterClasses([]);
+      } catch {
+        alert("Ошибка при массовом удалении мастер-классов");
+      }
     }
   };
 
-  const handleBulkDeleteProducts = () => {
+  const handleBulkDeleteProducts = async () => {
     if (window.confirm(`Удалить ${selectedProducts.length} товаров?`)) {
-      selectedProducts.forEach((id) => deleteProduct(id));
+      await Promise.all(
+        selectedProducts.map((id) => productApi.delete(id).catch(() => {})),
+      );
+      setProducts((prev) =>
+        prev.filter((p) => !selectedProducts.includes(p.id)),
+      );
       setSelectedProducts([]);
     }
   };
@@ -435,7 +436,11 @@ function AdminPanel() {
             <div className={styles.statNumber}>{allUsers.length}</div>
             <div className={styles.statBreakdown}>
               <span>
-                {allUsers.filter((u) => u.role === "creator").length} создателей
+                {allUsers.filter((u) => u.role === "admin").length}{" "}
+                администраторов
+              </span>
+              <span>
+                {allUsers.filter((u) => u.role === "user").length} обычных
               </span>
             </div>
           </div>
@@ -450,11 +455,11 @@ function AdminPanel() {
             <div className={styles.statNumber}>{masterClasses.length}</div>
             <div className={styles.statBreakdown}>
               <span>
-                {masterClasses.filter((m) => m.rating >= 4.5).length} с высоким
-                рейтингом
+                {masterClasses.filter((m) => m.isPublished).length} опубликовано
               </span>
               <span>
-                {masterClasses.reduce((sum, m) => sum + m.views, 0)} просмотров
+                {masterClasses.reduce((sum, m) => sum + (m.views || 0), 0)}{" "}
+                просмотров
               </span>
             </div>
           </div>
@@ -469,12 +474,10 @@ function AdminPanel() {
             <div className={styles.statNumber}>{products.length}</div>
             <div className={styles.statBreakdown}>
               <span>
-                {products.filter((p) => p.status === "available").length}{" "}
-                доступно
+                {products.filter((p) => p.isAvailable).length} в наличии
               </span>
               <span>
-                {products.reduce((sum, p) => sum + p.price, 0)} руб. общая
-                стоимость
+                {products.filter((p) => !p.isAvailable).length} нет в наличии
               </span>
             </div>
           </div>
@@ -482,48 +485,73 @@ function AdminPanel() {
 
         <div className={styles.statCard}>
           <div className={styles.statHeader}>
-            <ChatBubbleLeftIcon className={styles.statIcon} />
-            <h3>Комментарии</h3>
+            <ChartBarIcon className={styles.statIcon} />
+            <h3>Средний рейтинг</h3>
           </div>
           <div className={styles.statContent}>
-            <div className={styles.statNumber}>{allComments.length}</div>
+            <div className={styles.statNumber}>
+              {masterClasses.length
+                ? (
+                    masterClasses.reduce((s, m) => s + (m.rating || 0), 0) /
+                    masterClasses.length
+                  ).toFixed(1)
+                : "—"}
+            </div>
             <div className={styles.statBreakdown}>
               <span>
-                {allComments.filter((c) => c.status === "pending").length} на
-                модерации
+                {masterClasses.filter((m) => m.rating >= 4.5).length} с
+                рейтингом 4.5+
               </span>
-              <span>{allComments.filter((c) => c.reported).length} жалоб</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className={styles.quickActions}>
-        <h3 className={styles.sectionTitle}>Быстрые действия</h3>
-        <div className={styles.actionButtons}>
-          <button
-            className={styles.quickActionButton}
-            onClick={handleAddTestMasterClass}
-          >
-            <PlusIcon className={styles.actionIcon} />
-            Добавить тестовый мастер-класс
-          </button>
-          <button
-            className={styles.quickActionButton}
-            onClick={handleAddTestProduct}
-          >
-            <PlusIcon className={styles.actionIcon} />
-            Добавить тестовый товар
-          </button>
-          <button
-            className={styles.quickActionButton}
-            onClick={() => setActiveTab("comments")}
-          >
-            <ChatBubbleLeftIcon className={styles.actionIcon} />
-            Модерация комментариев
-          </button>
+      {/* Топ мастер-классов */}
+      {masterClasses.length > 0 && (
+        <div className={styles.dashboardSection}>
+          <h3 className={styles.dashboardSectionTitle}>
+            Топ мастер-классов по просмотрам
+          </h3>
+          <div className={styles.topList}>
+            {[...masterClasses]
+              .sort((a, b) => (b.views || 0) - (a.views || 0))
+              .slice(0, 5)
+              .map((m, i) => (
+                <div key={m.id} className={styles.topItem}>
+                  <span className={styles.topRank}>#{i + 1}</span>
+                  <span className={styles.topTitle}>{m.title}</span>
+                  <span className={styles.topMeta}>{m.views || 0} просм.</span>
+                  <span className={styles.topMeta}>★ {m.rating || 0}</span>
+                </div>
+              ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Последние пользователи */}
+      {allUsers.length > 0 && (
+        <div className={styles.dashboardSection}>
+          <h3 className={styles.dashboardSectionTitle}>
+            Последние зарегистрированные
+          </h3>
+          <div className={styles.topList}>
+            {[...allUsers]
+              .sort(
+                (a, b) =>
+                  new Date(b.registrationDate) - new Date(a.registrationDate),
+              )
+              .slice(0, 5)
+              .map((u) => (
+                <div key={u.id} className={styles.topItem}>
+                  <span className={styles.topTitle}>{u.name}</span>
+                  <span className={styles.topMeta}>{u.email}</span>
+                  <span className={styles.topMeta}>{u.registrationDate}</span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -532,7 +560,6 @@ function AdminPanel() {
     <div className={styles.managementSection}>
       <div className={styles.sectionHeader}>
         <h3 className={styles.sectionTitle}>
-          <UserGroupIcon className={styles.sectionIcon} />
           Управление пользователями ({allUsers.length})
         </h3>
         <div className={styles.sectionControls}>
@@ -553,7 +580,6 @@ function AdminPanel() {
           >
             <option value="all">Все пользователи</option>
             <option value="admin">Администраторы</option>
-            <option value="creator">Создатели</option>
             <option value="user">Обычные пользователи</option>
           </select>
           {selectedUsers.length > 0 && (
@@ -678,10 +704,8 @@ function AdminPanel() {
                     className={`${styles.roleBadge} ${styles[userItem.role]}`}
                   >
                     {userItem.role === "admin"
-                      ? "Админ"
-                      : userItem.role === "creator"
-                        ? "Создатель"
-                        : "Пользователь"}
+                      ? "Администратор"
+                      : "Пользователь"}
                   </span>
                 </td>
                 <td>
@@ -711,16 +735,20 @@ function AdminPanel() {
                     </button>
                     <button
                       onClick={() =>
-                        handleToggleUserRole(userItem.id, userItem.role)
+                        navigate(`/admin/edit-user/${userItem.id}`)
                       }
                       className={styles.editButton}
-                      title="Изменить роль"
+                      title="Редактировать профиль"
                     >
                       <PencilIcon className={styles.buttonIcon} />
                     </button>
                     <button
                       onClick={() =>
-                        handleToggleUserActive(userItem.id, userItem.isActive)
+                        handleToggleUserActive(
+                          userItem.id,
+                          userItem.isActive,
+                          userItem.name,
+                        )
                       }
                       className={
                         userItem.isActive
@@ -735,7 +763,9 @@ function AdminPanel() {
                     </button>
                     {userItem.id !== user.id && (
                       <button
-                        onClick={() => handleDeleteUser(userItem.id)}
+                        onClick={() =>
+                          handleDeleteUser(userItem.id, userItem.name)
+                        }
                         className={styles.deleteButton}
                         title="Удалить"
                       >
@@ -757,7 +787,6 @@ function AdminPanel() {
     <div className={styles.managementSection}>
       <div className={styles.sectionHeader}>
         <h3 className={styles.sectionTitle}>
-          <VideoCameraIcon className={styles.sectionIcon} />
           Управление мастер-классами ({masterClasses.length})
         </h3>
         <div className={styles.sectionControls}>
@@ -862,19 +891,7 @@ function AdminPanel() {
                 Просмотреть
               </button>
               <button
-                onClick={() =>
-                  handleToggleMasterClassStatus(
-                    item.id,
-                    item.status || "active",
-                  )
-                }
-                className={styles.editButton}
-              >
-                <PencilIcon className={styles.buttonIcon} />
-                {item.status === "archived" ? "Восстановить" : "В архив"}
-              </button>
-              <button
-                onClick={() => handleDeleteMasterClass(item.id)}
+                onClick={() => handleDeleteMasterClass(item.id, item.title)}
                 className={styles.deleteButton}
               >
                 <TrashIcon className={styles.buttonIcon} />
@@ -892,7 +909,6 @@ function AdminPanel() {
     <div className={styles.managementSection}>
       <div className={styles.sectionHeader}>
         <h3 className={styles.sectionTitle}>
-          <ShoppingBagIcon className={styles.sectionIcon} />
           Управление товарами ({products.length})
         </h3>
         <div className={styles.sectionControls}>
@@ -913,8 +929,7 @@ function AdminPanel() {
           >
             <option value="all">Все товары</option>
             <option value="available">Доступные</option>
-            <option value="sold">Проданные</option>
-            <option value="reserved">Забронированные</option>
+            <option value="unavailable">Недоступные</option>
           </select>
           {selectedProducts.length > 0 && (
             <button
@@ -1029,21 +1044,23 @@ function AdminPanel() {
                 <td>
                   <div className={styles.priceCell}>
                     <CurrencyDollarIcon className={styles.priceIcon} />
-                    {product.price} руб.
+                    {product.price} Br
                   </div>
                 </td>
                 <td>{product.views}</td>
                 <td>
                   <select
-                    value={product.status}
+                    value={product.isAvailable ? "available" : "unavailable"}
                     onChange={(e) =>
-                      handleUpdateProductStatus(product.id, e.target.value)
+                      handleUpdateProductStatus(
+                        product.id,
+                        e.target.value === "available",
+                      )
                     }
                     className={styles.statusSelect}
                   >
                     <option value="available">Доступен</option>
-                    <option value="sold">Продан</option>
-                    <option value="reserved">Забронирован</option>
+                    <option value="unavailable">Недоступен</option>
                   </select>
                 </td>
                 <td>
@@ -1058,7 +1075,9 @@ function AdminPanel() {
                       <EyeIcon className={styles.buttonIcon} />
                     </button>
                     <button
-                      onClick={() => handleDeleteProduct(product.id)}
+                      onClick={() =>
+                        handleDeleteProduct(product.id, product.title)
+                      }
                       className={styles.deleteButton}
                       title="Удалить"
                     >
@@ -1288,6 +1307,149 @@ function AdminPanel() {
 
   return (
     <div className={styles.adminPanel}>
+      {/* Модалка удаления товара */}
+      {deleteProductTarget && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setDeleteProductTarget(null)}
+        >
+          <div
+            className={styles.confirmModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={styles.confirmTitle}>Удалить товар?</h3>
+            <p className={styles.confirmText}>
+              Вы действительно хотите удалить товар «{deleteProductTarget.title}
+              »? Это действие нельзя отменить.
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setDeleteProductTarget(null)}
+              >
+                Отмена
+              </button>
+              <button
+                className={styles.deleteConfirmButton}
+                onClick={confirmDeleteProduct}
+              >
+                Удалить навсегда
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Модалка удаления мастер-класса */}{" "}
+      {deleteMasterClassTarget && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setDeleteMasterClassTarget(null)}
+        >
+          <div
+            className={styles.confirmModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={styles.confirmTitle}>Удалить мастер-класс?</h3>
+            <p className={styles.confirmText}>
+              Вы действительно хотите удалить мастер-класс «
+              {deleteMasterClassTarget.title}»? Это действие нельзя отменить.
+              Будут удалены все данные мастер-класса, включая комментарии и
+              оценки.
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setDeleteMasterClassTarget(null)}
+              >
+                Отмена
+              </button>
+              <button
+                className={styles.deleteConfirmButton}
+                onClick={confirmDeleteMasterClass}
+              >
+                Удалить навсегда
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Модалка удаления пользователя */}
+      {deleteUserTarget && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setDeleteUserTarget(null)}
+        >
+          <div
+            className={styles.confirmModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={styles.confirmTitle}>Удалить пользователя?</h3>
+            <p className={styles.confirmText}>
+              Вы действительно хотите удалить пользователя «
+              {deleteUserTarget.name}»? Это действие нельзя отменить. Будут
+              удалены все данные пользователя, включая его мастер-классы, товары
+              и комментарии.
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setDeleteUserTarget(null)}
+              >
+                Отмена
+              </button>
+              <button
+                className={styles.deleteConfirmButton}
+                onClick={confirmDeleteUser}
+              >
+                Удалить навсегда
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Модалка деактивации/активации пользователя */}
+      {toggleActiveTarget && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setToggleActiveTarget(null)}
+        >
+          <div
+            className={styles.confirmModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={styles.confirmTitle}>
+              {toggleActiveTarget.isActive
+                ? "Деактивировать пользователя?"
+                : "Активировать пользователя?"}
+            </h3>
+            <p className={styles.confirmText}>
+              {toggleActiveTarget.isActive
+                ? `Пользователь «${toggleActiveTarget.name}» не сможет войти в систему.`
+                : `Пользователь «${toggleActiveTarget.name}» снова получит доступ к системе.`}
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setToggleActiveTarget(null)}
+              >
+                Отмена
+              </button>
+              <button
+                className={
+                  toggleActiveTarget.isActive
+                    ? styles.deactivateConfirmButton
+                    : styles.activateConfirmButton
+                }
+                onClick={confirmToggleActive}
+              >
+                {toggleActiveTarget.isActive
+                  ? "Деактивировать"
+                  : "Активировать"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Заголовок */}
       <div className={styles.adminHeader}>
         <div className={styles.headerContent}>
@@ -1300,7 +1462,6 @@ function AdminPanel() {
           </button>
         </div>
       </div>
-
       {/* Навигация */}
       <div className={styles.adminNavigation}>
         <button
@@ -1357,7 +1518,6 @@ function AdminPanel() {
           <span className={styles.navBadge}>{allComments.length}</span>
         </button>
       </div>
-
       {/* Содержимое */}
       <div className={styles.adminContent}>
         {activeTab === "dashboard" && renderDashboard()}

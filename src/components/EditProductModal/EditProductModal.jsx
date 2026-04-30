@@ -677,3 +677,4 @@ function EditProductModal({ product, onSave, onClose }) {
 }
 
 export default EditProductModal;
+

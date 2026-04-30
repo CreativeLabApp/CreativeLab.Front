@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useMarketplaceStore } from "../../stores/marketplaceStore";
+import { productApi } from "../../api/productApi";
 import ProductCard from "../ProductCard/ProductCard";
 import SearchBar from "../SearchBar/SearchBar";
 import MarketplaceFilter from "../MarketplaceFilter/MarketplaceFilter";
@@ -8,13 +8,24 @@ import styles from "./Marketplace.module.css";
 import { TagIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 function Marketplace() {
-  const { products, searchProducts } = useMarketplaceStore();
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 10000]);
+  const [priceRange, setPriceRange] = useState([0, 500]);
   const [sortBy, setSortBy] = useState("popular");
   const [viewMode, setViewMode] = useState("grid");
+  const [selectedStatus, setSelectedStatus] = useState("");
+
+  useEffect(() => {
+    setIsLoading(true);
+    productApi
+      .getAll(false)
+      .then(setProducts)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, []);
 
   // Получаем уникальные категории
   const categories = useMemo(() => {
@@ -25,25 +36,33 @@ function Marketplace() {
   const filteredProducts = useMemo(() => {
     let result = products;
 
-    // Поиск
     if (searchQuery) {
-      result = searchProducts(searchQuery);
-    }
-
-    // Фильтр по категории
-    if (selectedCategory) {
+      const q = searchQuery.toLowerCase();
       result = result.filter(
-        (product) => product.category === selectedCategory
+        (p) =>
+          p.title.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          (p.tags || []).some((t) => t.toLowerCase().includes(q)),
       );
     }
 
-    // Фильтр по цене
+    if (selectedCategory) {
+      result = result.filter(
+        (product) => product.category === selectedCategory,
+      );
+    }
+
     result = result.filter(
       (product) =>
-        product.price >= priceRange[0] && product.price <= priceRange[1]
+        product.price >= priceRange[0] && product.price <= priceRange[1],
     );
 
-    // Сортировка
+    if (selectedStatus === "available") {
+      result = result.filter((p) => p.isAvailable);
+    } else if (selectedStatus === "unavailable") {
+      result = result.filter((p) => !p.isAvailable);
+    }
+
     result = [...result].sort((a, b) => {
       switch (sortBy) {
         case "price_asc":
@@ -56,7 +75,7 @@ function Marketplace() {
           return b.rating - a.rating;
         case "popular":
         default:
-          return b.views - a.views;
+          return (b.views || 0) - (a.views || 0);
       }
     });
 
@@ -67,14 +86,15 @@ function Marketplace() {
     selectedCategory,
     priceRange,
     sortBy,
-    searchProducts,
+    selectedStatus,
   ]);
 
   const handleClearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("");
-    setPriceRange([0, 10000]);
+    setPriceRange([0, 500]);
     setSortBy("popular");
+    setSelectedStatus("");
   };
 
   const handlePriceChange = (min, max) => {
@@ -115,8 +135,10 @@ function Marketplace() {
           categories={categories}
           selectedCategory={selectedCategory}
           priceRange={priceRange}
+          selectedStatus={selectedStatus}
           onCategoryChange={setSelectedCategory}
           onPriceChange={handlePriceChange}
+          onStatusChange={setSelectedStatus}
           onClear={handleClearFilters}
         />
 
@@ -131,8 +153,9 @@ function Marketplace() {
 
               {(searchQuery ||
                 selectedCategory ||
+                selectedStatus ||
                 priceRange[0] > 0 ||
-                priceRange[1] < 10000) && (
+                priceRange[1] < 500) && (
                 <button
                   onClick={handleClearFilters}
                   className={styles.clearButton}
@@ -175,13 +198,15 @@ function Marketplace() {
                   {selectedCategory
                     ? `Категория: ${selectedCategory}`
                     : searchQuery
-                    ? `Результаты поиска: "${searchQuery}"`
-                    : "Все товары"}
+                      ? `Результаты поиска: "${searchQuery}"`
+                      : "Все товары"}
                 </h2>
               </div>
             )}
 
-            {filteredProducts.length > 0 ? (
+            {isLoading ? (
+              <div className={styles.noResults}>Загрузка товаров...</div>
+            ) : filteredProducts.length > 0 ? (
               <div
                 className={`${styles.productsGrid} ${
                   viewMode === "list" ? styles.listView : ""

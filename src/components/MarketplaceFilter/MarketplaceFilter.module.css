@@ -287,6 +287,12 @@
   background: var(--card-background);
 }
 
+.statusButton.active {
+  border-color: var(--accent-color);
+  background: var(--accent-color);
+  color: var(--font-color);
+}
+
 .statusDot {
   width: 10px;
   height: 10px;

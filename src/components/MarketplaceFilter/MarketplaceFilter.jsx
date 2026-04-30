@@ -5,17 +5,19 @@ function MarketplaceFilter({
   categories,
   selectedCategory,
   priceRange,
+  selectedStatus,
   onCategoryChange,
   onPriceChange,
+  onStatusChange,
   onClear,
 }) {
-  const maxPrice = 10000;
+  const maxPrice = 500;
   const priceLabels = {
-    0: "0₽",
-    2500: "2.5К",
-    5000: "5К",
-    7500: "7.5К",
-    10000: "10К+",
+    0: "0 Br",
+    125: "125",
+    250: "250",
+    375: "375",
+    500: "500+",
   };
 
   const handlePriceInput = (type, value) => {
@@ -102,7 +104,7 @@ function MarketplaceFilter({
               type="range"
               min="0"
               max={maxPrice}
-              step="100"
+              step="5"
               value={priceRange[0]}
               onChange={(e) => handlePriceInput("min", e.target.value)}
               className={styles.slider}
@@ -111,7 +113,7 @@ function MarketplaceFilter({
               type="range"
               min="0"
               max={maxPrice}
-              step="100"
+              step="5"
               value={priceRange[1]}
               onChange={(e) => handlePriceInput("max", e.target.value)}
               className={styles.slider}
@@ -132,13 +134,25 @@ function MarketplaceFilter({
       <div className={styles.section}>
         <h4 className={styles.sectionTitle}>Статус товара</h4>
         <div className={styles.statusFilters}>
-          <button className={styles.statusButton}>
+          <button
+            onClick={() =>
+              onStatusChange(selectedStatus === "available" ? "" : "available")
+            }
+            className={`${styles.statusButton} ${selectedStatus === "available" ? styles.active : ""}`}
+          >
             <span className={`${styles.statusDot} ${styles.available}`}></span>В
             наличии
           </button>
-          <button className={styles.statusButton}>
+          <button
+            onClick={() =>
+              onStatusChange(
+                selectedStatus === "unavailable" ? "" : "unavailable",
+              )
+            }
+            className={`${styles.statusButton} ${selectedStatus === "unavailable" ? styles.active : ""}`}
+          >
             <span className={`${styles.statusDot} ${styles.reserved}`}></span>
-            Забронировано
+            Нет в наличии
           </button>
         </div>
       </div>

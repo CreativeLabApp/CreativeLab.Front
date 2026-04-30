@@ -14,23 +14,26 @@ import {
 import styles from "./MasterClassesCard.module.css";
 import { useNavigate } from "react-router-dom";
 import { useFavoritesStore } from "../../stores/favoritesStore";
+import { useAuthStore } from "../../stores/authStore";
 
 function MasterClassesCard({ item }) {
   const navigate = useNavigate();
   const { toggleFavorite, isFavorite } = useFavoritesStore();
+  const { user } = useAuthStore();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const isItemFavorite = isFavorite(item.id);
+
+  const handleFavoriteClick = (e) => {
+    e.stopPropagation();
+    if (user?.id) toggleFavorite(user.id, item);
+  };
+
   const images = item.images || [];
   const hasMultipleImages = images.length > 1;
 
   const handleDetailsClick = () => {
     navigate(`/master-class/${item.id}`);
-  };
-
-  const handleFavoriteClick = (e) => {
-    e.stopPropagation();
-    toggleFavorite(item.id);
   };
 
   const handlePrevImage = (e) => {

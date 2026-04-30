@@ -1,18 +1,21 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { userApi } from "../../api/userApi";
 import {
   UserIcon,
   EnvelopeIcon,
   LockClosedIcon,
+  ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
-import styles from "./EditProfile.module.css";
+import styles from "./AdminEditUser.module.css";
 
-function EditProfile() {
+function AdminEditUser() {
   const navigate = useNavigate();
-  const { user, updateProfile } = useAuthStore();
+  const { id } = useParams();
+  const { user: currentUser, isAdmin } = useAuthStore();
 
+  const [targetUser, setTargetUser] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     surname: "",
@@ -20,22 +23,33 @@ function EditProfile() {
     password: "",
     confirmPassword: "",
   });
-
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || "",
-        surname: user.surname || "",
-        email: user.email || "",
-        password: "",
-        confirmPassword: "",
-      });
+    if (!currentUser || !isAdmin()) {
+      navigate("/");
+      return;
     }
-  }, [user]);
+    userApi
+      .getById(id)
+      .then((data) => {
+        setTargetUser(data);
+        setFormData({
+          name: data.name || "",
+          surname: data.surname || "",
+          email: data.email || "",
+          password: "",
+          confirmPassword: "",
+        });
+        setLoading(false);
+      })
+      .catch(() => {
+        navigate("/admin");
+      });
+  }, [id, currentUser, isAdmin, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -70,19 +84,12 @@ function EditProfile() {
     setSaveSuccess(false);
     try {
       await userApi.update({
-        id: user.id,
+        id,
         name: formData.name,
         surname: formData.surname,
         email: formData.email,
         password: formData.password || null,
       });
-
-      await updateProfile({
-        name: formData.name,
-        surname: formData.surname,
-        email: formData.email,
-      });
-
       setSaveSuccess(true);
       setFormData((prev) => ({ ...prev, password: "", confirmPassword: "" }));
     } catch (err) {
@@ -92,27 +99,24 @@ function EditProfile() {
     }
   };
 
-  if (!user) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.authRequired}>
-          <h2>Требуется авторизация</h2>
-          <p>Пожалуйста, войдите в систему для редактирования профиля</p>
-          <button
-            onClick={() => navigate("/login")}
-            className={styles.loginButton}
-          >
-            Войти
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return null;
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Редактирование профиля</h1>
+        <button
+          onClick={() => navigate("/admin")}
+          className={styles.backButton}
+        >
+          <ArrowLeftIcon className={styles.backIcon} />
+          Назад в админку
+        </button>
+        <h1 className={styles.title}>Редактирование пользователя</h1>
+        {targetUser && (
+          <p className={styles.subtitle}>
+            {targetUser.name} {targetUser.surname} — {targetUser.email}
+          </p>
+        )}
       </div>
 
       {saveSuccess && (
@@ -122,7 +126,6 @@ function EditProfile() {
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>Основная информация</h3>
-
           <div className={styles.formGrid}>
             <div className={styles.formGroup}>
               <label htmlFor="name" className={styles.label}>
@@ -136,7 +139,7 @@ function EditProfile() {
                 value={formData.name}
                 onChange={handleInputChange}
                 className={`${styles.input} ${errors.name ? styles.error : ""}`}
-                placeholder="Ваше имя"
+                placeholder="Имя"
                 maxLength={50}
               />
               {errors.name && (
@@ -156,7 +159,7 @@ function EditProfile() {
                 value={formData.surname}
                 onChange={handleInputChange}
                 className={styles.input}
-                placeholder="Ваша фамилия"
+                placeholder="Фамилия"
                 maxLength={50}
               />
             </div>
@@ -173,7 +176,7 @@ function EditProfile() {
                 value={formData.email}
                 onChange={handleInputChange}
                 className={`${styles.input} ${errors.email ? styles.error : ""}`}
-                placeholder="your@email.com"
+                placeholder="email@example.com"
               />
               {errors.email && (
                 <span className={styles.errorMessage}>{errors.email}</span>
@@ -187,7 +190,6 @@ function EditProfile() {
           <p className={styles.sectionHint}>
             Оставьте пустым, если не хотите менять пароль
           </p>
-
           <div className={styles.formGrid}>
             <div className={styles.formGroup}>
               <label htmlFor="password" className={styles.label}>
@@ -211,7 +213,7 @@ function EditProfile() {
             <div className={styles.formGroup}>
               <label htmlFor="confirmPassword" className={styles.label}>
                 <LockClosedIcon className={styles.labelIcon} />
-                Подтверждение пароля
+                Подтверждение
               </label>
               <input
                 type="password"
@@ -238,7 +240,7 @@ function EditProfile() {
         <div className={styles.formActions}>
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/admin")}
             className={styles.cancelButton}
             disabled={isSubmitting}
           >
@@ -257,4 +259,4 @@ function EditProfile() {
   );
 }
 
-export default EditProfile;
+export default AdminEditUser;

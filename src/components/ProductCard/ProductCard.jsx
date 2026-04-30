@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useFavoritesStore } from "../../stores/favoritesStore";
+import { useAuthStore } from "../../stores/authStore";
 import {
   PhotoIcon,
   StarIcon,
@@ -18,17 +19,17 @@ import styles from "./ProductCard.module.css";
 function ProductCard({ product }) {
   const navigate = useNavigate();
   const { toggleFavoriteProduct, isFavoriteProduct } = useFavoritesStore();
+  const { user } = useAuthStore();
 
   const isInFavorites = isFavoriteProduct(product.id);
 
   const handleDetailsClick = () => {
-    console.log(product.sellerId);
     navigate(`/marketplace/product/${product.id}`);
   };
 
   const handleToggleFavorite = (e) => {
     e.stopPropagation();
-    toggleFavoriteProduct(product.id);
+    if (user?.id) toggleFavoriteProduct(user.id, product);
   };
 
   const renderRating = (rating) => {
@@ -57,7 +58,7 @@ function ProductCard({ product }) {
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat("ru-RU").format(price) + "₽";
+    return new Intl.NumberFormat("be-BY").format(price) + " Br";
   };
 
   return (
@@ -78,13 +79,11 @@ function ProductCard({ product }) {
         )}
 
         {/* Бейдж статуса */}
-        <div className={`${styles.statusBadge} ${styles[product.status]}`}>
-          {product.status === "available"
-            ? "В наличии"
-            : product.status === "sold"
-            ? "Продано"
-            : "Забронировано"}
-        </div>
+        {!product.isAvailable && (
+          <div className={`${styles.statusBadge} ${styles.unavailable}`}>
+            Нет в наличии
+          </div>
+        )}
 
         {/* Кнопки действий */}
         <div className={styles.actionButtons}>
@@ -162,16 +161,12 @@ function ProductCard({ product }) {
 
         <button
           className={`${styles.actionButton} ${
-            product.status !== "available" ? styles.disabled : ""
+            !product.isAvailable ? styles.disabled : ""
           }`}
           onClick={handleDetailsClick}
-          disabled={product.status !== "available"}
+          disabled={!product.isAvailable}
         >
-          {product.status === "available"
-            ? "Подробнее"
-            : product.status === "sold"
-            ? "Продано"
-            : "Забронировано"}
+          {product.isAvailable ? "Подробнее" : "Нет в наличии"}
         </button>
       </div>
     </div>

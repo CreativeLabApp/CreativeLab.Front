@@ -1,5 +1,10 @@
-import React from "react";
+import { useState } from "react";
 import styles from "./FilterPanel.module.css";
+import {
+  BarsArrowDownIcon,
+  BarsArrowUpIcon,
+  Bars3Icon,
+} from "@heroicons/react/24/outline";
 
 function FilterPanel({
   categories,
@@ -14,6 +19,42 @@ function FilterPanel({
   popularClasses,
 }) {
   const ratingOptions = [4.5, 4.0, 3.5, 3.0, 0];
+  const [materialSearch, setMaterialSearch] = useState("");
+  const [materialsSort, setMaterialsSort] = useState("none"); // "none" | "asc" | "desc"
+
+  const filteredMaterials = materialSearch.trim()
+    ? materials.filter((m) =>
+        m.toLowerCase().includes(materialSearch.toLowerCase()),
+      )
+    : materials;
+
+  const displayedMaterials =
+    materialsSort === "asc"
+      ? [...filteredMaterials].sort((a, b) => a.localeCompare(b, "ru"))
+      : materialsSort === "desc"
+        ? [...filteredMaterials].sort((a, b) => b.localeCompare(a, "ru"))
+        : filteredMaterials;
+
+  const cycleSortOrder = () =>
+    setMaterialsSort((prev) =>
+      prev === "none" ? "asc" : prev === "asc" ? "desc" : "none",
+    );
+
+  const sortIcon =
+    materialsSort === "asc" ? (
+      <BarsArrowDownIcon className={styles.sortIcon} />
+    ) : materialsSort === "desc" ? (
+      <BarsArrowUpIcon className={styles.sortIcon} />
+    ) : (
+      <Bars3Icon className={styles.sortIcon} />
+    );
+
+  const sortTitle =
+    materialsSort === "none"
+      ? "Сортировать А-Я"
+      : materialsSort === "asc"
+        ? "Сортировать Я-А"
+        : "Сбросить сортировку";
 
   return (
     <div className={styles.panel}>
@@ -53,8 +94,25 @@ function FilterPanel({
       {/* Фильтр по материалам */}
       <div className={styles.section}>
         <h4 className={styles.sectionTitle}>Материалы и техники</h4>
+        <div className={styles.materialSearchWrapper}>
+          <input
+            type="text"
+            value={materialSearch}
+            onChange={(e) => setMaterialSearch(e.target.value)}
+            placeholder="Поиск материала..."
+            className={styles.materialSearch}
+          />
+          <button
+            type="button"
+            onClick={cycleSortOrder}
+            className={`${styles.sortButton} ${materialsSort !== "none" ? styles.sortActive : ""}`}
+            title={sortTitle}
+          >
+            {sortIcon}
+          </button>
+        </div>
         <div className={styles.checkboxList}>
-          {materials.map((material) => (
+          {displayedMaterials.map((material) => (
             <label key={material} className={styles.checkboxLabel}>
               <input
                 type="checkbox"
@@ -65,6 +123,9 @@ function FilterPanel({
               <span className={styles.checkboxText}>{material}</span>
             </label>
           ))}
+          {displayedMaterials.length === 0 && (
+            <span className={styles.noResults}>Ничего не найдено</span>
+          )}
         </div>
       </div>
 

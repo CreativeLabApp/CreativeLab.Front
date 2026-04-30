@@ -4,10 +4,9 @@ export const footerColumns = [
     items: [
       { type: "link", label: "Главная", href: "/" },
       { type: "link", label: "Мастер-классы", href: "/master-class" },
-      { type: "link", label: "Продажи", href: "/sales" },
+      { type: "link", label: "Продажи", href: "/marketplace" },
       { type: "link", label: "Рейтинг", href: "/rating" },
-      { type: "link", label: "Избранное", href: "/favorites" },
-      { type: "link", label: "О проекте", href: "/about" },
+      { type: "link", label: "Избранное", href: "/favorite" },
     ],
   },
   {

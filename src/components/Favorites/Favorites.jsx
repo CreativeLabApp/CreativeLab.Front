@@ -1,281 +1,60 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useFavoritesStore } from "../../stores/favoritesStore";
-import { useMarketplaceStore } from "../../stores/marketplaceStore";
-import { masterclassApi } from "../../api/masterclassApi";
+import { useAuthStore } from "../../stores/authStore";
 import MasterClassesCard from "../MasterClassesCard/MasterClassesCard";
 import ProductCard from "../ProductCard/ProductCard";
 import styles from "./Favorites.module.css";
+import { useState } from "react";
 import {
   HeartIcon,
   VideoCameraIcon,
   ShoppingBagIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 
 function Favorites() {
+  const { user } = useAuthStore();
   const {
-    favorites,
-    favoriteProducts,
+    masterclasses,
+    products,
+    loading,
+    load,
     removeFromFavorites,
-    toggleFavoriteProduct,
+    removeFromFavoriteProducts,
     clearFavorites,
     getFavoritesCount,
     getFavoriteProductsCount,
     getAllFavoritesCount,
   } = useFavoritesStore();
 
-  const { products, getProductById } = useMarketplaceStore();
-  const [allMasterClasses, setAllMasterClasses] = useState([]);
-
-  useEffect(() => {
-    masterclassApi
-      .getAll()
-      .then((data) => {
-        const mapped = data.masterclasses.map((m) => ({
-          id: m.id,
-          title: m.title,
-          description: m.shortDescription || m.description || "",
-          category: m.categoryName || m.categoryId,
-          author: m.authorName || m.authorId,
-          images: m.imageUrls?.length
-            ? m.imageUrls
-            : m.thumbnailUrl
-              ? [m.thumbnailUrl]
-              : [],
-          rating: Number(m.rating) || 0,
-          views: m.views || 0,
-          materials: m.materials || [],
-        }));
-        setAllMasterClasses(mapped);
-      })
-      .catch(() => {});
-  }, []);
-
   const [activeTab, setActiveTab] = useState("masterclasses");
 
-  const favoriteMasterClasses = favorites
-    .map((id) => allMasterClasses.find((item) => item.id === id))
-    .filter(Boolean);
-
-  const favoriteProductsData = favoriteProducts
-    .map((id) =>
-      getProductById ? getProductById(id) : products.find((p) => p.id === id),
-    )
-    .filter(Boolean);
+  useEffect(() => {
+    if (user?.id) load(user.id);
+  }, [user?.id, load]);
 
   const favoritesCount = getAllFavoritesCount();
   const masterClassesCount = getFavoritesCount();
   const productsCount = getFavoriteProductsCount();
 
-  // Обработчики удаления
-  const handleRemoveMasterClass = (id) => {
-    removeFromFavorites(id);
-  };
+  if (loading) return null;
 
-  const handleRemoveProduct = (id) => {
-    toggleFavoriteProduct(id);
-  };
-
-  return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.headerContent}>
-          <div className={styles.titleSection}>
-            <div>
-              <h1 className={styles.title}>Избранное</h1>
-              <p className={styles.subtitle}>
-                {favoritesCount > 0
-                  ? `У вас ${favoritesCount} избранных элементов`
-                  : "Вы пока ничего не добавили в избранное"}
-              </p>
-            </div>
-          </div>
+  if (favoritesCount === 0) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Избранное</h1>
+          <p className={styles.subtitle}>
+            Вы пока ничего не добавили в избранное
+          </p>
         </div>
-
-        {favoritesCount > 0 && (
-          <div className={styles.headerActions}>
-            <button onClick={clearFavorites} className={styles.clearButton}>
-              <XMarkIcon className={styles.clearIcon} />
-              Очистить все
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Навигация между табами */}
-      {favoritesCount > 0 && (
-        <div className={styles.tabs}>
-          <button
-            className={`${styles.tab} ${
-              activeTab === "masterclasses" ? styles.active : ""
-            }`}
-            onClick={() => setActiveTab("masterclasses")}
-          >
-            <VideoCameraIcon className={styles.tabIcon} />
-            Мастер-классы
-            <span className={styles.tabCount}>{masterClassesCount}</span>
-          </button>
-          <button
-            className={`${styles.tab} ${
-              activeTab === "products" ? styles.active : ""
-            }`}
-            onClick={() => setActiveTab("products")}
-          >
-            <ShoppingBagIcon className={styles.tabIcon} />
-            Товары
-            <span className={styles.tabCount}>{productsCount}</span>
-          </button>
-          <button
-            className={`${styles.tab} ${
-              activeTab === "all" ? styles.active : ""
-            }`}
-            onClick={() => setActiveTab("all")}
-          >
-            <HeartIconSolid className={styles.tabIcon} />
-            Всё избранное
-            <span className={styles.tabCount}>{favoritesCount}</span>
-          </button>
-        </div>
-      )}
-
-      {favoritesCount > 0 ? (
-        <>
-          {/* Контент для мастер-классов */}
-          {activeTab === "masterclasses" && masterClassesCount > 0 && (
-            <div className={styles.contentSection}>
-              <h2 className={styles.sectionTitle}>Избранные мастер-классы</h2>
-              <div className={styles.grid}>
-                {favoriteMasterClasses.map((item) => (
-                  <div key={item.id} className={styles.cardWrapper}>
-                    <MasterClassesCard item={item} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Контент для товаров */}
-          {activeTab === "products" && productsCount > 0 && (
-            <div className={styles.contentSection}>
-              <h2 className={styles.sectionTitle}>Избранные товары</h2>
-              <div className={styles.grid}>
-                {favoriteProductsData.map((product) => (
-                  <div key={product.id} className={styles.cardWrapper}>
-                    <ProductCard product={product} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Контент для всего избранного */}
-          {activeTab === "all" && (
-            <div className={styles.allContent}>
-              {masterClassesCount > 0 && (
-                <div className={styles.contentSection}>
-                  <h2 className={styles.sectionTitle}>
-                    <VideoCameraIcon className={styles.sectionIcon} />
-                    Мастер-классы ({masterClassesCount})
-                  </h2>
-                  <div className={styles.grid}>
-                    {favoriteMasterClasses.map((item) => (
-                      <div key={item.id} className={styles.cardWrapper}>
-                        <MasterClassesCard item={item} />
-                        <button
-                          className={styles.removeButton}
-                          onClick={() => handleRemoveMasterClass(item.id)}
-                          aria-label="Удалить из избранного"
-                        >
-                          <XMarkIcon className={styles.removeIcon} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {productsCount > 0 && (
-                <div className={styles.contentSection}>
-                  <h2 className={styles.sectionTitle}>
-                    <ShoppingBagIcon className={styles.sectionIcon} />
-                    Товары ({productsCount})
-                  </h2>
-                  <div className={styles.grid}>
-                    {favoriteProductsData.map((product) => (
-                      <div key={product.id} className={styles.cardWrapper}>
-                        <ProductCard product={product} />
-                        <button
-                          className={styles.removeButton}
-                          onClick={() => handleRemoveProduct(product.id)}
-                          aria-label="Удалить из избранного"
-                        >
-                          <XMarkIcon className={styles.removeIcon} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Пустой таб */}
-          {(activeTab === "masterclasses" && masterClassesCount === 0) ||
-          (activeTab === "products" && productsCount === 0) ? (
-            <div className={styles.emptyTab}>
-              <div className={styles.emptyIcon}>
-                {activeTab === "masterclasses" ? (
-                  <VideoCameraIcon className={styles.emptyTabIcon} />
-                ) : (
-                  <ShoppingBagIcon className={styles.emptyTabIcon} />
-                )}
-              </div>
-              <h3 className={styles.emptyTabTitle}>
-                {activeTab === "masterclasses"
-                  ? "Нет избранных мастер-классов"
-                  : "Нет избранных товаров"}
-              </h3>
-              <p className={styles.emptyTabText}>
-                {activeTab === "masterclasses"
-                  ? "Добавляйте понравившиеся мастер-классы в избранное"
-                  : "Добавляйте понравившиеся товары в избранное"}
-              </p>
-              <Link
-                to={activeTab === "masterclasses" ? "/" : "/marketplace"}
-                className={styles.exploreButton}
-              >
-                {activeTab === "masterclasses"
-                  ? "Перейти к мастер-классам"
-                  : "Перейти к товарам"}
-              </Link>
-            </div>
-          ) : null}
-
-          {/* Футер с подсказками */}
-          <div className={styles.footerHint}>
-            <p>Добавляйте в избранное всё, что понравилось!</p>
-            <div className={styles.footerLinks}>
-              <Link to="/" className={styles.exploreLink}>
-                Смотреть мастер-классы
-              </Link>
-              <Link to="/marketplace" className={styles.exploreLink}>
-                Перейти в магазин
-              </Link>
-            </div>
-          </div>
-        </>
-      ) : (
-        /* Состояние пустого избранного */
         <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>
-            <HeartIcon className={styles.emptyHeartIcon} />
-          </div>
+          <HeartIcon className={styles.emptyHeartIcon} />
           <h2 className={styles.emptyTitle}>Избранное пусто</h2>
           <p className={styles.emptyText}>
             Добавляйте мастер-классы и товары в избранное, чтобы вернуться к ним
-            позже. Это поможет вам не потерять понравившиеся курсы и покупки.
+            позже.
           </p>
           <div className={styles.emptyActions}>
             <Link to="/" className={styles.catalogButton}>
@@ -288,7 +67,125 @@ function Favorites() {
             </Link>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
+          <div className={styles.titleSection}>
+            <div>
+              <h1 className={styles.title}>Избранное</h1>
+              <p className={styles.subtitle}>
+                У вас {favoritesCount} избранных элементов
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className={styles.headerActions}>
+          <button
+            onClick={() => clearFavorites(user.id)}
+            className={styles.clearButton}
+          >
+            <XMarkIcon className={styles.clearIcon} />
+            Очистить все
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tab} ${activeTab === "masterclasses" ? styles.active : ""}`}
+          onClick={() => setActiveTab("masterclasses")}
+        >
+          <VideoCameraIcon className={styles.tabIcon} />
+          Мастер-классы
+          <span className={styles.tabCount}>{masterClassesCount}</span>
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === "products" ? styles.active : ""}`}
+          onClick={() => setActiveTab("products")}
+        >
+          <ShoppingBagIcon className={styles.tabIcon} />
+          Товары
+          <span className={styles.tabCount}>{productsCount}</span>
+        </button>
+      </div>
+
+      {activeTab === "masterclasses" && (
+        <div className={styles.contentSection}>
+          {masterclasses.length > 0 ? (
+            <div className={styles.grid}>
+              {masterclasses.map((item) => (
+                <div key={item.id} className={styles.cardWrapper}>
+                  <MasterClassesCard item={item} />
+                  <button
+                    className={styles.removeButton}
+                    onClick={() => removeFromFavorites(user.id, item.id)}
+                    aria-label="Удалить из избранного"
+                  >
+                    <XMarkIcon className={styles.removeIcon} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.emptyTab}>
+              <VideoCameraIcon className={styles.emptyTabIcon} />
+              <h3 className={styles.emptyTabTitle}>
+                Нет избранных мастер-классов
+              </h3>
+              <Link to="/" className={styles.exploreButton}>
+                Перейти к мастер-классам
+              </Link>
+            </div>
+          )}
+        </div>
       )}
+
+      {activeTab === "products" && (
+        <div className={styles.contentSection}>
+          {products.length > 0 ? (
+            <div className={styles.grid}>
+              {products.map((product) => (
+                <div key={product.id} className={styles.cardWrapper}>
+                  <ProductCard product={product} />
+                  <button
+                    className={styles.removeButton}
+                    onClick={() =>
+                      removeFromFavoriteProducts(user.id, product.id)
+                    }
+                    aria-label="Удалить из избранного"
+                  >
+                    <XMarkIcon className={styles.removeIcon} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.emptyTab}>
+              <ShoppingBagIcon className={styles.emptyTabIcon} />
+              <h3 className={styles.emptyTabTitle}>Нет избранных товаров</h3>
+              <Link to="/marketplace" className={styles.exploreButton}>
+                Перейти в магазин
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className={styles.footerHint}>
+        <div className={styles.footerLinks}>
+          <Link to="/" className={styles.exploreLink}>
+            Смотреть мастер-классы
+          </Link>
+          <Link to="/marketplace" className={styles.exploreLink}>
+            Перейти в магазин
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
