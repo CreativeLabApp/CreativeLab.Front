@@ -1,6 +1,13 @@
 const BASE_URL = process.env.REACT_APP_API_URL || "https://localhost:7111/api";
 const SERVER_URL = process.env.REACT_APP_SERVER_URL || "https://localhost:7111";
 
+const getAuthHeaders = (token) => {
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+  return {};
+};
+
 const mapProduct = (p) => ({
   id: p.id,
   title: p.title,
@@ -110,15 +117,27 @@ export const productApi = {
     if (!res.ok) throw new Error("Failed to delete product");
   },
 
-  rate: async (id, score) => {
+  rate: async (id, score, token) => {
     const res = await fetch(
       `${BASE_URL}/product/rate?id=${id}&score=${score}`,
       {
         method: "PATCH",
+        headers: getAuthHeaders(token),
       },
     );
     if (!res.ok) throw new Error("Failed to rate product");
     return res.json(); // { rating: decimal }
+  },
+
+  getUserRating: async (productId, userId, token) => {
+    const res = await fetch(
+      `${BASE_URL}/product/getuserrating?productId=${productId}&userId=${userId}`,
+      {
+        headers: getAuthHeaders(token),
+      },
+    );
+    if (!res.ok) throw new Error("Failed to get user rating");
+    return res.json(); // { score: number }
   },
 
   uploadImages: async (files) => {

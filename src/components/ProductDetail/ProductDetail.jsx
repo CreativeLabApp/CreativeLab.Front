@@ -33,7 +33,7 @@ function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toggleFavoriteProduct, isFavoriteProduct } = useFavoritesStore();
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
 
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -55,17 +55,23 @@ function ProductDetail() {
       .getById(id)
       .then((product) => {
         setProduct(product);
-        setLoading(false);
+        console.log(user);
+        console.log(token);
+        return productApi.getUserRating(id, user.id, token);
+      })
+      .then((userRating) => {
+        setUserScore(userRating?.score || 0);
         return productApi.getBySeller(product.sellerId);
       })
       .then((related) => {
         setRelatedProducts(related.filter((p) => p.id !== id).slice(0, 4));
+        setLoading(false);
       })
       .catch((err) => {
         setError(err.message);
         setLoading(false);
       });
-  }, [id]);
+  }, [id, user.id]);
 
   const notify = (msg) => {
     setNotification(msg);
@@ -93,11 +99,10 @@ function ProductDetail() {
     }
     setIsRating(true);
     try {
-      const { rating } = await productApi.rate(id, score);
+      const { rating } = await productApi.rate(id, score, token);
       setProduct((prev) => ({
         ...prev,
         rating,
-        ratingsCount: (prev.ratingsCount || 0) + 1,
       }));
       setUserScore(score);
       notify("Оценка сохранена!");
@@ -129,21 +134,6 @@ function ProductDetail() {
 
   if (loading) return <Loader />;
 
-  if (error || !product) {
-    return (
-      <div className={styles.notFoundContainer}>
-        <h2>Товар не найден</h2>
-        <p>{error || "Запрошенный товар не существует или был удалён."}</p>
-        <button
-          onClick={() => navigate("/marketplace")}
-          className={styles.homeButton}
-        >
-          Вернуться в магазин
-        </button>
-      </div>
-    );
-  }
-
   return (
     <>
       {notification && <Notification>{notification}</Notification>}
@@ -152,7 +142,7 @@ function ProductDetail() {
         <div className={styles.modalOverlay}>
           <div className={styles.deleteConfirmModal}>
             <h3>Удалить товар?</h3>
-            <p>Вы уверены, что хотите удалить «{product.title}»?</p>
+            <p>Вы уверены, что хотите удалить "{product.title}"?</p>
             <p>Это действие нельзя отменить.</p>
             <div className={styles.modalActions}>
               <button
@@ -170,7 +160,6 @@ function ProductDetail() {
       )}
 
       <div className={styles.container}>
-        {/* Навигация */}
         <nav className={styles.navigation}>
           <div className={styles.navigationLeft}>
             <button onClick={() => navigate(-1)} className={styles.backButton}>
@@ -206,7 +195,6 @@ function ProductDetail() {
         </nav>
 
         <div className={styles.content}>
-          {/* Левая колонка — галерея */}
           <div className={styles.leftColumn}>
             {product.images.length > 0 ? (
               <ProductGallery
@@ -224,7 +212,6 @@ function ProductDetail() {
             )}
           </div>
 
-          {/* Центральная колонка — детали */}
           <div className={styles.centerColumn}>
             <div className={styles.productInfo}>
               <h1 className={styles.title}>{product.title}</h1>
@@ -249,7 +236,6 @@ function ProductDetail() {
                 <p>{product.description}</p>
               </div>
 
-              {/* Продавец */}
               <div className={styles.sellerInfo}>
                 <h3>Продавец</h3>
                 <div className={styles.sellerDetails}>
@@ -264,7 +250,6 @@ function ProductDetail() {
                 </div>
               </div>
 
-              {/* Характеристики */}
               <div className={styles.specifications}>
                 <h3>Характеристики</h3>
                 <div className={styles.specGrid}>
@@ -309,7 +294,6 @@ function ProductDetail() {
                 </div>
               </div>
 
-              {/* Рейтинг */}
               <div className={styles.ratingSection}>
                 <h3>Рейтинг</h3>
                 <div className={styles.ratingOverview}>
@@ -356,7 +340,7 @@ function ProductDetail() {
               </div>
               {product.materials.length > 0 && (
                 <div className={styles.tagsSection}>
-                  <h3>Материалы</h3>
+                  <div className={styles.h}>Материалы</div>
                   <div className={styles.tagsList}>
                     {product.materials.map((m, i) => (
                       <span key={i} className={styles.tag}>
@@ -369,7 +353,6 @@ function ProductDetail() {
             </div>
           </div>
 
-          {/* Правая колонка — покупка */}
           <div className={styles.rightColumn}>
             <div className={styles.purchaseCard}>
               <div className={styles.purchaseHeader}>
@@ -438,7 +421,6 @@ function ProductDetail() {
           </div>
         </div>
 
-        {/* Похожие товары */}
         {relatedProducts.length > 0 && (
           <div className={styles.relatedSection}>
             <h2 className={styles.relatedTitle}>

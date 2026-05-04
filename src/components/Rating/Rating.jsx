@@ -11,19 +11,19 @@ import {
   VideoCameraIcon,
   UserIcon,
   FireIcon,
-  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
-import creatorsData from "../../sources/creators";
 
 function Rating() {
-  const { products } = useMarketplaceStore();
+  const { products, fetchProducts } = useMarketplaceStore();
   const [masterClasses, setMasterClasses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    masterclassApi
-      .getAll()
-      .then((data) => {
+    const loadData = async () => {
+      try {
+        await fetchProducts();
+        const data = await masterclassApi.getAll();
         const mapped = data.masterclasses.map((m) => ({
           id: m.id,
           title: m.title,
@@ -38,34 +38,34 @@ function Rating() {
           views: m.views || 0,
         }));
         setMasterClasses(mapped);
-      })
-      .catch(() => {});
-  }, []);
+      } catch (err) {
+        console.error("Error loading data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
+  }, [fetchProducts]);
 
   const [activeCategory, setActiveCategory] = useState("all");
   const [timePeriod, setTimePeriod] = useState("all");
 
-  // Категории для фильтрации
   const categories = [
     { id: "all", name: "Все", icon: <TrophyIcon /> },
     { id: "products", name: "Товары", icon: <ShoppingBagIcon /> },
     { id: "masterclasses", name: "Мастер-классы", icon: <VideoCameraIcon /> },
-    { id: "creators", name: "Творцы", icon: <UserIcon /> },
   ];
 
-  // Периоды времени
   const timePeriods = [
     { id: "all", name: "За все время" },
     { id: "month", name: "За месяц" },
     { id: "week", name: "За неделю" },
   ];
 
-  // Форматирование чисел
   const formatNumber = (num) => {
     return new Intl.NumberFormat("ru-RU").format(num);
   };
 
-  // Рендер рейтинга звездами
   const renderRatingStars = (rating) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
@@ -85,11 +85,9 @@ function Rating() {
     );
   };
 
-  // Топ товаров по продажам и рейтингу
   const topProducts = useMemo(() => {
     return [...products]
       .sort((a, b) => {
-        // Сначала по продажам, потом по рейтингу
         const salesA = a.sales || 0;
         const salesB = b.sales || 0;
         if (salesB !== salesA) return salesB - salesA;
@@ -98,11 +96,9 @@ function Rating() {
       .slice(0, 10);
   }, [products]);
 
-  // Топ мастер-классов по просмотрам и рейтингу
   const topMasterClasses = useMemo(() => {
     return [...masterClasses]
       .sort((a, b) => {
-        // Сначала по просмотрам, потом по рейтингу
         const viewsA = a.views || 0;
         const viewsB = b.views || 0;
         if (viewsB !== viewsA) return viewsB - viewsA;
@@ -111,37 +107,21 @@ function Rating() {
       .slice(0, 10);
   }, [masterClasses]);
 
-  // Топ креаторов по рейтингу и продажам
-  const topCreators = useMemo(() => {
-    return [...creatorsData]
-      .sort((a, b) => {
-        // Сначала по рейтингу, потом по продажам
-        if (b.rating !== a.rating) return b.rating - a.rating;
-        return b.totalSales - a.totalSales;
-      })
-      .slice(0, 10);
-  }, []);
-
-  // Получение данных для текущей категории
   const getCurrentData = () => {
     switch (activeCategory) {
       case "products":
         return topProducts;
       case "masterclasses":
         return topMasterClasses;
-      case "creators":
-        return topCreators;
       case "all":
       default:
         return {
           products: topProducts.slice(0, 5),
           masterClasses: topMasterClasses.slice(0, 5),
-          creators: topCreators.slice(0, 5),
         };
     }
   };
 
-  // Рендер карточки продукта
   const renderProductCard = (product, index) => (
     <div key={product.id} className={styles.ratingCard}>
       <div className={styles.rankBadge}>
@@ -186,7 +166,6 @@ function Rating() {
     </div>
   );
 
-  // Рендер карточки мастер-класса
   const renderMasterClassCard = (masterClass, index) => (
     <div key={masterClass.id} className={styles.ratingCard}>
       <div className={styles.rankBadge}>
@@ -194,8 +173,8 @@ function Rating() {
       </div>
       <div className={styles.cardContent}>
         <div className={styles.cardImage}>
-          {masterClass.image ? (
-            <img src={masterClass.image} alt={masterClass.title} />
+          {masterClass.images && masterClass.images.length > 0 ? (
+            <img src={masterClass.images[0]} alt={masterClass.title} />
           ) : (
             <div className={styles.imagePlaceholder}>
               <VideoCameraIcon className={styles.placeholderIcon} />
@@ -234,77 +213,34 @@ function Rating() {
     </div>
   );
 
-  // Рендер карточки креатора
-  const renderCreatorCard = (creator, index) => (
-    <div key={creator.id} className={styles.ratingCard}>
-      <div className={styles.rankBadge}>
-        <span className={styles.rankNumber}>{index + 1}</span>
-      </div>
-      <div className={styles.cardContent}>
-        <div className={styles.cardImage}>
-          {creator.avatar ? (
-            <img src={creator.avatar} alt={creator.name} />
-          ) : (
-            <div className={styles.avatarPlaceholder}>
-              <UserIcon className={styles.avatarIcon} />
-            </div>
-          )}
-        </div>
-        <div className={styles.cardInfo}>
-          <h3 className={styles.cardTitle}>{creator.name}</h3>
-          <div className={styles.cardMeta}>
-            <div className={styles.cardRating}>
-              {renderRatingStars(creator.rating)}
-              <span className={styles.ratingValue}>{creator.rating}</span>
-            </div>
-            <div className={styles.creatorCategory}>
-              <SparklesIcon className={styles.categoryIcon} />
-              <span>{creator.category}</span>
-            </div>
-          </div>
-          <div className={styles.cardStats}>
-            <div className={styles.statItem}>
-              <VideoCameraIcon className={styles.statIcon} />
-              <span>{creator.masterClassesCount} мастер-классов</span>
-            </div>
-            <div className={styles.statItem}>
-              <ArrowTrendingUpIcon className={styles.statIcon} />
-              <span>{formatNumber(creator.totalSales)} продаж</span>
-            </div>
-            <div className={styles.statItem}>
-              <UserGroupIcon className={styles.statIcon} />
-              <span>{formatNumber(creator.followers)} подписчиков</span>
-            </div>
-          </div>
-          <div className={styles.cardFooter}>
-            <Link to={`/creator/${creator.id}`} className={styles.viewButton}>
-              Профиль
-            </Link>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   const currentData = getCurrentData();
+
+  if (isLoading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Рейтинг</h1>
+          <p className={styles.subtitle}>Загрузка данных...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
-      {/* Шапка страницы */}
       <div className={styles.header}>
         <div className={styles.headerContent}>
           <div className={styles.titleSection}>
             <div>
               <h1 className={styles.title}>Рейтинг</h1>
               <p className={styles.subtitle}>
-                Лучшие товары, мастер-классы и авторы платформы
+                Лучшие товары и мастер-классы платформы
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Фильтры */}
       <div className={styles.filtersSection}>
         <div className={styles.categoriesFilter}>
           {categories.map((category) => (
@@ -320,34 +256,11 @@ function Rating() {
             </button>
           ))}
         </div>
-
-        <div className={styles.timeFilter}>
-          <div className={styles.timeFilterLabel}>
-            <CalendarDaysIcon className={styles.timeIcon} />
-            <span>Период:</span>
-          </div>
-          <div className={styles.timeButtons}>
-            {timePeriods.map((period) => (
-              <button
-                key={period.id}
-                className={`${styles.timeButton} ${
-                  timePeriod === period.id ? styles.active : ""
-                }`}
-                onClick={() => setTimePeriod(period.id)}
-              >
-                {period.name}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
-      {/* Контент */}
       <div className={styles.content}>
         {activeCategory === "all" ? (
-          // Показываем все категории
           <div className={styles.allCategories}>
-            {/* Топ товаров */}
             <div className={styles.categorySection}>
               <div className={styles.sectionHeader}>
                 <div className={styles.sectionTitle}>
@@ -365,7 +278,6 @@ function Rating() {
               </div>
             </div>
 
-            {/* Топ мастер-классов */}
             <div className={styles.categorySection}>
               <div className={styles.sectionHeader}>
                 <div className={styles.sectionTitle}>
@@ -382,27 +294,8 @@ function Rating() {
                 )}
               </div>
             </div>
-
-            {/* Топ креаторов */}
-            <div className={styles.categorySection}>
-              <div className={styles.sectionHeader}>
-                <div className={styles.sectionTitle}>
-                  <UserIcon className={styles.sectionIcon} />
-                  <h2>Топ авторов</h2>
-                </div>
-                <Link to="/creators" className={styles.seeAllLink}>
-                  Все авторы →
-                </Link>
-              </div>
-              <div className={styles.ratingList}>
-                {currentData.creators.map((creator, index) =>
-                  renderCreatorCard(creator, index),
-                )}
-              </div>
-            </div>
           </div>
         ) : (
-          // Показываем выбранную категорию
           <div className={styles.singleCategory}>
             <div className={styles.categoryHeader}>
               <h2 className={styles.categoryTitle}>
@@ -423,16 +316,11 @@ function Rating() {
                 currentData.map((masterClass, index) =>
                   renderMasterClassCard(masterClass, index),
                 )}
-              {activeCategory === "creators" &&
-                currentData.map((creator, index) =>
-                  renderCreatorCard(creator, index),
-                )}
             </div>
           </div>
         )}
       </div>
 
-      {/* Информация о рейтинге */}
       <div className={styles.infoSection}>
         <div className={styles.infoCard}>
           <FireIcon className={styles.infoIcon} />
@@ -440,8 +328,8 @@ function Rating() {
             <h3 className={styles.infoTitle}>Как считается рейтинг?</h3>
             <p className={styles.infoText}>
               Рейтинг формируется на основе множества факторов: количество
-              продаж, отзывы пользователей, просмотры, активность авторов и
-              другие показатели качества.
+              продаж, отзывы пользователей, просмотры и другие показатели
+              качества.
             </p>
           </div>
         </div>
@@ -495,23 +383,6 @@ const CalendarDaysIcon = ({ className }) => (
       strokeLinecap="round"
       strokeLinejoin="round"
       d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"
-    />
-  </svg>
-);
-
-const UserGroupIcon = ({ className }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={1.5}
-    stroke="currentColor"
-    className={className}
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.25 0 2.25 2.25 0 0 1 4.25 0Zm-13.5 0a2.25 2.25 0 1 1-4.25 0 2.25 2.25 0 0 1 4.25 0Z"
     />
   </svg>
 );

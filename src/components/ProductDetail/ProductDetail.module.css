@@ -1,5 +1,5 @@
 .container {
-  width: 80%;
+  width: 85%;
   margin: 0 auto;
   padding: var(--spacing-xl);
   min-height: 100vh;
@@ -300,17 +300,15 @@
 .specificationsHeader,
 .tagsHeader {
   display: flex;
-  align-items: center;
   justify-content: space-between;
 }
 
 .descriptionHeader h3,
 .specificationsHeader h3,
-.tagsHeader h3 {
+.tagsHeader .h {
   font-size: var(--font-size-lg);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--font-color);
-  margin: 0;
 }
 
 .editDescriptionButton,
@@ -366,7 +364,7 @@
 .ratingCount {
   font-size: var(--font-size-sm);
   color: var(--gray-color);
-  margin-left: var(--spacing-sm);
+  width: 60px;
 }
 
 /* Цена с кнопкой редактирования */
@@ -532,10 +530,17 @@
 
 /* Теги */
 .tagsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   padding: var(--spacing-lg);
   background: var(--main-color);
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
+}
+
+.h {
+  font-weight: 600;
 }
 
 .tagsList {
@@ -1189,14 +1194,12 @@
   font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--font-color);
-  margin: 0 0 var(--spacing-md);
 }
 
 .ratingOverview {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
 }
 
 .ratingScore {
