@@ -100,10 +100,10 @@ export const productApi = {
     return res.json();
   },
 
-  update: async (dto) => {
+  update: async (dto, token) => {
     const res = await fetch(`${BASE_URL}/product/update`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
       body: JSON.stringify(dto),
     });
     if (!res.ok) throw new Error("Failed to update product");
@@ -140,11 +140,12 @@ export const productApi = {
     return res.json(); // { score: number }
   },
 
-  uploadImages: async (files) => {
+  uploadImages: async (files, token) => {
     const formData = new FormData();
     for (const file of files) formData.append("files", file);
     const res = await fetch(`${BASE_URL}/upload/images`, {
       method: "POST",
+      headers: getAuthHeaders(token),
       body: formData,
     });
     if (!res.ok) throw new Error("Failed to upload images");

@@ -27,6 +27,7 @@ import Loader from "../common/Loader/Loader";
 import ProductGallery from "../ProductGallery/ProductGallery";
 import ProductCard from "../ProductCard/ProductCard";
 import Notification from "../common/Notification/Notification";
+import EditProductModal from "../EditProductModal/EditProductModal";
 import { productApi } from "../../api/productApi";
 
 function ProductDetail() {
@@ -42,11 +43,12 @@ function ProductDetail() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [notification, setNotification] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [userScore, setUserScore] = useState(0);
   const [hoverScore, setHoverScore] = useState(0);
   const [isRating, setIsRating] = useState(false);
 
-  const isOwner = user && product && user.id === product.sellerId;
+  const isOwner = user && product && user?.id === product.sellerId;
   const isInWish = isFavoriteProduct(id);
 
   useEffect(() => {
@@ -57,7 +59,7 @@ function ProductDetail() {
         setProduct(product);
         console.log(user);
         console.log(token);
-        return productApi.getUserRating(id, user.id, token);
+        return productApi.getUserRating(id, user?.id, token);
       })
       .then((userRating) => {
         setUserScore(userRating?.score || 0);
@@ -71,7 +73,7 @@ function ProductDetail() {
         setError(err.message);
         setLoading(false);
       });
-  }, [id, user.id]);
+  }, [id, user?.id]);
 
   const notify = (msg) => {
     setNotification(msg);
@@ -83,7 +85,7 @@ function ProductDetail() {
       navigate("/login", { state: { from: `/marketplace/product/${id}` } });
       return;
     }
-    toggleFavoriteProduct(user.id, product);
+    toggleFavoriteProduct(user?.id, product);
     if (!isInWish) notify("Товар добавлен в избранное");
   };
 
@@ -120,6 +122,14 @@ function ProductDetail() {
     } catch (err) {
       notify("Ошибка при удалении товара");
     }
+  };
+
+  const handleEdit = () => {
+    setShowEditModal(true);
+  };
+
+  const handleEditModalClose = () => {
+    setShowEditModal(false);
   };
 
   const formatPrice = (price) =>
@@ -159,6 +169,10 @@ function ProductDetail() {
         </div>
       )}
 
+      {showEditModal && product && (
+        <EditProductModal product={product} onClose={handleEditModalClose} />
+      )}
+
       <div className={styles.container}>
         <nav className={styles.navigation}>
           <div className={styles.navigationLeft}>
@@ -189,6 +203,10 @@ function ProductDetail() {
               >
                 <TrashIcon className={styles.deleteIcon} />
                 Удалить
+              </button>
+              <button className={styles.editProductButton} onClick={handleEdit}>
+                <PencilSquareIcon className={styles.editIcon} />
+                Редактировать
               </button>
             </div>
           )}
@@ -387,15 +405,6 @@ function ProductDetail() {
                 {!isOwner && !product.isAvailable && (
                   <button className={styles.soldButton} disabled>
                     Нет в наличии
-                  </button>
-                )}
-                {isOwner && (
-                  <button
-                    className={styles.editButton}
-                    onClick={() => navigate(`/marketplace/edit-product/${id}`)}
-                  >
-                    <PencilSquareIcon className={styles.editIcon} />
-                    Редактировать
                   </button>
                 )}
               </div>

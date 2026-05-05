@@ -125,6 +125,31 @@
   transform: translateY(-1px);
 }
 
+.editProductButton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--accent-color);
+  color: var(--font-color);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editProductButton:hover {
+  background: var(--hover-color);
+  transform: translateY(-1px);
+}
+
+.editIcon {
+  width: 16px;
+  height: 16px;
+}
+
 .deleteIcon {
   width: 16px;
   height: 16px;
