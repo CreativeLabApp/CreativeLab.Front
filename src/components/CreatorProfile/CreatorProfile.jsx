@@ -81,8 +81,8 @@ function CreatorProfile() {
           images: m.imageUrls?.length
             ? m.imageUrls
             : m.thumbnailUrl
-              ? [m.thumbnailUrl]
-              : [],
+            ? [m.thumbnailUrl]
+            : [],
           rating: Number(m.rating) || 0,
           views: m.views || 0,
           materials: m.materials || [],
@@ -197,7 +197,9 @@ function CreatorProfile() {
         {/* Навигация по контенту */}
         <div className={styles.contentNavigation}>
           <button
-            className={`${styles.navButton} ${activeTab === "masterclasses" ? styles.active : ""}`}
+            className={`${styles.navButton} ${
+              activeTab === "masterclasses" ? styles.active : ""
+            }`}
             onClick={() => setActiveTab("masterclasses")}
           >
             <VideoCameraIcon className={styles.navIcon} />
@@ -207,7 +209,9 @@ function CreatorProfile() {
             </span>
           </button>
           <button
-            className={`${styles.navButton} ${activeTab === "products" ? styles.active : ""}`}
+            className={`${styles.navButton} ${
+              activeTab === "products" ? styles.active : ""
+            }`}
             onClick={() => setActiveTab("products")}
           >
             <ShoppingBagIcon className={styles.navIcon} />
@@ -215,7 +219,9 @@ function CreatorProfile() {
             <span className={styles.navCount}>{creatorProducts.length}</span>
           </button>
           <button
-            className={`${styles.navButton} ${activeTab === "gallery" ? styles.active : ""}`}
+            className={`${styles.navButton} ${
+              activeTab === "gallery" ? styles.active : ""
+            }`}
             onClick={() => setActiveTab("gallery")}
           >
             <PhotoIcon className={styles.navIcon} />
@@ -225,8 +231,8 @@ function CreatorProfile() {
 
         {/* Контент */}
         <div className={styles.contentSection}>
-          {activeTab === "masterclasses" ? (
-            creatorMasterClasses.length > 0 ? (
+          {activeTab === "masterclasses" &&
+            (creatorMasterClasses.length > 0 ? (
               <div className={styles.masterClassesGrid}>
                 {creatorMasterClasses.map((item) => (
                   <div key={item.id} className={styles.cardWrapper}>
@@ -257,33 +263,16 @@ function CreatorProfile() {
                   </Link>
                 )}
               </div>
-            )
-          ) : creatorProducts.length > 0 ? (
+            ))}
+          {activeTab === "products" && (
             <div className={styles.productsGrid}>
               {creatorProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
-          ) : activeTab === "gallery" ? (
+          )}
+          {activeTab === "gallery" && (
             <Gallery userId={id} isOwnProfile={isOwnProfile} />
-          ) : (
-            <div className={styles.emptyState}>
-              <ShoppingBagIcon className={styles.emptyIcon} />
-              <h3>Пока нет товаров</h3>
-              <p>
-                {isOwnProfile
-                  ? "Добавьте свои товары для продажи в маркетплейсе!"
-                  : `${fullName} пока не добавил товары`}
-              </p>
-              {isOwnProfile && (
-                <Link
-                  to="/marketplace/add-product"
-                  className={styles.createButton}
-                >
-                  Добавить товар
-                </Link>
-              )}
-            </div>
           )}
         </div>
       </div>
