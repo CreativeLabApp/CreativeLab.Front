@@ -19,9 +19,6 @@ import {
   StarIcon,
   CurrencyDollarIcon,
   ChatBubbleLeftIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import styles from "./AdminPanel.module.css";
 
@@ -117,12 +114,14 @@ function AdminPanel() {
   const [deleteUserTarget, setDeleteUserTarget] = useState(null); // { id, name }
   const [deleteMasterClassTarget, setDeleteMasterClassTarget] = useState(null); // { id, title }
   const [deleteProductTarget, setDeleteProductTarget] = useState(null); // { id, title }
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState(null); // { id, userName, masterclassTitle }
+  const [bulkDeleteCommentsTarget, setBulkDeleteCommentsTarget] =
+    useState(null); // number
 
   // Фильтры
   const [userFilter, setUserFilter] = useState("all");
   const [masterClassFilter, setMasterClassFilter] = useState("all");
   const [productFilter, setProductFilter] = useState("all");
-  const [commentFilter, setCommentFilter] = useState("all"); // Новый фильтр для комментариев
 
   // Сортировка
   const [userSort, setUserSort] = useState({ field: "id", direction: "asc" });
@@ -146,9 +145,6 @@ function AdminPanel() {
       navigate("/");
     }
   }, [user, isAdmin, navigate]);
-
-  // Получение всех комментариев с информацией о мастер-классе
-  const getAllComments = () => allComments;
 
   // Фильтрация пользователей
   const filteredUsers = allUsers
@@ -241,22 +237,18 @@ function AdminPanel() {
   const filteredComments = allComments
     .filter((comment) => {
       const matchesSearch =
-        comment.comment.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        comment.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        comment.masterClassTitle
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
+        (comment.comment &&
+          comment.comment.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (comment.userName &&
+          comment.userName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (comment.masterclassTitle &&
+          comment.masterclassTitle
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()));
 
-      const matchesFilter =
-        commentFilter === "all" ||
-        (commentFilter === "pending" && comment.status === "pending") ||
-        (commentFilter === "approved" && comment.status === "approved") ||
-        (commentFilter === "rejected" && comment.status === "rejected") ||
-        (commentFilter === "reported" && comment.reported);
-
-      return matchesSearch && matchesFilter;
+      return matchesSearch;
     })
-    .sort((a, b) => b.timestamp - a.timestamp); // Сортировка по дате (новые сначала)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   // Обработчики пользователей
   const handleDeleteUser = async (userId, name) => {
@@ -363,95 +355,45 @@ function AdminPanel() {
   };
 
   // Обработчики комментариев
-  const handleApproveComment = async (commentId) => {
-    if (window.confirm("Одобрить этот комментарий?")) {
-      try {
-        // TODO: Add backend endpoint for approving ratings
-        setAllComments((prev) =>
-          prev.map((c) =>
-            c.id === commentId ? { ...c, status: "approved" } : c,
-          ),
-        );
-        setSelectedComments(selectedComments.filter((id) => id !== commentId));
-      } catch {
-        alert("Ошибка при одобрении комментария");
-      }
+  const handleDeleteComment = (commentId, userName, masterclassTitle) => {
+    setDeleteCommentTarget({ id: commentId, userName, masterclassTitle });
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!deleteCommentTarget) return;
+    try {
+      await masterclassApi.deleteRating(deleteCommentTarget.id);
+      setAllComments((prev) =>
+        prev.filter((c) => c.id !== deleteCommentTarget.id),
+      );
+      setSelectedComments(
+        selectedComments.filter((id) => id !== deleteCommentTarget.id),
+      );
+    } catch {
+      alert("Ошибка при удалении комментария");
+    } finally {
+      setDeleteCommentTarget(null);
     }
   };
 
-  const handleRejectComment = async (commentId) => {
-    if (window.confirm("Отклонить этот комментарий?")) {
-      try {
-        // TODO: Add backend endpoint for rejecting ratings
-        setAllComments((prev) =>
-          prev.map((c) =>
-            c.id === commentId ? { ...c, status: "rejected" } : c,
-          ),
-        );
-        setSelectedComments(selectedComments.filter((id) => id !== commentId));
-      } catch {
-        alert("Ошибка при отклонении комментария");
-      }
-    }
+  const handleBulkDeleteComments = () => {
+    setBulkDeleteCommentsTarget(selectedComments.length);
   };
 
-  const handleDeleteComment = async (commentId) => {
-    if (window.confirm("Удалить этот комментарий?")) {
-      try {
-        await masterclassApi.deleteRating(commentId);
-        setAllComments((prev) => prev.filter((c) => c.id !== commentId));
-        setSelectedComments(selectedComments.filter((id) => id !== commentId));
-      } catch {
-        alert("Ошибка при удалении комментария");
-      }
-    }
-  };
-
-  const handleBulkApproveComments = async () => {
-    if (window.confirm(`Одобрить ${selectedComments.length} комментариев?`)) {
-      try {
-        // TODO: Add backend endpoint for bulk approving ratings
-        setAllComments((prev) =>
-          prev.map((c) =>
-            selectedComments.includes(c.id) ? { ...c, status: "approved" } : c,
-          ),
-        );
-        setSelectedComments([]);
-      } catch {
-        alert("Ошибка при массовом одобрении комментариев");
-      }
-    }
-  };
-
-  const handleBulkRejectComments = async () => {
-    if (window.confirm(`Отклонить ${selectedComments.length} комментариев?`)) {
-      try {
-        // TODO: Add backend endpoint for bulk rejecting ratings
-        setAllComments((prev) =>
-          prev.map((c) =>
-            selectedComments.includes(c.id) ? { ...c, status: "rejected" } : c,
-          ),
-        );
-        setSelectedComments([]);
-      } catch {
-        alert("Ошибка при массовом отклонении комментариев");
-      }
-    }
-  };
-
-  const handleBulkDeleteComments = async () => {
-    if (window.confirm(`Удалить ${selectedComments.length} комментариев?`)) {
-      try {
-        await Promise.all(
-          selectedComments.map((id) => masterclassApi.deleteRating(id)),
-        );
-        setAllComments((prev) =>
-          prev.filter((c) => !selectedComments.includes(c.id)),
-        );
-        setSelectedComments([]);
-      } catch {
-        alert("Ошибка при массовом удалении комментариев");
-      }
+  const confirmBulkDeleteComments = async () => {
+    if (!bulkDeleteCommentsTarget) return;
+    try {
+      await Promise.all(
+        selectedComments.map((id) => masterclassApi.deleteRating(id)),
+      );
+      setAllComments((prev) =>
+        prev.filter((c) => !selectedComments.includes(c.id)),
+      );
+      setSelectedComments([]);
+    } catch {
+      alert("Ошибка при массовом удалении комментариев");
+    } finally {
+      setBulkDeleteCommentsTarget(null);
     }
   };
 
@@ -763,7 +705,7 @@ function AdminPanel() {
                         <UserIcon className={styles.avatarPlaceholder} />
                       )}
                     </div>
-                    <div className={styles.userInfo}>
+                    <div className={styles.userInfo2}>
                       <div className={styles.userName}>{userItem.name}</div>
                       <div className={styles.userEmail}>
                         {userItem.email || "Нет email"}
@@ -1170,7 +1112,6 @@ function AdminPanel() {
     <div className={styles.managementSection}>
       <div className={styles.sectionHeader}>
         <h3 className={styles.sectionTitle}>
-          <ChatBubbleLeftIcon className={styles.sectionIcon} />
           Модерация комментариев ({allComments.length})
         </h3>
         <div className={styles.sectionControls}>
@@ -1184,33 +1125,9 @@ function AdminPanel() {
               className={styles.searchInput}
             />
           </div>
-          <select
-            value={commentFilter}
-            onChange={(e) => setCommentFilter(e.target.value)}
-            className={styles.filterSelect}
-          >
-            <option value="all">Все комментарии</option>
-            <option value="pending">На модерации</option>
-            <option value="approved">Одобренные</option>
-            <option value="rejected">Отклоненные</option>
-            <option value="reported">Жалобы</option>
-          </select>
+
           {selectedComments.length > 0 && (
             <div className={styles.bulkActions}>
-              <button
-                className={styles.bulkApproveButton}
-                onClick={handleBulkApproveComments}
-              >
-                <CheckCircleIcon className={styles.actionIcon} />
-                Одобрить ({selectedComments.length})
-              </button>
-              <button
-                className={styles.bulkRejectButton}
-                onClick={handleBulkRejectComments}
-              >
-                <XCircleIcon className={styles.actionIcon} />
-                Отклонить ({selectedComments.length})
-              </button>
               <button
                 className={styles.bulkDeleteButton}
                 onClick={handleBulkDeleteComments}
@@ -1237,7 +1154,7 @@ function AdminPanel() {
                 selectedComments.includes(comment.id)
                   ? styles.selectedComment
                   : ""
-              } ${comment.reported ? styles.reportedComment : ""}`}
+              }`}
             >
               <div className={styles.commentCheckbox}>
                 <input
@@ -1272,55 +1189,31 @@ function AdminPanel() {
                 <div className={styles.commentMeta}>
                   <div className={styles.commentDate}>
                     <CalendarIcon className={styles.metaIcon} />
-                    {new Date(comment.timestamp).toLocaleDateString()}
+                    {new Date(comment.createdAt).toLocaleDateString()}
                   </div>
                   <div className={styles.commentRating}>
                     <StarIcon className={styles.metaIcon} />
-                    {comment.rating} ★
+                    {comment.score} ★
                   </div>
-                  <span
-                    className={`${styles.statusBadge} ${
-                      comment.status === "approved"
-                        ? styles.approved
-                        : comment.status === "rejected"
-                          ? styles.rejected
-                          : styles.pending
-                    }`}
-                  >
-                    {comment.status === "approved"
-                      ? "Одобрен"
-                      : comment.status === "rejected"
-                        ? "Отклонен"
-                        : "На модерации"}
-                  </span>
                 </div>
               </div>
 
               <div className={styles.commentMasterClass}>
                 <strong>Мастер-класс:</strong>
                 <a
-                  href={`/masterclass/${comment.masterClassId}`}
+                  href={`/masterclass/${comment.masterclassId}`}
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate(`/masterclass/${comment.masterClassId}`);
+                    navigate(`/masterclass/${comment.masterclassId}`);
                   }}
                   className={styles.masterClassLink}
                 >
-                  {comment.masterClassTitle}
+                  {comment.masterclassTitle}
                 </a>
-                <span className={styles.masterClassAuthor}>
-                  Автор: {comment.masterClassAuthor}
-                </span>
               </div>
 
               <div className={styles.commentContent}>
                 <p>{comment.comment}</p>
-                {comment.reported && comment.reportReason && (
-                  <div className={styles.reportInfo}>
-                    <ExclamationTriangleIcon className={styles.reportIcon} />
-                    <strong>Жалоба:</strong> {comment.reportReason}
-                  </div>
-                )}
               </div>
 
               <div className={styles.commentActions}>
@@ -1333,34 +1226,22 @@ function AdminPanel() {
                 </button>
                 <button
                   onClick={() =>
-                    navigate(`/masterclass/${comment.masterClassId}`)
+                    navigate(`/masterclass/${comment.masterclassId}`)
                   }
                   className={styles.viewMasterClassButton}
                 >
                   <EyeIcon className={styles.buttonIcon} />
                   Мастер-класс
                 </button>
-                {comment.status !== "approved" && (
-                  <button
-                    onClick={() => handleApproveComment(comment.id)}
-                    className={styles.approveButton}
-                  >
-                    <CheckCircleIcon className={styles.buttonIcon} />
-                    Одобрить
-                  </button>
-                )}
-                {comment.status !== "rejected" && (
-                  <button
-                    onClick={() => handleRejectComment(comment.id)}
-                    className={styles.rejectButton}
-                  >
-                    <XCircleIcon className={styles.buttonIcon} />
-                    Отклонить
-                  </button>
-                )}
                 <button
-                  onClick={() => handleDeleteComment(comment.id)}
-                  className={styles.deleteButton}
+                  onClick={() =>
+                    handleDeleteComment(
+                      comment.id,
+                      comment.userName,
+                      comment.masterclassTitle,
+                    )
+                  }
+                  className={styles.deleteButton2}
                 >
                   <TrashIcon className={styles.buttonIcon} />
                   Удалить
@@ -1517,6 +1398,74 @@ function AdminPanel() {
                 {toggleActiveTarget.isActive
                   ? "Деактивировать"
                   : "Активировать"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Модалка удаления комментария */}
+      {deleteCommentTarget && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setDeleteCommentTarget(null)}
+        >
+          <div
+            className={styles.confirmModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={styles.confirmTitle}>Удалить комментарий?</h3>
+            <p className={styles.confirmText}>
+              Вы действительно хотите удалить комментарий пользователя "
+              {deleteCommentTarget.userName}" к мастер-классу "
+              {deleteCommentTarget.masterclassTitle}"? Это действие нельзя
+              отменить.
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setDeleteCommentTarget(null)}
+              >
+                Отмена
+              </button>
+              <button
+                className={styles.deleteConfirmButton}
+                onClick={confirmDeleteComment}
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Модалка массового удаления комментариев */}
+      {bulkDeleteCommentsTarget && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setBulkDeleteCommentsTarget(null)}
+        >
+          <div
+            className={styles.confirmModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={styles.confirmTitle}>
+              Удалить {bulkDeleteCommentsTarget} комментариев?
+            </h3>
+            <p className={styles.confirmText}>
+              Вы действительно хотите удалить {bulkDeleteCommentsTarget}{" "}
+              комментариев? Это действие нельзя отменить.
+            </p>
+            <div className={styles.confirmActions}>
+              <button
+                className={styles.cancelButton}
+                onClick={() => setBulkDeleteCommentsTarget(null)}
+              >
+                Отмена
+              </button>
+              <button
+                className={styles.deleteConfirmButton}
+                onClick={confirmBulkDeleteComments}
+              >
+                Удалить
               </button>
             </div>
           </div>

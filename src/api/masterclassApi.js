@@ -99,7 +99,9 @@ export const masterclassApi = {
   },
 
   getAllRatings: async () => {
-    const res = await fetch(`${BASE_URL}/masterclass/getallratings`);
+    const res = await fetch(
+      `${BASE_URL}/masterclass/getallratings/getallratings`,
+    );
     if (!res.ok) throw new Error("Failed to get all ratings");
     return res.json(); // [{ id, masterclassId, masterclassTitle, userId, userName, score, comment, createdAt }]
   },

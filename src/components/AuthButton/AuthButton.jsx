@@ -35,15 +35,17 @@ function AuthButton() {
         {buttonText}
       </button>
 
-      <button
-        className={styles.exit}
-        onClick={() => {
-          logout();
-          navigate("/");
-        }}
-      >
-        <ArrowRightStartOnRectangleIcon className={styles.icon} />
-      </button>
+      {isAuthenticated && (
+        <button
+          className={styles.exit}
+          onClick={() => {
+            logout();
+            navigate("/");
+          }}
+        >
+          <ArrowRightStartOnRectangleIcon className={styles.icon} />
+        </button>
+      )}
     </div>
   );
 }

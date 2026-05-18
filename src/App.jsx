@@ -19,6 +19,9 @@ import CreateProduct from "./components/CreateProduct/CreateProduct";
 import EditProfilePage from "./pages/EditProfilePage/EditProfilePage";
 import AdminPanel from "./components/AdminPanel/AdminPanel";
 import AdminEditUser from "./components/AdminEditUser/AdminEditUser";
+import TermsPage from "./pages/TermsPage/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage/PrivacyPage";
+import RulesPage from "./pages/RulesPage/RulesPage";
 import { useAuthStore } from "./stores/authStore";
 import { authApi } from "./api/authApi";
 import { useFavoritesStore } from "./stores/favoritesStore";
@@ -89,6 +92,18 @@ function App() {
 
       <Route path="/messages" element={<Layout />}>
         <Route index element={<MessagesPage />} />
+      </Route>
+
+      <Route path="/terms" element={<Layout />}>
+        <Route index element={<TermsPage />} />
+      </Route>
+
+      <Route path="/privacy" element={<Layout />}>
+        <Route index element={<PrivacyPage />} />
+      </Route>
+
+      <Route path="/rules" element={<Layout />}>
+        <Route index element={<RulesPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

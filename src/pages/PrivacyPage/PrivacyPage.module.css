@@ -1,0 +1,129 @@
+.privacyContainer {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+  background: var(--main-color);
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.title {
+  font-size: var(--font-size-xxl);
+  font-weight: 700;
+  color: var(--font-color);
+  margin: 0 0 var(--spacing-xs);
+  text-align: center;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.date {
+  font-size: var(--font-size-sm);
+  color: var(--gray-color);
+  text-align: center;
+  margin: 0 0 var(--spacing-xl);
+}
+
+.section {
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.section h2 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--font-color);
+  margin: 0 0 var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.section h2::before {
+  content: "";
+  width: 4px;
+  height: 24px;
+  background: var(--accent-color);
+  border-radius: 2px;
+}
+
+.section p {
+  font-size: var(--font-size-base);
+  color: var(--font-color);
+  line-height: 1.8;
+  margin: 0 0 var(--spacing-md);
+}
+
+.section p:last-child {
+  margin-bottom: 0;
+}
+
+.section ul {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+  list-style: none;
+}
+
+.section li {
+  font-size: var(--font-size-base);
+  color: var(--font-color);
+  line-height: 1.8;
+  margin-bottom: var(--spacing-sm);
+  padding-left: var(--spacing-lg);
+  position: relative;
+}
+
+.section li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--accent-color);
+  font-weight: bold;
+}
+
+.section a {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  border-bottom: 1px dashed transparent;
+}
+
+.section a:hover {
+  color: var(--accent-hover);
+  border-bottom-color: var(--accent-hover);
+}
+
+@media (max-width: 768px) {
+  .privacyContainer {
+    padding: var(--spacing-md);
+    margin: calc(var(--spacing-md) * -1);
+    width: calc(100% + var(--spacing-md) * 2);
+    border-radius: 0;
+  }
+
+  .title {
+    font-size: var(--font-size-xl);
+  }
+
+  .section h2 {
+    font-size: var(--font-size-base);
+  }
+
+  .section h2::before {
+    width: 3px;
+    height: 18px;
+  }
+
+  .section p,
+  .section li {
+    font-size: var(--font-size-sm);
+  }
+}
