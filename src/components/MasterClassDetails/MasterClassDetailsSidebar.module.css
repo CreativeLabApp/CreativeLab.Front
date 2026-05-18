@@ -15,6 +15,29 @@
   border-bottom: 1px solid var(--border-color);
 }
 
+/* Информация */
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--card-background);
+  border-radius: var(--border-radius);
+}
+
+.infoIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--accent-color);
+  flex-shrink: 0;
+}
+
+.infoText {
+  font-size: var(--font-size-sm);
+  color: var(--font-color);
+}
+
 /* Карточка пользовательской оценки */
 .userRatingCard {
   background: var(--card-background);

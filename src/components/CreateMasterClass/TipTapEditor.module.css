@@ -1,0 +1,127 @@
+.container {
+  border: 1px solid #ffd500;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.container:focus-within {
+  border-color: #ffea00;
+}
+
+.container.error {
+  border-color: #ef4444;
+}
+
+.container.error:focus-within {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  flex-wrap: wrap;
+}
+
+.toolbarButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.15s ease;
+}
+
+.toolbarButton:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.toolbarButton.active {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+}
+
+.textIcon {
+  font-size: 14px;
+  font-weight: 600;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.toolbarButton.active .textIcon {
+  text-decoration: line-through;
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  background: #e5e7eb;
+  margin: 0 4px;
+}
+
+.editorContent {
+  min-height: 150px;
+  padding: 12px;
+}
+
+.editor {
+  min-height: 150px;
+  outline: none;
+}
+
+.editor:focus {
+  outline: none;
+}
+
+.editor :global(.ProseMirror) {
+  outline: none;
+  min-height: 150px;
+}
+
+.editor :global(.ProseMirror p) {
+  margin: 0 0 8px 0;
+}
+
+.editor :global(.ProseMirror p:last-child) {
+  margin-bottom: 0;
+}
+
+.editor :global(.ProseMirror h2) {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: #111827;
+}
+
+.editor :global(.ProseMirror ul),
+.editor :global(.ProseMirror ol) {
+  margin: 0 0 8px 0;
+  padding-left: 24px;
+}
+
+.editor :global(.ProseMirror blockquote) {
+  border-left: 4px solid #3b82f6;
+  margin: 0 0 8px 0;
+  padding-left: 16px;
+  color: #6b7280;
+  font-style: italic;
+}

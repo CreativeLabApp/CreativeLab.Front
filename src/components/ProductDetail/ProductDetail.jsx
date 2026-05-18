@@ -29,6 +29,7 @@ import ProductCard from "../ProductCard/ProductCard";
 import Notification from "../common/Notification/Notification";
 import EditProductModal from "../EditProductModal/EditProductModal";
 import { productApi } from "../../api/productApi";
+import { chatApi } from "../../api/chatApi";
 
 function ProductDetail() {
   const { id } = useParams();
@@ -132,6 +133,22 @@ function ProductDetail() {
     setShowEditModal(false);
   };
 
+  const handleContactSeller = async () => {
+    if (!user) {
+      navigate("/login", { state: { from: `/marketplace/product/${id}` } });
+      return;
+    }
+
+    try {
+      // Создаем чат с продавцом
+      const chat = await chatApi.createChat([user.id, product.sellerId], token);
+      // Переходим к сообщениям с открытым чатом
+      navigate(`/messages?chatId=${chat.id}`);
+    } catch (err) {
+      notify("Ошибка при создании чата");
+    }
+  };
+
   const formatPrice = (price) =>
     new Intl.NumberFormat("be-BY").format(price) + " Br";
 
@@ -170,7 +187,13 @@ function ProductDetail() {
       )}
 
       {showEditModal && product && (
-        <EditProductModal product={product} onClose={handleEditModalClose} />
+        <EditProductModal
+          product={product}
+          onClose={handleEditModalClose}
+          onUpdate={(updatedProduct) => {
+            setProduct(updatedProduct);
+          }}
+        />
       )}
 
       <div className={styles.container}>
@@ -214,7 +237,7 @@ function ProductDetail() {
 
         <div className={styles.content}>
           <div className={styles.leftColumn}>
-            {product.images.length > 0 ? (
+            {product?.images?.length > 0 ? (
               <ProductGallery
                 images={product.images}
                 selectedIndex={selectedImageIndex}
@@ -394,9 +417,7 @@ function ProductDetail() {
                 {!isOwner && product.isAvailable && (
                   <button
                     className={styles.buyButton}
-                    onClick={() =>
-                      navigate(`/messages?creatorId=${product.sellerId}`)
-                    }
+                    onClick={handleContactSeller}
                   >
                     <ChatBubbleLeftRightIcon className={styles.buyIcon} />
                     Написать продавцу

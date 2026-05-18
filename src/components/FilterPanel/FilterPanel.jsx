@@ -8,11 +8,14 @@ import {
 
 function FilterPanel({
   categories,
+  ageCategories,
   materials,
   selectedCategories,
+  selectedAgeCategories,
   selectedMaterials,
   minRating,
   onCategoryChange,
+  onAgeCategoryChange,
   onMaterialChange,
   onRatingChange,
   onClearAll,
@@ -91,6 +94,37 @@ function FilterPanel({
         </div>
       </div>
 
+      {/* Фильтр по возрастным категориям */}
+      {ageCategories && ageCategories.length > 0 && (
+        <div className={styles.section}>
+          <h4 className={styles.sectionTitle}>Возрастная категория</h4>
+          <div className={styles.checkboxList}>
+            {ageCategories.map((ageCat) => (
+              <label key={ageCat.id} className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={selectedAgeCategories.includes(ageCat.id)}
+                  onChange={() => onAgeCategoryChange(ageCat.id)}
+                  className={styles.checkbox}
+                />
+                <span className={styles.checkboxText}>
+                  {ageCat.name} ({ageCat.minAge}-{ageCat.maxAge} лет)
+                </span>
+                <span className={styles.count}>
+                  (
+                  {
+                    popularClasses.filter(
+                      (item) => item.ageCategoryId === ageCat.id,
+                    ).length
+                  }
+                  )
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Фильтр по материалам */}
       <div className={styles.section}>
         <h4 className={styles.sectionTitle}>Материалы и техники</h4>
@@ -148,7 +182,9 @@ function FilterPanel({
       </div>
 
       {/* Активные фильтры */}
-      {(selectedCategories.length > 0 || selectedMaterials.length > 0) && (
+      {(selectedCategories.length > 0 ||
+        selectedAgeCategories.length > 0 ||
+        selectedMaterials.length > 0) && (
         <div className={styles.activeFilters}>
           <h4 className={styles.sectionTitle}>Активные фильтры</h4>
           <div className={styles.activeTags}>
@@ -163,6 +199,20 @@ function FilterPanel({
                 </button>
               </span>
             ))}
+            {selectedAgeCategories.map((ageCatId) => {
+              const ageCat = ageCategories.find((a) => a.id === ageCatId);
+              return ageCat ? (
+                <span key={ageCatId} className={styles.activeTag}>
+                  {ageCat.name}
+                  <button
+                    onClick={() => onAgeCategoryChange(ageCatId)}
+                    className={styles.removeTag}
+                  >
+                    ×
+                  </button>
+                </span>
+              ) : null;
+            })}
             {selectedMaterials.map((mat) => (
               <span key={mat} className={styles.activeTag}>
                 {mat}

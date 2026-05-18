@@ -6,4 +6,14 @@ export const categoryApi = {
     if (!res.ok) throw new Error("Failed to fetch categories");
     return res.json(); // [{ id, name, order }]
   },
+
+  create: async (name) => {
+    const res = await fetch(`${BASE_URL}/category/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) throw new Error("Failed to create category");
+    return res.json(); // { id, name, order }
+  },
 };

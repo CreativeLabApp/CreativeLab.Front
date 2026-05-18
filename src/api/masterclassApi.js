@@ -42,6 +42,21 @@ export const masterclassApi = {
     return data.urls.map((url) => `${SERVER_URL}${url}`);
   },
 
+  uploadVideo: async (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${BASE_URL}/upload/video`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || err.title || "Failed to upload video");
+    }
+    const data = await res.json(); // { url: "/videos/..." }
+    return `${SERVER_URL}${data.url}`;
+  },
+
   update: async (dto) => {
     const res = await fetch(`${BASE_URL}/masterclass/update`, {
       method: "PUT",
@@ -81,6 +96,19 @@ export const masterclassApi = {
     const res = await fetch(`${BASE_URL}/masterclass/getratings?id=${id}`);
     if (!res.ok) throw new Error("Failed to get ratings");
     return res.json(); // [{ userId, userName, score, createdAt, updatedAt }]
+  },
+
+  getAllRatings: async () => {
+    const res = await fetch(`${BASE_URL}/masterclass/getallratings`);
+    if (!res.ok) throw new Error("Failed to get all ratings");
+    return res.json(); // [{ id, masterclassId, masterclassTitle, userId, userName, score, comment, createdAt }]
+  },
+
+  deleteRating: async (id) => {
+    const res = await fetch(`${BASE_URL}/masterclass/deleterating?id=${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error("Failed to delete rating");
   },
 
   create: async (dto) => {

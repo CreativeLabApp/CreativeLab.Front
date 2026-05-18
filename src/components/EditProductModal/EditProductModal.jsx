@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { productApi } from "../../api/productApi";
+import { materialApi } from "../../api/materialApi";
+import TipTapEditor from "../CreateMasterClass/TipTapEditor";
 import styles from "./EditProductModal.module.css";
 import {
   XMarkIcon,
@@ -12,9 +14,12 @@ import {
   ScaleIcon,
   TagIcon,
   CalendarDaysIcon,
+  BeakerIcon,
+  PlusIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 
-function EditProductModal({ product, onClose }) {
+function EditProductModal({ product, onClose, onUpdate }) {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -36,8 +41,12 @@ function EditProductModal({ product, onClose }) {
     tags: [],
   });
 
+  const [existingMaterials, setExistingMaterials] = useState([]);
+  const [materialInputValue, setMaterialInputValue] = useState("");
+  const [materialDropdownOpen, setMaterialDropdownOpen] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
+  const materialInputRef = useRef(null);
 
   useEffect(() => {
     if (product) {
@@ -57,6 +66,10 @@ function EditProductModal({ product, onClose }) {
       });
       setPreviewImages(product.images || []);
     }
+    materialApi
+      .getAll()
+      .then(setExistingMaterials)
+      .catch(() => {});
   }, [product]);
 
   const notify = (msg) => {
@@ -86,6 +99,77 @@ function EditProductModal({ product, onClose }) {
     setSelectedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Фильтрация материалов для выпадающего списка
+  const filteredMaterials = existingMaterials.filter(
+    (m) =>
+      m.toLowerCase().includes(materialInputValue.toLowerCase()) &&
+      !formData.materials.includes(m),
+  );
+
+  // Добавление материала из выпадающего списка
+  const handleSelectMaterial = (material) => {
+    if (!formData.materials.includes(material)) {
+      setFormData((prev) => ({
+        ...prev,
+        materials: [...prev.materials, material],
+      }));
+    }
+    setMaterialInputValue("");
+    setMaterialDropdownOpen(false);
+  };
+
+  // Добавление нового материала
+  const handleAddNewMaterial = (e) => {
+    e.preventDefault();
+    const material = materialInputValue.trim();
+    if (material && !formData.materials.includes(material)) {
+      setFormData((prev) => ({
+        ...prev,
+        materials: [...prev.materials, material],
+      }));
+      if (!existingMaterials.includes(material)) {
+        setExistingMaterials((prev) => [...prev, material].sort());
+      }
+    }
+    setMaterialInputValue("");
+    setMaterialDropdownOpen(false);
+  };
+
+  // Удаление материала
+  const handleRemoveMaterial = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      materials: prev.materials.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Обработка ввода в поле материала
+  const handleMaterialInputChange = (e) => {
+    setMaterialInputValue(e.target.value);
+    setMaterialDropdownOpen(true);
+  };
+
+  // Обработка фокуса на поле материала
+  const handleMaterialInputFocus = () => {
+    if (materialInputValue.trim()) {
+      setMaterialDropdownOpen(true);
+    }
+  };
+
+  // Закрытие выпадающего списка при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        materialInputRef.current &&
+        !materialInputRef.current.contains(e.target)
+      ) {
+        setMaterialDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -107,23 +191,24 @@ function EditProductModal({ product, onClose }) {
         stockQuantity: Number(formData.stockQuantity),
         dimensions: formData.dimensions || null,
         weight: formData.weight ? Number(formData.weight) : null,
-        materials: formData.materials.map((m) => ({ name: m })),
+        materials: formData.materials,
         tags: formData.tags.map((t) => ({ name: t })),
         imageUrls,
       };
 
       if (product) {
         dto.id = product.id;
-        await productApi.update(dto, user.token);
+        const updatedProduct = await productApi.update(dto, user.token);
+        if (onUpdate) {
+          onUpdate(updatedProduct);
+        }
       } else {
         await productApi.create(dto, user.token);
       }
 
       notify(product ? "Товар обновлен!" : "Товар создан!");
       onClose();
-      if (product) {
-        navigate(`/marketplace/product/${product.id}`);
-      } else {
+      if (!product) {
         navigate("/marketplace");
       }
     } catch (err) {
@@ -176,12 +261,12 @@ function EditProductModal({ product, onClose }) {
             </div>
             <div className={styles.formGroup}>
               <label>Полное описание</label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Полное описание"
-                rows={4}
+              <TipTapEditor
+                content={formData.description}
+                onChange={(html) =>
+                  setFormData((prev) => ({ ...prev, description: html }))
+                }
+                error={!!error}
               />
             </div>
           </div>
@@ -279,6 +364,67 @@ function EditProductModal({ product, onClose }) {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className={styles.formSection}>
+            <h3>Материалы</h3>
+            <div className={styles.formGroup} ref={materialInputRef}>
+              <label>Добавить материал</label>
+              <div className={styles.materialInputRow}>
+                <div className={styles.materialAutocomplete}>
+                  <input
+                    type="text"
+                    value={materialInputValue}
+                    onChange={handleMaterialInputChange}
+                    onFocus={handleMaterialInputFocus}
+                    placeholder="Начните вводить..."
+                    autoComplete="off"
+                  />
+                  {materialDropdownOpen && filteredMaterials.length > 0 && (
+                    <div className={styles.materialDropdown}>
+                      {filteredMaterials.map((material, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          className={styles.materialDropdownItem}
+                          onClick={() => handleSelectMaterial(material)}
+                        >
+                          {material}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddNewMaterial}
+                  className={styles.addMaterialButton}
+                  disabled={!materialInputValue.trim()}
+                >
+                  <PlusIcon className={styles.addMaterialIcon} />
+                </button>
+              </div>
+              <span className={styles.inputHint}>
+                Выберите из списка или добавьте новый
+              </span>
+            </div>
+
+            {formData.materials.length > 0 && (
+              <div className={styles.materialsList}>
+                {formData.materials.map((material, index) => (
+                  <div key={index} className={styles.materialItem}>
+                    <span>{material}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMaterial(index)}
+                      className={styles.removeMaterialButton}
+                    >
+                      <TrashIcon className={styles.removeMaterialIcon} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className={styles.formSection}>

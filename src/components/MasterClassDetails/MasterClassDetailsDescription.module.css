@@ -12,9 +12,49 @@
   margin: 0 0 var(--spacing-lg) 0;
 }
 
-.descriptionText {
+.descriptionContent {
   font-size: var(--font-size-base);
   line-height: 1.6;
   color: var(--font-color);
-  margin: 0;
+}
+
+.descriptionContent :global(p) {
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.descriptionContent :global(p:last-child) {
+  margin-bottom: 0;
+}
+
+.descriptionContent :global(h2) {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin: var(--spacing-lg) 0 var(--spacing-md) 0;
+  color: var(--font-color);
+}
+
+.descriptionContent :global(ul),
+.descriptionContent :global(ol) {
+  margin: 0 0 var(--spacing-md) 0;
+  padding-left: var(--spacing-xl);
+}
+
+.descriptionContent :global(blockquote) {
+  border-left: 4px solid var(--accent-color);
+  margin: var(--spacing-md) 0;
+  padding-left: var(--spacing-md);
+  color: var(--secondary-font-color);
+  font-style: italic;
+}
+
+.descriptionContent :global(strong) {
+  font-weight: 600;
+}
+
+.descriptionContent :global(em) {
+  font-style: italic;
+}
+
+.descriptionContent :global(s) {
+  text-decoration: line-through;
 }

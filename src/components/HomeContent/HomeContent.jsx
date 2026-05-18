@@ -6,26 +6,34 @@ import FilterPanel from "../FilterPanel/FilterPanel";
 import { Link } from "react-router-dom";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { masterclassApi } from "../../api/masterclassApi";
+import { ageCategoryApi } from "../../api/ageCategoryApi";
 
 function HomeContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedAgeCategories, setSelectedAgeCategories] = useState([]);
   const [selectedMaterials, setSelectedMaterials] = useState([]);
   const [minRating, setMinRating] = useState(0);
   const [masterClasses, setMasterClasses] = useState([]);
+  const [ageCategories, setAgeCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
 
   useEffect(() => {
     setIsLoading(true);
-    masterclassApi
-      .getAll()
-      .then((data) => {
+    Promise.all([
+      masterclassApi.getAll(),
+      ageCategoryApi.getAll().catch(() => []),
+    ])
+      .then(([data, ageCats]) => {
         const mapped = data.masterclasses.map((m) => ({
           id: m.id,
           title: m.title,
           description: m.shortDescription || m.description || "",
           category: m.categoryName || m.categoryId,
+          categoryId: m.categoryId,
+          ageCategoryId: m.ageCategoryId,
+          ageCategory: m.ageCategoryName || "",
           author: m.authorName || m.authorId,
           images: m.imageUrls?.length
             ? m.imageUrls
@@ -37,6 +45,7 @@ function HomeContent() {
           materials: m.materials || [],
         }));
         setMasterClasses(mapped);
+        setAgeCategories(ageCats);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -71,6 +80,10 @@ function HomeContent() {
         selectedCategories.length === 0 ||
         selectedCategories.includes(item.category);
 
+      const matchesAgeCategory =
+        selectedAgeCategories.length === 0 ||
+        selectedAgeCategories.includes(item.ageCategoryId);
+
       const matchesMaterial =
         selectedMaterials.length === 0 ||
         (item.materials &&
@@ -79,13 +92,18 @@ function HomeContent() {
       const matchesRating = item.rating >= minRating;
 
       return (
-        matchesSearch && matchesCategory && matchesMaterial && matchesRating
+        matchesSearch &&
+        matchesCategory &&
+        matchesAgeCategory &&
+        matchesMaterial &&
+        matchesRating
       );
     });
   }, [
     masterClasses,
     searchQuery,
     selectedCategories,
+    selectedAgeCategories,
     selectedMaterials,
     minRating,
   ]);
@@ -94,6 +112,7 @@ function HomeContent() {
     const hasFilters =
       searchQuery ||
       selectedCategories.length > 0 ||
+      selectedAgeCategories.length > 0 ||
       selectedMaterials.length > 0 ||
       minRating > 0;
     if (hasFilters) return filteredClasses;
@@ -103,6 +122,7 @@ function HomeContent() {
     masterClasses,
     searchQuery,
     selectedCategories,
+    selectedAgeCategories,
     selectedMaterials,
     minRating,
   ]);
@@ -110,12 +130,14 @@ function HomeContent() {
   const hasActiveFilters =
     searchQuery ||
     selectedCategories.length > 0 ||
+    selectedAgeCategories.length > 0 ||
     selectedMaterials.length > 0 ||
     minRating > 0;
 
   const clearAllFilters = () => {
     setSearchQuery("");
     setSelectedCategories([]);
+    setSelectedAgeCategories([]);
     setSelectedMaterials([]);
     setMinRating(0);
   };
@@ -141,8 +163,10 @@ function HomeContent() {
         <aside className={styles.sidebar}>
           <FilterPanel
             categories={allCategories}
+            ageCategories={ageCategories}
             materials={allMaterials}
             selectedCategories={selectedCategories}
+            selectedAgeCategories={selectedAgeCategories}
             selectedMaterials={selectedMaterials}
             minRating={minRating}
             onCategoryChange={(cat) =>
@@ -150,6 +174,13 @@ function HomeContent() {
                 prev.includes(cat)
                   ? prev.filter((c) => c !== cat)
                   : [...prev, cat],
+              )
+            }
+            onAgeCategoryChange={(ageCatId) =>
+              setSelectedAgeCategories((prev) =>
+                prev.includes(ageCatId)
+                  ? prev.filter((id) => id !== ageCatId)
+                  : [...prev, ageCatId],
               )
             }
             onMaterialChange={(mat) =>

@@ -15,245 +15,206 @@ import {
   CheckIcon as CheckIconSolid,
   CheckBadgeIcon as CheckBadgeIconSolid,
 } from "@heroicons/react/24/solid";
-import creatorsData from "../../sources/creators";
-
-// Расширяем данные креаторов для мессенджера
-const enhancedCreatorsData = creatorsData.map((creator) => ({
-  ...creator,
-  // Добавляем поля, необходимые для мессенджера
-  avatar: creator.avatar || null,
-  isOnline: Math.random() > 0.5, // Случайный статус онлайн
-  lastSeen: "недавно",
-  unreadMessages: Math.floor(Math.random() * 3), // Случайное количество непрочитанных
-  // Добавляем поля для статуса и времени последнего посещения
-  lastActive: new Date(
-    Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
-  ).toISOString(),
-}));
+import { chatApi, messageApi, userApi } from "../../api/chatApi";
 
 function Messages() {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
 
-  const [selectedCreator, setSelectedCreator] = useState(null);
+  const [selectedChat, setSelectedChat] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [newMessage, setNewMessage] = useState("");
-  const [messages, setMessages] = useState({});
+  const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [newChatSearch, setNewChatSearch] = useState("");
-  const [availableCreators, setAvailableCreators] = useState([]);
+  const [availableUsers, setAvailableUsers] = useState([]);
   const [userChats, setUserChats] = useState([]);
+  const [error, setError] = useState("");
 
-  // Получаем creatorId из query параметров
   const searchParams = new URLSearchParams(location.search);
   const creatorIdFromUrl = searchParams.get("creatorId");
+  const chatIdFromUrl = searchParams.get("chatId");
 
-  // Получение всех креаторов, с которыми есть диалоги у текущего пользователя
-  const getChatsWithCurrentUser = useCallback(
-    (messagesData) => {
-      if (!user) return [];
+  // Загрузка чатов пользователя
+  const loadUserChats = useCallback(async () => {
+    if (!user?.id || !token) return;
 
-      const creatorIds = new Set();
+    try {
+      setIsLoading(true);
+      const chats = await chatApi.getUserChats(user.id, token);
 
-      // Собираем всех креаторов, с которыми есть диалоги
-      Object.keys(messagesData).forEach((key) => {
-        const [userId1, userId2] = key.split("-").map(Number);
+      // Загружаем чат с поддержкой
+      const adminChat = await chatApi.getOrCreateAdminChat(user.id, token);
 
-        // Проверяем, участвует ли текущий пользователь в диалоге
-        if (userId1 === user.id) {
-          creatorIds.add(userId2);
-        } else if (userId2 === user.id) {
-          creatorIds.add(userId1);
-        }
-      });
-
-      // Получаем полные данные креаторов
-      return enhancedCreatorsData.filter(
-        (creator) => creator.id !== user.id && creatorIds.has(creator.id)
+      // Проверяем, есть ли уже чат с поддержкой в списке
+      const hasAdminChat = chats.some(
+        (c) => c.participantId === adminChat.participantId,
       );
-    },
-    [user]
-  ); // Зависимость от user
+      if (!hasAdminChat) {
+        chats.unshift(adminChat);
+      }
 
-  // Инициализация сообщений - обычный useEffect
+      setUserChats(chats);
+    } catch (err) {
+      setError("Не удалось загрузить чаты");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, token]);
+
   useEffect(() => {
-    const savedMessages =
-      JSON.parse(localStorage.getItem("creator-messages")) || {};
-    setMessages(savedMessages);
+    loadUserChats();
+  }, [loadUserChats]);
 
-    // Получаем чаты после загрузки сообщений
-    const chats = getChatsWithCurrentUser(savedMessages);
-    setUserChats(chats);
-  }, [user, getChatsWithCurrentUser]); // Добавляем getChatsWithCurrentUser в зависимости
+  // Загрузка сообщений для выбранного чата
+  const loadMessages = useCallback(async () => {
+    if (!selectedChat?.id || !user?.id || !token) return;
 
-  // Эффект для автоматического открытия чата при наличии creatorId в URL
+    try {
+      setIsLoadingMessages(true);
+      const msgs = await messageApi.getChatMessages(
+        selectedChat.id,
+        user.id,
+        token,
+      );
+      setMessages(msgs);
+    } catch (err) {
+      setError("Не удалось загрузить сообщения");
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  }, [selectedChat, user, token]);
+
   useEffect(() => {
-    if (creatorIdFromUrl && user && userChats) {
-      const creatorId = parseInt(creatorIdFromUrl);
+    loadMessages();
+  }, [loadMessages]);
 
-      // Проверяем, существует ли такой креатор
-      const creator = enhancedCreatorsData.find((c) => c.id === creatorId);
+  // Загрузка пользователей для нового чата
+  useEffect(() => {
+    if (showNewChatModal && token) {
+      userApi
+        .getUsers(newChatSearch, token)
+        .then(setAvailableUsers)
+        .catch(() => setError("Не удалось загрузить пользователей"));
+    }
+  }, [showNewChatModal, newChatSearch, token]);
 
-      if (creator) {
-        // Проверяем, есть ли уже чат с этим креатором
-        const existingChat = userChats.find((c) => c.id === creatorId);
+  // Открытие чата из URL
+  useEffect(() => {
+    if (!user || userChats.length === 0) return;
 
-        if (existingChat) {
-          setSelectedCreator(existingChat);
-        } else {
-          // Создаем новый чат
-          setSelectedCreator(creator);
-          // Очищаем query параметр из URL
-          navigate("/messages", { replace: true });
-        }
+    // Открытие чата по chatId
+    if (chatIdFromUrl) {
+      const existingChat = userChats.find((c) => c.id === chatIdFromUrl);
+      if (existingChat) {
+        setSelectedChat(existingChat);
+        navigate("/messages", { replace: true });
       }
     }
-  }, [creatorIdFromUrl, user, userChats, navigate]);
 
-  // Инициализация сообщений
-  useEffect(() => {
-    const savedMessages =
-      JSON.parse(localStorage.getItem("creator-messages")) || {};
-    setMessages(savedMessages);
-
-    // Получаем чаты после загрузки сообщений
-    const chats = getChatsWithCurrentUser(savedMessages);
-    setUserChats(chats);
-  }, [user, getChatsWithCurrentUser]);
-
-  // Эффект для автоматического открытия чата при наличии creatorId в URL
-  useEffect(() => {
-    if (creatorIdFromUrl && user) {
-      const creatorId = parseInt(creatorIdFromUrl);
-
-      // Проверяем, существует ли такой креатор
-      const creator = enhancedCreatorsData.find((c) => c.id === creatorId);
-
-      if (creator) {
-        // Проверяем, есть ли уже чат с этим креатором
-        const existingChat = userChats.find((c) => c.id === creatorId);
-
-        if (existingChat) {
-          setSelectedCreator(existingChat);
-        } else {
-          // Создаем новый чат
-          setSelectedCreator(creator);
-          // Очищаем query параметр из URL
-          navigate("/messages", { replace: true });
-        }
+    // Открытие чата по creatorId (для обратной совместимости)
+    if (creatorIdFromUrl) {
+      const existingChat = userChats.find(
+        (c) => c.participantId === creatorIdFromUrl,
+      );
+      if (existingChat) {
+        setSelectedChat(existingChat);
+        navigate("/messages", { replace: true });
       }
     }
-  }, [creatorIdFromUrl, user, userChats, navigate]);
+  }, [creatorIdFromUrl, chatIdFromUrl, user, userChats, navigate]);
 
-  // Фильтрация чатов по поиску
-  const filteredChats = userChats.filter(
-    (creator) =>
-      creator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      creator.bio.toLowerCase().includes(searchQuery.toLowerCase())
+  // Фильтрация чатов
+  const filteredChats = userChats.filter((chat) =>
+    chat.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // Фильтрация доступных для нового чата креаторов
-  useEffect(() => {
-    if (!user) return;
-
-    const available = enhancedCreatorsData.filter(
-      (creator) =>
-        creator.id !== user.id &&
-        creator.name.toLowerCase().includes(newChatSearch.toLowerCase())
-    );
-
-    setAvailableCreators(available);
-  }, [newChatSearch, user]);
-
-  // Получение диалога с выбранным креатором
-  const getCurrentDialog = () => {
-    if (!selectedCreator || !user) return [];
-
-    const dialogKey = `${user.id}-${selectedCreator.id}`;
-    const reversedKey = `${selectedCreator.id}-${user.id}`;
-
-    return messages[dialogKey] || messages[reversedKey] || [];
-  };
-
   // Отправка сообщения
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !selectedCreator || !user) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedChat || !user) return;
 
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const newMsg = {
-      id: Date.now(),
-      text: newMessage.trim(),
-      senderId: user.id,
-      receiverId: selectedCreator.id,
-      timestamp: new Date().toISOString(),
-      isRead: false,
-      attachments: [],
-    };
+      // Determine receiver: if participantId exists and is valid, use it
+      let receiverId = selectedChat.participantId;
 
-    const dialogKey = `${user.id}-${selectedCreator.id}`;
-    const updatedMessages = {
-      ...messages,
-      [dialogKey]: [...(messages[dialogKey] || []), newMsg],
-    };
+      // If participantId is not available, try to find from participants array
+      if (!receiverId && selectedChat.participants) {
+        const otherParticipant = selectedChat.participants.find(
+          (p) => p.userId !== user.id,
+        );
+        receiverId = otherParticipant?.userId;
+      }
 
-    setMessages(updatedMessages);
+      // If still no receiver, we can't send the message
+      if (!receiverId) {
+        setError("Не удалось определить получателя сообщения");
+        setIsLoading(false);
+        return;
+      }
 
-    // Обновляем userChats после отправки сообщения
-    const updatedChats = getChatsWithCurrentUser(updatedMessages);
-    setUserChats(updatedChats);
-
-    localStorage.setItem("creator-messages", JSON.stringify(updatedMessages));
-
-    // Имитация ответа от креатора
-    setTimeout(() => {
-      const autoReply = {
-        id: Date.now() + 1,
-        text: "Спасибо за сообщение! Я отвечу вам как можно скорее.",
-        senderId: selectedCreator.id,
-        receiverId: user.id,
-        timestamp: new Date().toISOString(),
-        isRead: true,
-        attachments: [],
+      const dto = {
+        ChatId: selectedChat.id,
+        SenderId: user.id,
+        ReceiverId: receiverId,
+        Content: newMessage.trim(),
       };
 
-      const updatedWithReply = {
-        ...updatedMessages,
-        [dialogKey]: [...updatedMessages[dialogKey], autoReply],
-      };
+      await messageApi.createMessage(dto, token);
 
-      setMessages(updatedWithReply);
-      const updatedChatsAfterReply = getChatsWithCurrentUser(updatedWithReply);
-      setUserChats(updatedChatsAfterReply);
-
-      localStorage.setItem(
-        "creator-messages",
-        JSON.stringify(updatedWithReply)
-      );
+      setNewMessage("");
+      await loadMessages();
+    } catch (err) {
+      setError("Не удалось отправить сообщение");
+    } finally {
       setIsLoading(false);
-    }, 1000);
-
-    setNewMessage("");
+    }
   };
 
-  // Начать новый диалог с выбранным креатором
-  const handleStartNewDialog = (creator) => {
-    setSelectedCreator(creator);
-    setSearchQuery("");
-    setShowNewChatModal(false);
-    setNewChatSearch("");
+  // Создание нового чата
+  const handleCreateChat = async (otherUserId) => {
+    // Проверяем, существует ли уже чат с этим пользователем
+    const existingChat = userChats.find((c) => c.participantId === otherUserId);
+    if (existingChat) {
+      setSelectedChat(existingChat);
+      setShowNewChatModal(false);
+      setNewChatSearch("");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const chat = await chatApi.createChat([user.id, otherUserId], token);
+      await loadUserChats();
+      setSelectedChat(
+        userChats.find((c) => c.id === chat.id) || {
+          id: chat.id,
+          participantId: otherUserId,
+          name: "Новый чат",
+        },
+      );
+      setShowNewChatModal(false);
+      setNewChatSearch("");
+    } catch (err) {
+      setError("Не удалось создать чат");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Создать новый чат с креатором
-  const handleCreateNewChat = (creator) => {
-    handleStartNewDialog(creator);
+  // Выбор чата
+  const handleSelectChat = (chat) => {
+    setSelectedChat(chat);
   };
 
   // Форматирование времени
   const formatTime = (timestamp) => {
+    if (!timestamp) return "";
     const date = new Date(timestamp);
     return date.toLocaleTimeString("ru-RU", {
       hour: "2-digit",
@@ -263,6 +224,7 @@ function Messages() {
 
   // Форматирование даты
   const formatDate = (timestamp) => {
+    if (!timestamp) return "";
     const date = new Date(timestamp);
     const today = new Date();
     const yesterday = new Date(today);
@@ -280,39 +242,8 @@ function Messages() {
     }
   };
 
-  // Получение последнего сообщения для превью
-  const getLastMessagePreview = (creatorId) => {
-    const dialogKey = `${user?.id}-${creatorId}`;
-    const reversedKey = `${creatorId}-${user?.id}`;
-    const dialog = messages[dialogKey] || messages[reversedKey];
-
-    if (!dialog || dialog.length === 0) return "Начните диалог";
-
-    const lastMsg = dialog[dialog.length - 1];
-    const isFromMe = lastMsg.senderId === user?.id;
-    const prefix = isFromMe ? "Вы: " : "";
-    return (
-      prefix +
-      (lastMsg.text.length > 30
-        ? lastMsg.text.substring(0, 30) + "..."
-        : lastMsg.text)
-    );
-  };
-
-  // Получение времени последнего сообщения
-  const getLastMessageTime = (creatorId) => {
-    const dialogKey = `${user?.id}-${creatorId}`;
-    const reversedKey = `${creatorId}-${user?.id}`;
-    const dialog = messages[dialogKey] || messages[reversedKey];
-
-    if (!dialog || dialog.length === 0) return "";
-
-    const lastMsg = dialog[dialog.length - 1];
-    return formatTime(lastMsg.timestamp);
-  };
-
-  // Обработка нажатия Enter для отправки
-  const handleKeyPress = (e) => {
+  // Обработка Enter
+  const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -321,23 +252,21 @@ function Messages() {
 
   return (
     <div className={styles.container}>
-      {/* Заголовок */}
+      {error && <div className={styles.error}>{error}</div>}
+
       <div className={styles.header}>
         <div className={styles.headerContent}>
           <div>
             <h1 className={styles.title}>Сообщения</h1>
             <p className={styles.subtitle}>
-              Общайтесь с другими креаторами, обсуждайте сотрудничество и
-              делитесь опытом
+              Общайтесь с другими пользователями
             </p>
           </div>
         </div>
       </div>
 
       <div className={styles.messengerContainer}>
-        {/* Боковая панель с чатами */}
         <div className={styles.sidebar}>
-          {/* Панель поиска и создания нового чата */}
           <div className={styles.sidebarHeader}>
             <div className={styles.searchBar}>
               <MagnifyingGlassIcon className={styles.searchIcon} />
@@ -357,31 +286,39 @@ function Messages() {
             </button>
           </div>
 
-          {/* Список чатов */}
           <div className={styles.creatorsList}>
             <div className={styles.creatorsHeader}>
               <h3 className={styles.creatorsTitle}>Мои чаты</h3>
               <span className={styles.chatCount}>{filteredChats.length}</span>
             </div>
 
-            {filteredChats.length > 0 ? (
-              filteredChats.map((creator) => (
+            {isLoading ? (
+              <div className={styles.loading}>Загрузка...</div>
+            ) : filteredChats.length > 0 ? (
+              filteredChats.map((chat) => (
                 <div
-                  key={creator.id}
+                  key={chat.id}
                   className={`${styles.creatorItem} ${
-                    selectedCreator?.id === creator.id ? styles.selected : ""
+                    selectedChat?.id === chat.id ? styles.selected : ""
                   }`}
-                  onClick={() => handleStartNewDialog(creator)}
+                  onClick={() => handleSelectChat(chat)}
                 >
+                  <div className={styles.creatorAvatar}>
+                    {chat.avatarUrl ? (
+                      <img src={chat.avatarUrl} alt={chat.name} />
+                    ) : (
+                      <UserIcon className={styles.avatarIcon} />
+                    )}
+                  </div>
                   <div className={styles.creatorInfo}>
                     <div className={styles.creatorHeader}>
-                      <h4 className={styles.creatorName}>{creator.name}</h4>
+                      <h4 className={styles.creatorName}>{chat.name}</h4>
                       <span className={styles.messageTime}>
-                        {getLastMessageTime(creator.id)}
+                        {formatTime(chat.lastMessageTime)}
                       </span>
                     </div>
                     <div className={styles.lastMessage}>
-                      {getLastMessagePreview(creator.id)}
+                      {chat.lastMessage || "Нет сообщений"}
                     </div>
                   </div>
                 </div>
@@ -401,42 +338,45 @@ function Messages() {
           </div>
         </div>
 
-        {/* Основная область чата */}
         <div className={styles.chatArea}>
-          {selectedCreator ? (
+          {selectedChat ? (
             <>
-              {/* Заголовок чата */}
               <div className={styles.chatHeader}>
                 <div className={styles.chatCreatorInfo}>
+                  <div className={styles.chatCreatorAvatar}>
+                    {selectedChat.avatarUrl ? (
+                      <img
+                        src={selectedChat.avatarUrl}
+                        alt={selectedChat.name}
+                      />
+                    ) : (
+                      <UserIcon className={styles.avatarIcon} />
+                    )}
+                  </div>
                   <div className={styles.chatCreatorDetails}>
-                    <div className={styles.chatCreatorNameRow}>
-                      <h2 className={styles.chatCreatorName}>
-                        {selectedCreator.name}
-                      </h2>
-                    </div>
+                    <h2 className={styles.chatCreatorName}>
+                      {selectedChat.name}
+                    </h2>
                   </div>
                 </div>
               </div>
 
-              {/* Область сообщений */}
               <div className={styles.messagesContainer}>
-                {getCurrentDialog().length === 0 ? (
+                {isLoadingMessages ? (
+                  <div className={styles.loading}>Загрузка сообщений...</div>
+                ) : messages.length === 0 ? (
                   <div className={styles.emptyChat}>
                     <EnvelopeIcon className={styles.emptyChatIcon} />
-                    <h3>Начните диалог с {selectedCreator.name}</h3>
-                    <p>
-                      Обсудите сотрудничество, поделитесь опытом или задайте
-                      вопросы
-                    </p>
+                    <h3>Начните диалог</h3>
+                    <p>Напишите первое сообщение</p>
                   </div>
                 ) : (
                   <div className={styles.messagesList}>
                     {(() => {
-                      const dialog = getCurrentDialog();
                       let currentDate = null;
 
-                      return dialog.map((message, index) => {
-                        const messageDate = formatDate(message.timestamp);
+                      return messages.map((message) => {
+                        const messageDate = formatDate(message.createdAt);
                         const isMyMessage = message.senderId === user?.id;
                         const showDate = currentDate !== messageDate;
 
@@ -461,11 +401,11 @@ function Messages() {
                             >
                               <div className={styles.messageContent}>
                                 <div className={styles.messageText}>
-                                  {message.text}
+                                  {message.content}
                                 </div>
                                 <div className={styles.messageMeta}>
                                   <span className={styles.messageTime}>
-                                    {formatTime(message.timestamp)}
+                                    {formatTime(message.createdAt)}
                                   </span>
                                   {isMyMessage && (
                                     <div className={styles.messageStatus}>
@@ -492,12 +432,11 @@ function Messages() {
                 )}
               </div>
 
-              {/* Панель ввода сообщения */}
               <div className={styles.inputContainer}>
                 <textarea
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
                   placeholder="Напишите сообщение..."
                   className={styles.messageInput}
                   rows={1}
@@ -517,14 +456,10 @@ function Messages() {
               </div>
             </>
           ) : (
-            /* Состояние без выбранного креатора */
             <div className={styles.noChatSelected}>
               <ChatBubbleLeftRightIcon className={styles.noChatIcon} />
               <h2>Выберите чат для общения</h2>
-              <p>
-                Выберите существующий чат или создайте новый, чтобы обсудить
-                сотрудничество, поделиться опытом или задать вопросы
-              </p>
+              <p>Выберите существующий чат или создайте новый</p>
               {userChats.length === 0 && (
                 <button
                   className={styles.createFirstChatButton}
@@ -538,7 +473,6 @@ function Messages() {
         </div>
       </div>
 
-      {/* Модальное окно создания нового чата */}
       {showNewChatModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.newChatModal}>
@@ -559,7 +493,7 @@ function Messages() {
               <MagnifyingGlassIcon className={styles.modalSearchIcon} />
               <input
                 type="text"
-                placeholder="Поиск креаторов..."
+                placeholder="Поиск пользователей..."
                 value={newChatSearch}
                 onChange={(e) => setNewChatSearch(e.target.value)}
                 className={styles.modalSearchInput}
@@ -567,41 +501,28 @@ function Messages() {
             </div>
 
             <div className={styles.availableCreatorsList}>
-              {availableCreators.length > 0 ? (
-                availableCreators.map((creator) => (
+              {availableUsers.length > 0 ? (
+                availableUsers.map((u) => (
                   <div
-                    key={creator.id}
+                    key={u.id}
                     className={styles.availableCreatorItem}
-                    onClick={() => handleCreateNewChat(creator)}
+                    onClick={() => handleCreateChat(u.id)}
                   >
                     <div className={styles.availableCreatorAvatar}>
-                      {creator.avatar ? (
-                        <img src={creator.avatar} alt={creator.name} />
-                      ) : (
-                        <UserIcon className={styles.availableAvatarIcon} />
-                      )}
+                      <UserIcon className={styles.availableAvatarIcon} />
                     </div>
                     <div className={styles.availableCreatorInfo}>
                       <h4 className={styles.availableCreatorName}>
-                        {creator.name}
+                        {u.name} {u.surname}
                       </h4>
-                      <p className={styles.availableCreatorBio}>
-                        {creator.bio.length > 50
-                          ? creator.bio.substring(0, 50) + "..."
-                          : creator.bio}
-                      </p>
+                      <p className={styles.availableCreatorBio}>{u.email}</p>
                     </div>
                     <PlusIcon className={styles.addChatIcon} />
                   </div>
                 ))
               ) : (
                 <div className={styles.noAvailableCreators}>
-                  <UserIcon className={styles.noAvailableIcon} />
-                  <p>
-                    {newChatSearch
-                      ? "Креаторы не найдены"
-                      : "Нет доступных креаторов для нового чата"}
-                  </p>
+                  <p>Нет доступных пользователей</p>
                 </div>
               )}
             </div>

@@ -23,6 +23,9 @@ function mapMasterclass(m) {
     description: m.description || "",
     shortDescription: m.shortDescription || "",
     category: m.categoryName || m.categoryId,
+    categoryId: m.categoryId,
+    ageCategoryId: m.ageCategoryId,
+    ageCategory: m.ageCategoryName || "",
     author: m.authorName || m.authorId,
     authorId: m.authorId,
     images: m.imageUrls?.length
@@ -30,6 +33,7 @@ function mapMasterclass(m) {
       : m.thumbnailUrl
         ? [m.thumbnailUrl]
         : [],
+    videoUrl: m.videoUrl || "",
     rating: Number(m.rating) || 0,
     ratingsCount: m.ratingsCount || 0,
     views: m.views || 0,
@@ -239,7 +243,9 @@ function MasterClassDetails() {
         masterClassId={id}
         user={user}
         rateMasterClass={handleUpdateRating}
-        getUserRating={() => (userScore ? { rating: userScore, comment: userComment } : null)}
+        getUserRating={() =>
+          userScore ? { rating: userScore, comment: userComment } : null
+        }
       />
 
       {showEditModal && (
@@ -307,7 +313,9 @@ function MasterClassDetails() {
               masterClass={masterClass}
               onRateClick={handleRateClick}
               user={user}
-              getUserRating={() => (userScore ? { rating: userScore, comment: userComment } : null)}
+              getUserRating={() =>
+                userScore ? { rating: userScore, comment: userComment } : null
+              }
               isOwner={isOwner}
               ratingsCount={ratings.length}
             />
@@ -320,7 +328,9 @@ function MasterClassDetails() {
               relatedClasses={relatedClasses}
               navigate={navigate}
               user={user}
-              getUserRating={() => (userScore ? { rating: userScore, comment: userComment } : null)}
+              getUserRating={() =>
+                userScore ? { rating: userScore, comment: userComment } : null
+              }
               onEditRating={handleRateClick}
               isOwner={isOwner}
               onEditMasterClass={() => setShowEditModal(true)}

@@ -86,6 +86,27 @@ function AdminPanel() {
       .catch(() => {});
   }, []);
 
+  const [allComments, setAllComments] = useState([]);
+
+  useEffect(() => {
+    masterclassApi
+      .getAllRatings()
+      .then((data) => {
+        const mapped = data.map((r) => ({
+          id: r.id,
+          masterclassId: r.masterclassId,
+          masterclassTitle: r.masterclassTitle || "Без мастер-класса",
+          userId: r.userId,
+          userName: r.userName || "Unknown",
+          score: r.score,
+          comment: r.comment || "",
+          createdAt: r.createdAt,
+        }));
+        setAllComments(mapped);
+      })
+      .catch(() => {});
+  }, []);
+
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -127,12 +148,7 @@ function AdminPanel() {
   }, [user, isAdmin, navigate]);
 
   // Получение всех комментариев с информацией о мастер-классе
-  const getAllComments = () => {
-    // Комментарии будут загружаться через API когда появится эндпоинт
-    return [];
-  };
-
-  const allComments = getAllComments();
+  const getAllComments = () => allComments;
 
   // Фильтрация пользователей
   const filteredUsers = allUsers
@@ -347,39 +363,95 @@ function AdminPanel() {
   };
 
   // Обработчики комментариев
-  const handleApproveComment = (commentId) => {
+  const handleApproveComment = async (commentId) => {
     if (window.confirm("Одобрить этот комментарий?")) {
-      setSelectedComments(selectedComments.filter((id) => id !== commentId));
+      try {
+        // TODO: Add backend endpoint for approving ratings
+        setAllComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId ? { ...c, status: "approved" } : c,
+          ),
+        );
+        setSelectedComments(selectedComments.filter((id) => id !== commentId));
+      } catch {
+        alert("Ошибка при одобрении комментария");
+      }
     }
   };
 
-  const handleRejectComment = (commentId) => {
+  const handleRejectComment = async (commentId) => {
     if (window.confirm("Отклонить этот комментарий?")) {
-      setSelectedComments(selectedComments.filter((id) => id !== commentId));
+      try {
+        // TODO: Add backend endpoint for rejecting ratings
+        setAllComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId ? { ...c, status: "rejected" } : c,
+          ),
+        );
+        setSelectedComments(selectedComments.filter((id) => id !== commentId));
+      } catch {
+        alert("Ошибка при отклонении комментария");
+      }
     }
   };
 
-  const handleDeleteComment = (commentId) => {
+  const handleDeleteComment = async (commentId) => {
     if (window.confirm("Удалить этот комментарий?")) {
-      setSelectedComments(selectedComments.filter((id) => id !== commentId));
+      try {
+        await masterclassApi.deleteRating(commentId);
+        setAllComments((prev) => prev.filter((c) => c.id !== commentId));
+        setSelectedComments(selectedComments.filter((id) => id !== commentId));
+      } catch {
+        alert("Ошибка при удалении комментария");
+      }
     }
   };
 
-  const handleBulkApproveComments = () => {
+  const handleBulkApproveComments = async () => {
     if (window.confirm(`Одобрить ${selectedComments.length} комментариев?`)) {
-      setSelectedComments([]);
+      try {
+        // TODO: Add backend endpoint for bulk approving ratings
+        setAllComments((prev) =>
+          prev.map((c) =>
+            selectedComments.includes(c.id) ? { ...c, status: "approved" } : c,
+          ),
+        );
+        setSelectedComments([]);
+      } catch {
+        alert("Ошибка при массовом одобрении комментариев");
+      }
     }
   };
 
-  const handleBulkRejectComments = () => {
+  const handleBulkRejectComments = async () => {
     if (window.confirm(`Отклонить ${selectedComments.length} комментариев?`)) {
-      setSelectedComments([]);
+      try {
+        // TODO: Add backend endpoint for bulk rejecting ratings
+        setAllComments((prev) =>
+          prev.map((c) =>
+            selectedComments.includes(c.id) ? { ...c, status: "rejected" } : c,
+          ),
+        );
+        setSelectedComments([]);
+      } catch {
+        alert("Ошибка при массовом отклонении комментариев");
+      }
     }
   };
 
-  const handleBulkDeleteComments = () => {
+  const handleBulkDeleteComments = async () => {
     if (window.confirm(`Удалить ${selectedComments.length} комментариев?`)) {
-      setSelectedComments([]);
+      try {
+        await Promise.all(
+          selectedComments.map((id) => masterclassApi.deleteRating(id)),
+        );
+        setAllComments((prev) =>
+          prev.filter((c) => !selectedComments.includes(c.id)),
+        );
+        setSelectedComments([]);
+      } catch {
+        alert("Ошибка при массовом удалении комментариев");
+      }
     }
   };
 

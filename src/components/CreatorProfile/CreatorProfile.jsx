@@ -11,11 +11,13 @@ import {
   ShareIcon,
   ShoppingBagIcon,
   VideoCameraIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline";
 import MasterClassesCard from "../MasterClassesCard/MasterClassesCard";
 import ProductCard from "../ProductCard/ProductCard";
 import Loader from "../common/Loader/Loader";
 import Notification from "../common/Notification/Notification";
+import Gallery from "../Gallery/Gallery";
 import styles from "./CreatorProfile.module.css";
 
 function CreatorProfile() {
@@ -157,15 +159,7 @@ function CreatorProfile() {
                   Редактировать
                 </Link>
               ) : (
-                <div className={styles.profileActions}>
-                  <button
-                    className={styles.messageButton}
-                    onClick={() => alert(`Связь с ${fullName}`)}
-                  >
-                    <EnvelopeIcon className={styles.messageIcon} />
-                    Написать
-                  </button>
-                </div>
+                <div className={styles.profileActions}></div>
               )}
             </div>
           </div>
@@ -220,6 +214,13 @@ function CreatorProfile() {
             Товары
             <span className={styles.navCount}>{creatorProducts.length}</span>
           </button>
+          <button
+            className={`${styles.navButton} ${activeTab === "gallery" ? styles.active : ""}`}
+            onClick={() => setActiveTab("gallery")}
+          >
+            <PhotoIcon className={styles.navIcon} />
+            Галерея
+          </button>
         </div>
 
         {/* Контент */}
@@ -263,6 +264,8 @@ function CreatorProfile() {
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
+          ) : activeTab === "gallery" ? (
+            <Gallery userId={id} isOwnProfile={isOwnProfile} />
           ) : (
             <div className={styles.emptyState}>
               <ShoppingBagIcon className={styles.emptyIcon} />

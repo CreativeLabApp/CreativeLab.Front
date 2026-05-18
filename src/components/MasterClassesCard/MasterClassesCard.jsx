@@ -6,6 +6,7 @@ import {
   HeartIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import {
   StarIcon as StarIconSolid,
@@ -188,6 +189,14 @@ function MasterClassesCard({ item }) {
           <UserIcon className={styles.metaIcon} />
           <span className={styles.metaText}>{item.author}</span>
         </div>
+
+        {/* Возрастная категория */}
+        {item.ageCategory && (
+          <div className={styles.metaItem}>
+            <UserGroupIcon className={styles.metaIcon} />
+            <span className={styles.metaText}>{item.ageCategory}</span>
+          </div>
+        )}
 
         {/* Рейтинг */}
         <div className={styles.ratingContainer}>

@@ -35,7 +35,13 @@ function AuthButton() {
         {buttonText}
       </button>
 
-      <button className={styles.exit} onClick={() => logout()}>
+      <button
+        className={styles.exit}
+        onClick={() => {
+          logout();
+          navigate("/");
+        }}
+      >
         <ArrowRightStartOnRectangleIcon className={styles.icon} />
       </button>
     </div>

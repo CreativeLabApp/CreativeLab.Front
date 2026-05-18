@@ -1,11 +1,21 @@
 import React from "react";
-import { PhotoIcon } from "@heroicons/react/24/outline";
+import { PhotoIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import styles from "./MasterClassDetailsSidebar.module.css";
 
 function MasterClassDetailsSidebar({ masterClass, relatedClasses, navigate }) {
   return (
     <div className={styles.sidebarCard}>
       <h3 className={styles.sidebarTitle}>Информация</h3>
+
+      {/* Возрастная категория */}
+      {masterClass.ageCategory && (
+        <div className={styles.infoItem}>
+          <UserGroupIcon className={styles.infoIcon} />
+          <span className={styles.infoText}>
+            Возраст: <strong>{masterClass.ageCategory}</strong>
+          </span>
+        </div>
+      )}
 
       {/* Материалы */}
       <div className={styles.tagsSection}>
