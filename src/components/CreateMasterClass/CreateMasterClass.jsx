@@ -85,7 +85,7 @@ function CreateMasterClass() {
     }
 
     const invalid = newFiles.filter(
-      (f) => f.size > 5 * 1024 * 1024 || !f.type.match("image.*"),
+      (f) => f.size > 5 * 1024 * 1024 || !f.type.match("image.*")
     );
     if (invalid.length) {
       setErrors((prev) => ({
@@ -102,8 +102,8 @@ function CreateMasterClass() {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
             reader.readAsDataURL(file);
-          }),
-      ),
+          })
+      )
     ).then((newPreviews) => {
       setFormData((prev) => ({
         ...prev,
@@ -191,7 +191,7 @@ function CreateMasterClass() {
   const filteredMaterials = existingMaterials.filter(
     (m) =>
       m.toLowerCase().includes(materialInputValue.toLowerCase()) &&
-      !formData.materials.includes(m),
+      !formData.materials.includes(m)
   );
 
   // Добавление материала из выпадающего списка
@@ -263,7 +263,7 @@ function CreateMasterClass() {
   const filteredCategories = categories.filter(
     (cat) =>
       cat.name.toLowerCase().includes(categoryInputValue.toLowerCase()) &&
-      (formData.categoryId ? cat.id !== formData.categoryId : true),
+      (formData.categoryId ? cat.id !== formData.categoryId : true)
   );
 
   // Категория - выбор из списка
@@ -287,7 +287,7 @@ function CreateMasterClass() {
     try {
       const newCategory = await categoryApi.create(name);
       setCategories((prev) =>
-        [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)),
+        [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name))
       );
       setFormData((prev) => ({
         ...prev,
@@ -372,7 +372,7 @@ function CreateMasterClass() {
         const newCategory = await categoryApi.create(categoryInputValue.trim());
         categoryId = newCategory.id;
         setCategories((prev) =>
-          [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)),
+          [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name))
         );
       }
 
@@ -458,7 +458,7 @@ function CreateMasterClass() {
                           type="button"
                           onClick={() =>
                             setCurrentImageIndex((p) =>
-                              p === 0 ? formData.previews.length - 1 : p - 1,
+                              p === 0 ? formData.previews.length - 1 : p - 1
                             )
                           }
                           className={styles.navButton}
@@ -470,7 +470,7 @@ function CreateMasterClass() {
                           type="button"
                           onClick={() =>
                             setCurrentImageIndex((p) =>
-                              p === formData.previews.length - 1 ? 0 : p + 1,
+                              p === formData.previews.length - 1 ? 0 : p + 1
                             )
                           }
                           className={`${styles.navButton} ${styles.nextButton}`}
@@ -491,7 +491,9 @@ function CreateMasterClass() {
                         <button
                           type="button"
                           onClick={() => setCurrentImageIndex(i)}
-                          className={`${styles.thumbnailButton} ${currentImageIndex === i ? styles.active : ""}`}
+                          className={`${styles.thumbnailButton} ${
+                            currentImageIndex === i ? styles.active : ""
+                          }`}
                           aria-label={`Выбрать изображение ${i + 1}`}
                         >
                           <img
@@ -577,7 +579,9 @@ function CreateMasterClass() {
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  className={`${styles.input} ${errors.title ? styles.errorInput : ""}`}
+                  className={`${styles.input} ${
+                    errors.title ? styles.errorInput : ""
+                  }`}
                   placeholder="Например: Акварельный пейзаж для начинающих"
                   maxLength={100}
                 />
@@ -615,7 +619,7 @@ function CreateMasterClass() {
                   error={!!errors.description}
                 />
                 <div className={styles.characterCount}>
-                  {formData.description.replace(/<[^>]*>/g, "").length}/2000
+                  {formData.description.replace(/<[^>]*>/g, "").length}/3000
                 </div>
                 {errors.description && (
                   <div className={styles.error}>{errors.description}</div>
@@ -689,7 +693,9 @@ function CreateMasterClass() {
                       }
                       onChange={handleCategoryInputChange}
                       onFocus={handleCategoryInputFocus}
-                      className={`${styles.input} ${errors.categoryId ? styles.errorInput : ""}`}
+                      className={`${styles.input} ${
+                        errors.categoryId ? styles.errorInput : ""
+                      }`}
                       placeholder={
                         formData.categoryId
                           ? formData.categoryName
@@ -753,7 +759,9 @@ function CreateMasterClass() {
                   name="ageCategoryId"
                   value={formData.ageCategoryId}
                   onChange={handleInputChange}
-                  className={`${styles.select} ${errors.ageCategoryId ? styles.errorInput : ""}`}
+                  className={`${styles.select} ${
+                    errors.ageCategoryId ? styles.errorInput : ""
+                  }`}
                 >
                   <option value="">Выберите возрастную категорию...</option>
                   {ageCategories.map((cat) => (
