@@ -129,7 +129,7 @@ function PrivacyPage() {
           <p>
             По вопросам, связанным с обработкой персональных данных,
             обращайтесь:{" "}
-            <a href="mailto:support@creativelab.ru">support@creativelab.ru</a>
+            <a href="mailto:support@creativelab.by">support@creativelab.by</a>
           </p>
         </section>
       </div>

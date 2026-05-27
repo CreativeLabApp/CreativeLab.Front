@@ -1,5 +1,5 @@
 .container {
-  width: 85%;
+  width: 90%;
   margin: 0 auto;
   padding: var(--spacing-xl);
   min-height: 100vh;
@@ -183,6 +183,10 @@
   .rightColumn {
     grid-column: 1 / -1;
   }
+}
+
+.rightColumn {
+  position: relative;
 }
 
 /* Левая колонка - изображения */
@@ -596,8 +600,6 @@
   border-radius: var(--border-radius);
   padding: var(--spacing-xl);
   box-shadow: 0 4px 20px var(--shadow-color);
-  position: sticky;
-  top: var(--spacing-xl);
 }
 
 .purchaseHeader {

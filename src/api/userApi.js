@@ -4,7 +4,7 @@ export const userApi = {
   getAll: async () => {
     const res = await fetch(`${BASE_URL}/user/getall`);
     if (!res.ok) throw new Error("Failed to fetch users");
-    return res.json(); // [{ id, name, surname, email, createdAt, masterclassesCount, productsCount }]
+    return res.json(); // [{ id, name, surname, email, role, isActive, createdAt, masterclassesCount, productsCount }]
   },
 
   getById: async (id) => {

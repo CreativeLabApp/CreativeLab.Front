@@ -35,12 +35,16 @@ function AdminPanel() {
       .then((data) => {
         setAllUsers(
           data
-            .filter((u) => !u.isAdmin)
+            .filter((u) => u.role !== "admin")
             .map((u) => ({
               id: u.id,
               name: `${u.name} ${u.surname}`.trim(),
               email: u.email,
-              role: u.isAdmin ? "admin" : "user",
+              role:
+                u.role ||
+                (u.email?.toLowerCase() === "admin@creativelab.com"
+                  ? "admin"
+                  : "user"),
               isActive: u.isActive,
               registrationDate: u.createdAt?.split("T")[0] || "",
               masterclassesCount: u.masterclassesCount,
@@ -448,15 +452,6 @@ function AdminPanel() {
           </div>
           <div className={styles.statContent}>
             <div className={styles.statNumber}>{allUsers.length}</div>
-            <div className={styles.statBreakdown}>
-              <span>
-                {allUsers.filter((u) => u.role === "admin").length}{" "}
-                администраторов
-              </span>
-              <span>
-                {allUsers.filter((u) => u.role === "user").length} обычных
-              </span>
-            </div>
           </div>
         </div>
 
@@ -544,13 +539,14 @@ function AdminPanel() {
       )}
 
       {/* Последние пользователи */}
-      {allUsers.length > 0 && (
+      {allUsers.filter((u) => u.role !== "admin").length > 0 && (
         <div className={styles.dashboardSection}>
           <h3 className={styles.dashboardSectionTitle}>
             Последние зарегистрированные
           </h3>
           <div className={styles.topList}>
             {[...allUsers]
+              .filter((u) => u.role !== "admin")
               .sort(
                 (a, b) =>
                   new Date(b.registrationDate) - new Date(a.registrationDate),
@@ -872,16 +868,12 @@ function AdminPanel() {
             <div className={styles.cardContent}>
               <div className={styles.cardStats}>
                 <div className={styles.statItem}>
-                  <EyeIcon className={styles.statIcon} />
-                  <span>{item.views} просмотров</span>
-                </div>
-                <div className={styles.statItem}>
                   <StarIcon className={styles.statIcon} />
                   <span>{item.rating} ★</span>
                 </div>
                 <div className={styles.statItem}>
                   <CalendarIcon className={styles.statIcon} />
-                  <span>{item.createdAt}</span>
+                  <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
               <div className={styles.cardDescription}>
@@ -999,7 +991,6 @@ function AdminPanel() {
                     (productSort.direction === "asc" ? "↑" : "↓")}
                 </button>
               </th>
-              <th>Просмотры</th>
               <th>Статус</th>
               <th>Действия</th>
             </tr>
@@ -1061,7 +1052,6 @@ function AdminPanel() {
                     {product.price} Br
                   </div>
                 </td>
-                <td>{product.views}</td>
                 <td>
                   <select
                     value={product.isAvailable ? "available" : "unavailable"}

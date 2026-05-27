@@ -17,7 +17,6 @@ import {
   ChevronRightIcon,
   BeakerIcon,
   VideoCameraIcon,
-  LinkIcon,
 } from "@heroicons/react/24/outline";
 
 function CreateMasterClass() {
@@ -85,7 +84,7 @@ function CreateMasterClass() {
     }
 
     const invalid = newFiles.filter(
-      (f) => f.size > 5 * 1024 * 1024 || !f.type.match("image.*")
+      (f) => f.size > 5 * 1024 * 1024 || !f.type.match("image.*"),
     );
     if (invalid.length) {
       setErrors((prev) => ({
@@ -102,8 +101,8 @@ function CreateMasterClass() {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
             reader.readAsDataURL(file);
-          })
-      )
+          }),
+      ),
     ).then((newPreviews) => {
       setFormData((prev) => ({
         ...prev,
@@ -129,10 +128,10 @@ function CreateMasterClass() {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 100 * 1024 * 1024) {
+    if (file.size > 10000 * 1024 * 1024) {
       setErrors((prev) => ({
         ...prev,
-        video: "Видео не должно превышать 100MB",
+        video: "Видео не должно превышать 1GB",
       }));
       return;
     }
@@ -191,7 +190,7 @@ function CreateMasterClass() {
   const filteredMaterials = existingMaterials.filter(
     (m) =>
       m.toLowerCase().includes(materialInputValue.toLowerCase()) &&
-      !formData.materials.includes(m)
+      !formData.materials.includes(m),
   );
 
   // Добавление материала из выпадающего списка
@@ -263,7 +262,7 @@ function CreateMasterClass() {
   const filteredCategories = categories.filter(
     (cat) =>
       cat.name.toLowerCase().includes(categoryInputValue.toLowerCase()) &&
-      (formData.categoryId ? cat.id !== formData.categoryId : true)
+      (formData.categoryId ? cat.id !== formData.categoryId : true),
   );
 
   // Категория - выбор из списка
@@ -287,7 +286,7 @@ function CreateMasterClass() {
     try {
       const newCategory = await categoryApi.create(name);
       setCategories((prev) =>
-        [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name))
+        [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)),
       );
       setFormData((prev) => ({
         ...prev,
@@ -372,7 +371,7 @@ function CreateMasterClass() {
         const newCategory = await categoryApi.create(categoryInputValue.trim());
         categoryId = newCategory.id;
         setCategories((prev) =>
-          [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name))
+          [...prev, newCategory].sort((a, b) => a.name.localeCompare(b.name)),
         );
       }
 
@@ -458,7 +457,7 @@ function CreateMasterClass() {
                           type="button"
                           onClick={() =>
                             setCurrentImageIndex((p) =>
-                              p === 0 ? formData.previews.length - 1 : p - 1
+                              p === 0 ? formData.previews.length - 1 : p - 1,
                             )
                           }
                           className={styles.navButton}
@@ -470,7 +469,7 @@ function CreateMasterClass() {
                           type="button"
                           onClick={() =>
                             setCurrentImageIndex((p) =>
-                              p === formData.previews.length - 1 ? 0 : p + 1
+                              p === formData.previews.length - 1 ? 0 : p + 1,
                             )
                           }
                           className={`${styles.navButton} ${styles.nextButton}`}
@@ -659,7 +658,7 @@ function CreateMasterClass() {
                       Нажмите для загрузки видео
                     </span>
                     <span className={styles.videoUploadHint}>
-                      Макс. 100MB, форматы: mp4, webm, mov, avi
+                      Макс. 1GB, форматы: mp4, webm, mov, avi
                     </span>
                   </label>
                 )}

@@ -274,7 +274,44 @@ function ProductDetail() {
 
               <div className={styles.description}>
                 <h3>Описание</h3>
-                <p>{product.description}</p>
+                <div
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+              </div>
+
+              <div className={styles.actionButtons}>
+                {!isOwner && product.isAvailable && (
+                  <button
+                    className={styles.buyButton}
+                    onClick={handleContactSeller}
+                  >
+                    <ChatBubbleLeftRightIcon className={styles.buyIcon} />
+                    Написать продавцу
+                  </button>
+                )}
+                {!isOwner && !product.isAvailable && (
+                  <button className={styles.soldButton} disabled>
+                    Нет в наличии
+                  </button>
+                )}
+              </div>
+
+              <div className={styles.secondaryActions}>
+                <button
+                  className={`${styles.wishlistButton} ${isInWish ? styles.active : ""}`}
+                  onClick={handleToggleFavorite}
+                >
+                  {isInWish ? (
+                    <HeartIconSolid className={styles.wishlistIcon} />
+                  ) : (
+                    <HeartIcon className={styles.wishlistIcon} />
+                  )}
+                  {isInWish ? "В избранном" : "В избранное"}
+                </button>
+                <button className={styles.shareButton} onClick={handleShare}>
+                  <ShareIcon className={styles.shareIcon} />
+                  Поделиться
+                </button>
               </div>
 
               <div className={styles.sellerInfo}>
@@ -391,62 +428,6 @@ function ProductDetail() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-
-          <div className={styles.rightColumn}>
-            <div className={styles.purchaseCard}>
-              <div className={styles.purchaseHeader}>
-                <CurrencyDollarIcon className={styles.purchaseIcon} />
-                <h3>Купить товар</h3>
-              </div>
-              <div className={styles.priceDisplay}>
-                <div className={styles.displayPrice}>
-                  {formatPrice(product.price)}
-                </div>
-              </div>
-              <div className={styles.stockInfo}>
-                <div className={styles.stockLabel}>
-                  {product.isAvailable
-                    ? `В наличии: ${product.stockQuantity} шт.`
-                    : "Нет в наличии"}
-                </div>
-              </div>
-
-              <div className={styles.actionButtons}>
-                {!isOwner && product.isAvailable && (
-                  <button
-                    className={styles.buyButton}
-                    onClick={handleContactSeller}
-                  >
-                    <ChatBubbleLeftRightIcon className={styles.buyIcon} />
-                    Написать продавцу
-                  </button>
-                )}
-                {!isOwner && !product.isAvailable && (
-                  <button className={styles.soldButton} disabled>
-                    Нет в наличии
-                  </button>
-                )}
-              </div>
-
-              <div className={styles.secondaryActions}>
-                <button
-                  className={`${styles.wishlistButton} ${isInWish ? styles.active : ""}`}
-                  onClick={handleToggleFavorite}
-                >
-                  {isInWish ? (
-                    <HeartIconSolid className={styles.wishlistIcon} />
-                  ) : (
-                    <HeartIcon className={styles.wishlistIcon} />
-                  )}
-                  {isInWish ? "В избранном" : "В избранное"}
-                </button>
-                <button className={styles.shareButton} onClick={handleShare}>
-                  <ShareIcon className={styles.shareIcon} />
-                  Поделиться
-                </button>
-              </div>
             </div>
           </div>
         </div>

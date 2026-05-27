@@ -24,6 +24,17 @@ export const masterclassApi = {
     return res.json();
   },
 
+  incrementViews: async (id) => {
+    const res = await fetch(
+      `${BASE_URL}/masterclass/IncrementViews/incrementviews?id=${id}`,
+      {
+        method: "PATCH",
+      },
+    );
+    if (!res.ok) throw new Error("Failed to increment masterclass views");
+    return res.json();
+  },
+
   uploadImages: async (files) => {
     const formData = new FormData();
     for (const file of files) {

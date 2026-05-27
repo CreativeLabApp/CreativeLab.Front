@@ -65,6 +65,10 @@ function MasterClassDetails() {
   const { user } = useAuthStore();
 
   useEffect(() => {
+    hasIncrementedViews.current = false;
+  }, [id]);
+
+  useEffect(() => {
     setLoading(true);
     setError(null);
     masterclassApi
@@ -109,7 +113,14 @@ function MasterClassDetails() {
   useEffect(() => {
     if (masterClass && !hasIncrementedViews.current) {
       hasIncrementedViews.current = true;
-      // views increment — можно добавить API вызов если появится эндпоинт
+      masterclassApi
+        .incrementViews(masterClass.id)
+        .then((updatedViews) => {
+          setMasterClass((prev) =>
+            prev ? { ...prev, views: updatedViews } : prev,
+          );
+        })
+        .catch(() => {});
     }
   }, [masterClass]);
 

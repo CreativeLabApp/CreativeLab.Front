@@ -106,7 +106,7 @@ function TermsPage() {
           <p>
             Все споры решаются путём переговоров. При невозможности достижения
             согласия споры рассматриваются в соответствии с законодательством
-            РФ.
+            Республики Беларусь.
           </p>
         </section>
 
@@ -115,7 +115,7 @@ function TermsPage() {
           <p>
             По вопросам, связанным с настоящим Соглашением, обращайтесь по
             адресу:{" "}
-            <a href="mailto:support@creativelab.ru">support@creativelab.ru</a>
+            <a href="mailto:support@creativelab.by">support@creativelab.by</a>
           </p>
         </section>
       </div>
