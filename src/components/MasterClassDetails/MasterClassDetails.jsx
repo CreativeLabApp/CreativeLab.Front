@@ -58,6 +58,7 @@ function MasterClassDetails() {
   const [userScore, setUserScore] = useState(null);
   const [userComment, setUserComment] = useState(null);
   const [ratings, setRatings] = useState([]);
+  const [userRatingId, setUserRatingId] = useState(null);
 
   const hasIncrementedViews = useRef(false);
 
@@ -81,7 +82,8 @@ function MasterClassDetails() {
         if (user?.id) {
           masterclassApi
             .getUserRating(m.id, user.id)
-            .then(({ score, comment }) => {
+            .then(({ id: ratingId, score, comment }) => {
+              setUserRatingId(ratingId ?? null);
               setUserScore(score);
               setUserComment(comment ?? null);
             })
@@ -108,7 +110,7 @@ function MasterClassDetails() {
         setError(err.message);
         setLoading(false);
       });
-  }, [id]);
+  }, [id, user?.id]);
 
   useEffect(() => {
     if (masterClass && !hasIncrementedViews.current) {
@@ -185,22 +187,18 @@ function MasterClassDetails() {
         rating: result.rating,
         ratingsCount: result.ratingsCount,
       }));
+
+      const currentUserRating = await masterclassApi.getUserRating(
+        masterClassId,
+        user.id,
+      );
+      setUserRatingId(currentUserRating?.id ?? null);
       setUserScore(result.userScore);
       setUserComment(comment || null);
-      setRatings((prev) => {
-        const filtered = prev.filter((r) => r.userId !== user.id);
-        return [
-          {
-            userId: user.id,
-            userName: `${user.name} ${user.surname || ""}`.trim(),
-            score: result.userScore,
-            comment: comment || null,
-            createdAt: new Date().toISOString(),
-            updatedAt: null,
-          },
-          ...filtered,
-        ];
-      });
+
+      const updatedRatings = await masterclassApi.getRatings(masterClassId);
+      setRatings(updatedRatings);
+
       notify("Оценка успешно сохранена!");
       return true;
     } catch {
@@ -211,6 +209,37 @@ function MasterClassDetails() {
 
   const isOwner = user && masterClass && user.id === masterClass.authorId;
   const isItemFavorite = isFavorite(id);
+
+  const handleDeleteRating = async () => {
+    const ratingId =
+      userRatingId ||
+      ratings.find((rating) => rating.userId === user?.id)?.id ||
+      null;
+
+    if (!ratingId) {
+      notify("Не удалось удалить оценку: идентификатор не найден.");
+      return;
+    }
+
+    try {
+      await masterclassApi.deleteRating(ratingId);
+      const [updatedMasterClass, updatedRatings] = await Promise.all([
+        masterclassApi.getById(id),
+        masterclassApi.getRatings(id),
+      ]);
+
+      setMasterClass(mapMasterclass(updatedMasterClass));
+      setRatings(updatedRatings);
+      setUserRatingId(null);
+      setUserScore(null);
+      setUserComment(null);
+      notify("Оценка успешно удалена!");
+      setShowRatingModal(false);
+    } catch (err) {
+      console.error(err);
+      notify("Ошибка при удалении оценки");
+    }
+  };
 
   const handleToggleFavorite = () => {
     if (!user) {
@@ -254,8 +283,11 @@ function MasterClassDetails() {
         masterClassId={id}
         user={user}
         rateMasterClass={handleUpdateRating}
+        deleteRating={handleDeleteRating}
         getUserRating={() =>
-          userScore ? { rating: userScore, comment: userComment } : null
+          userScore
+            ? { id: userRatingId, rating: userScore, comment: userComment }
+            : null
         }
       />
 

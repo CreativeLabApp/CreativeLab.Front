@@ -9,8 +9,8 @@ function MasterClassDetailsRatingModal({
   masterClassId,
   user,
   rateMasterClass,
+  deleteRating,
   getUserRating,
-  setShowNotification,
 }) {
   const [userRating, setUserRating] = useState(0);
   const [ratingComment, setRatingComment] = useState("");
@@ -43,13 +43,26 @@ function MasterClassDetailsRatingModal({
         userRating,
         ratingComment,
         user.id,
-        user.name || user.email
+        user.name || user.email,
       );
 
-      setShowNotification(true);
       onClose();
     } catch (error) {
       console.error("Ошибка при отправке оценки:", error);
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
+  const handleDeleteRating = async () => {
+    if (!deleteRating) return;
+
+    setIsSubmittingRating(true);
+    try {
+      await deleteRating();
+      onClose();
+    } catch (error) {
+      console.error("Ошибка при удалении оценки:", error);
     } finally {
       setIsSubmittingRating(false);
     }
@@ -90,7 +103,7 @@ function MasterClassDetailsRatingModal({
         onClose();
       }
     },
-    [onClose]
+    [onClose],
   );
 
   // Добавляем обработчик клавиш при монтировании
@@ -142,6 +155,15 @@ function MasterClassDetailsRatingModal({
             >
               Отмена
             </button>
+            {hasUserRated && (
+              <button
+                onClick={handleDeleteRating}
+                className={styles.deleteRatingButton}
+                disabled={isSubmittingRating}
+              >
+                Удалить оценку
+              </button>
+            )}
             <button
               onClick={handleSubmitRating}
               className={styles.submitRatingButton}

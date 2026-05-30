@@ -7,6 +7,7 @@ export const footerColumns = [
       { type: "link", label: "Продажи", href: "/marketplace" },
       { type: "link", label: "Рейтинг", href: "/rating" },
       { type: "link", label: "Избранное", href: "/favorite" },
+      { type: "link", label: "О проекте", href: "/about" },
     ],
   },
   {

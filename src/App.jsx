@@ -22,6 +22,7 @@ import AdminEditUser from "./components/AdminEditUser/AdminEditUser";
 import TermsPage from "./pages/TermsPage/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage/PrivacyPage";
 import RulesPage from "./pages/RulesPage/RulesPage";
+import AboutPage from "./pages/AboutPage/AboutPage";
 import { useAuthStore } from "./stores/authStore";
 import { authApi } from "./api/authApi";
 import { useFavoritesStore } from "./stores/favoritesStore";
@@ -100,6 +101,10 @@ function App() {
 
       <Route path="/privacy" element={<Layout />}>
         <Route index element={<PrivacyPage />} />
+      </Route>
+
+      <Route path="/about" element={<Layout />}>
+        <Route index element={<AboutPage />} />
       </Route>
 
       <Route path="/rules" element={<Layout />}>
