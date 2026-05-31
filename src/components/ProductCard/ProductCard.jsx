@@ -109,11 +109,15 @@ function ProductCard({ product }) {
       <div className={styles.content}>
         <h3 className={styles.title}>{product.title}</h3>
 
-        <p className={styles.description}>
-          {product.description.length > 80
-            ? product.description.substring(0, 80) + "..."
-            : product.description}
-        </p>
+        <p
+          className={styles.description}
+          dangerouslySetInnerHTML={{
+            __html:
+              product.description.length > 80
+                ? product.description.substring(0, 80) + "..."
+                : product.description,
+          }}
+        ></p>
 
         {/* Продавец */}
         <div className={styles.sellerInfo}>

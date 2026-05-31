@@ -273,6 +273,23 @@ function ProductDetail() {
                 )}
               </div>
 
+              <div
+                className={styles.specItem}
+                style={{
+                  border: "1px solid var(--accent-color)",
+                  borderRadius: "10px",
+                  padding: "10px",
+                  width: "150px",
+                }}
+              >
+                <QrCodeIcon className={styles.specIcon} />
+                <div>
+                  <div className={styles.specLabel}>
+                    В наличии {product.stockQuantity}
+                  </div>
+                </div>
+              </div>
+
               <div className={styles.description}>
                 <h3>Описание</h3>
                 <div
@@ -367,15 +384,6 @@ function ProductDetail() {
                       <div className={styles.specLabel}>Добавлено</div>
                       <div className={styles.specValue}>
                         {formatDate(product.createdAt)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className={styles.specItem}>
-                    <QrCodeIcon className={styles.specIcon} />
-                    <div>
-                      <div className={styles.specLabel}>Количество</div>
-                      <div className={styles.specValue}>
-                        {product.stockQuantity}
                       </div>
                     </div>
                   </div>
