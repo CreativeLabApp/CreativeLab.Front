@@ -5,7 +5,7 @@ import MasterClassesList from "../MasterClassesList/MasterClassesList";
 function PopularMasterClasses({ masterClasses }) {
   return (
     <section className={styles.section}>
-      {masterClasses.length === 0 ? (
+      {masterClasses?.length === 0 ? (
         <div className={styles.noResults}>
           <div className={styles.noResultsIcon}>🔍</div>
           <h3 className={styles.noResultsTitle}>Ничего не найдено</h3>
