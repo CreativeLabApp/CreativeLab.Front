@@ -644,25 +644,7 @@ function AdminPanel() {
               </th>
               <th>Пользователь</th>
               <th>Роль</th>
-              <th>
-                <button
-                  className={styles.sortButton}
-                  onClick={() =>
-                    setUserSort({
-                      field: "rating",
-                      direction:
-                        userSort.field === "rating" &&
-                        userSort.direction === "asc"
-                          ? "desc"
-                          : "asc",
-                    })
-                  }
-                >
-                  Рейтинг{" "}
-                  {userSort.field === "rating" &&
-                    (userSort.direction === "asc" ? "↑" : "↓")}
-                </button>
-              </th>
+
               <th>Дата регистрации</th>
               <th>Статус</th>
               <th>Действия</th>
@@ -718,12 +700,7 @@ function AdminPanel() {
                       : "Пользователь"}
                   </span>
                 </td>
-                <td>
-                  <div className={styles.ratingCell}>
-                    <StarIcon className={styles.ratingIcon} />
-                    {userItem.rating ? userItem.rating.toFixed(1) : "Нет"}
-                  </div>
-                </td>
+
                 <td>{userItem.registrationDate}</td>
                 <td>
                   <span

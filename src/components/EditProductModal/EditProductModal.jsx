@@ -2,19 +2,16 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { productApi } from "../../api/productApi";
+import { categoryApi } from "../../api/categoryApi";
 import { materialApi } from "../../api/materialApi";
 import TipTapEditor from "../CreateMasterClass/TipTapEditor";
 import styles from "./EditProductModal.module.css";
 import {
   XMarkIcon,
-  PencilSquareIcon,
   PhotoIcon,
   CurrencyDollarIcon,
   CubeIcon,
   ScaleIcon,
-  TagIcon,
-  CalendarDaysIcon,
-  BeakerIcon,
   PlusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
@@ -35,6 +32,7 @@ function EditProductModal({ product, onClose, onUpdate }) {
     stockQuantity: "",
     isAvailable: true,
     categoryId: "",
+    categoryName: "",
     dimensions: "",
     weight: "",
     materials: [],
@@ -42,9 +40,9 @@ function EditProductModal({ product, onClose, onUpdate }) {
   });
 
   const [existingMaterials, setExistingMaterials] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [materialInputValue, setMaterialInputValue] = useState("");
   const [materialDropdownOpen, setMaterialDropdownOpen] = useState(false);
-  const [selectedImages, setSelectedImages] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
   const materialInputRef = useRef(null);
 
@@ -59,16 +57,26 @@ function EditProductModal({ product, onClose, onUpdate }) {
         stockQuantity: product.stockQuantity || "",
         isAvailable: product.isAvailable ?? true,
         categoryId: product.categoryId || "",
+        categoryName: product.categoryId ? "" : product.category || "",
         dimensions: product.dimensions || "",
         weight: product.weight || "",
         materials: product.materials || [],
         tags: product.tags || [],
       });
-      setPreviewImages(product.images || []);
+      setPreviewImages(
+        (product.images || []).map((url, index) => ({
+          id: `existing-${index}`,
+          src: url,
+        })),
+      );
     }
     materialApi
       .getAll()
       .then(setExistingMaterials)
+      .catch(() => {});
+    categoryApi
+      .getAll()
+      .then(setCategories)
       .catch(() => {});
   }, [product]);
 
@@ -88,15 +96,23 @@ function EditProductModal({ product, onClose, onUpdate }) {
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-      setSelectedImages((prev) => [...prev, ...files]);
-      const newPreviews = files.map((file) => URL.createObjectURL(file));
+      const newPreviews = files.map((file, index) => ({
+        id: `new-${Date.now()}-${index}`,
+        src: URL.createObjectURL(file),
+        file,
+      }));
       setPreviewImages((prev) => [...prev, ...newPreviews]);
     }
   };
 
   const handleRemoveImage = (index) => {
-    setPreviewImages((prev) => prev.filter((_, i) => i !== index));
-    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewImages((prev) => {
+      const removed = prev[index];
+      if (removed?.file) {
+        URL.revokeObjectURL(removed.src);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
   // Фильтрация материалов для выпадающего списка
@@ -176,10 +192,42 @@ function EditProductModal({ product, onClose, onUpdate }) {
     setLoading(true);
 
     try {
-      let imageUrls = product?.images || [];
+      const existingImageUrls = previewImages
+        .filter((img) => !img.file)
+        .map((img) => img.src);
+      const newFiles = previewImages
+        .filter((img) => img.file)
+        .map((img) => img.file);
 
-      if (selectedImages.length > 0) {
-        imageUrls = await productApi.uploadImages(selectedImages, user.token);
+      let imageUrls = [...existingImageUrls];
+      if (newFiles.length > 0) {
+        const uploadedUrls = await productApi.uploadImages(
+          newFiles,
+          user.token,
+        );
+        imageUrls = [...existingImageUrls, ...uploadedUrls];
+      }
+
+      let categoryId = formData.categoryId;
+      if (!categoryId) {
+        const categoryName = formData.categoryName?.trim();
+        if (categoryName) {
+          const existingCategory = categories.find(
+            (category) =>
+              category.name.toLowerCase() === categoryName.toLowerCase(),
+          );
+          if (existingCategory) {
+            categoryId = existingCategory.id;
+          } else {
+            const createdCategory = await categoryApi.create(categoryName);
+            categoryId = createdCategory.id;
+            setCategories((prev) => [...prev, createdCategory]);
+          }
+        }
+      }
+
+      if (!categoryId) {
+        throw new Error("Выберите категорию или введите ее название");
       }
 
       const dto = {
@@ -188,6 +236,7 @@ function EditProductModal({ product, onClose, onUpdate }) {
         discountPrice: formData.discountPrice
           ? Number(formData.discountPrice)
           : null,
+        categoryId,
         stockQuantity: Number(formData.stockQuantity),
         dimensions: formData.dimensions || null,
         weight: formData.weight ? Number(formData.weight) : null,
@@ -257,6 +306,37 @@ function EditProductModal({ product, onClose, onUpdate }) {
                 onChange={handleInputChange}
                 placeholder="Краткое описание (до 300 символов)"
                 maxLength={300}
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label>Категория</label>
+              <select
+                name="categoryId"
+                value={formData.categoryId}
+                onChange={(e) => {
+                  handleInputChange(e);
+                  if (e.target.value)
+                    setFormData((prev) => ({ ...prev, categoryName: "" }));
+                }}
+              >
+                <option value="">Выберите категорию</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <div className={styles.categoryDivider}>или введите вручную</div>
+              <input
+                type="text"
+                name="categoryName"
+                value={formData.categoryName}
+                onChange={(e) => {
+                  handleInputChange(e);
+                  if (e.target.value)
+                    setFormData((prev) => ({ ...prev, categoryId: "" }));
+                }}
+                placeholder="Например: Вышивка"
               />
             </div>
             <div className={styles.formGroup}>
@@ -443,8 +523,8 @@ function EditProductModal({ product, onClose, onUpdate }) {
               </label>
               <div className={styles.imagePreviews}>
                 {previewImages.map((preview, index) => (
-                  <div key={index} className={styles.imagePreview}>
-                    <img src={preview} alt={`Preview ${index}`} />
+                  <div key={preview.id} className={styles.imagePreview}>
+                    <img src={preview.src} alt={`Preview ${index}`} />
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(index)}

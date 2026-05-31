@@ -11,12 +11,14 @@ const getAuthHeaders = (token) => {
 const mapProduct = (p) => ({
   id: p.id,
   title: p.title,
-  description: p.shortDescription || p.description || "",
-  fullDescription: p.description || "",
-  seller: p.sellerName || p.sellerId,
-  sellerId: p.sellerId,
-  category: p.categoryName || p.categoryId,
-  categoryId: p.categoryId,
+  description: p.description || p.shortDescription || "",
+  shortDescription: p.shortDescription || "",
+  fullDescription: p.description || p.shortDescription || "",
+  seller: p.sellerName || p.seller?.name || p.sellerId,
+  sellerId: p.sellerId || p.seller?.id,
+  category:
+    p.categoryName || p.category?.name || p.categoryId || p.category || "",
+  categoryId: p.categoryId || p.category?.id,
   price: Number(p.price) || 0,
   discountPrice: p.discountPrice ? Number(p.discountPrice) : null,
   images: p.imageUrls?.length
@@ -28,12 +30,16 @@ const mapProduct = (p) => ({
   stockQuantity: p.stockQuantity || 0,
   dimensions: p.dimensions || "",
   weight: p.weight || null,
-  materials: p.materials || [],
+  materials: Array.isArray(p.materials)
+    ? p.materials.map((m) => (typeof m === "string" ? m : m.name || ""))
+    : [],
   createdAt: p.createdAt,
   rating: Number(p.rating) || 0,
   ratingsCount: p.ratingsCount || 0,
   views: p.views || 0,
-  tags: p.tags || [],
+  tags: Array.isArray(p.tags)
+    ? p.tags.map((t) => (typeof t === "string" ? t : t.name || ""))
+    : [],
   status: p.isAvailable ? "available" : "unavailable",
 });
 
@@ -60,34 +66,7 @@ export const productApi = {
     const res = await fetch(`${BASE_URL}/product/get?id=${id}`);
     if (!res.ok) throw new Error("Product not found");
     const data = await res.json();
-    return {
-      id: data.id,
-      title: data.title,
-      description: data.description || "",
-      shortDescription: data.shortDescription || "",
-      seller: data.sellerName || data.sellerId,
-      sellerId: data.sellerId,
-      category: data.categoryName || data.categoryId,
-      categoryId: data.categoryId,
-      price: Number(data.price) || 0,
-      discountPrice: data.discountPrice ? Number(data.discountPrice) : null,
-      images: data.imageUrls?.length
-        ? data.imageUrls
-        : data.thumbnailUrl
-          ? [data.thumbnailUrl]
-          : [],
-      isAvailable: data.isAvailable,
-      stockQuantity: data.stockQuantity || 0,
-      dimensions: data.dimensions || "",
-      weight: data.weight || null,
-      materials: data.materials || [],
-      createdAt: data.createdAt,
-      rating: Number(data.rating) || 0,
-      ratingsCount: data.ratingsCount || 0,
-      views: data.views || 0,
-      tags: data.tags || [],
-      status: data.isAvailable ? "available" : "unavailable",
-    };
+    return mapProduct(data);
   },
 
   create: async (dto) => {
@@ -107,7 +86,8 @@ export const productApi = {
       body: JSON.stringify(dto),
     });
     if (!res.ok) throw new Error("Failed to update product");
-    return res.json();
+    const data = await res.json();
+    return mapProduct(data);
   },
 
   delete: async (id) => {

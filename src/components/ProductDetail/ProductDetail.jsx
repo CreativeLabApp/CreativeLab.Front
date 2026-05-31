@@ -9,7 +9,6 @@ import {
   PhotoIcon,
   HeartIcon,
   ShareIcon,
-  CurrencyDollarIcon,
   CalendarDaysIcon,
   CubeIcon,
   ScaleIcon,
@@ -193,6 +192,7 @@ function ProductDetail() {
           onClose={handleEditModalClose}
           onUpdate={(updatedProduct) => {
             setProduct(updatedProduct);
+            window.location.reload(); // Перезагружаем страницу, чтобы обновить список связанных товаров
           }}
         />
       )}
