@@ -8,7 +8,7 @@ function AboutPage() {
       <div className={styles.aboutContainer}>
         <h1 className={styles.title}>О проекте</h1>{" "}
         <p className={styles.subtitle}>
-          CreativeLab - веб-приложение, позволяющего пользователю просматривать
+          CreativeLab - веб-приложение, позволяющее пользователю просматривать
           мастер-классы, создавать свои и выставлять объявления о продаже
           изделий.
         </p>
