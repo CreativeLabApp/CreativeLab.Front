@@ -145,9 +145,6 @@ function Rating() {
               <span className={styles.ratingValue}>{product.rating}</span>
             </div>
             <div className={styles.cardStats}>
-              <span className={styles.sales}>
-                Продано: {formatNumber(product.sales || 0)}
-              </span>
               <span className={styles.price}>
                 {formatNumber(product.price)} Br
               </span>
