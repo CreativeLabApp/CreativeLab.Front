@@ -99,8 +99,8 @@ function Rating() {
   const topMasterClasses = useMemo(() => {
     return [...masterClasses]
       .sort((a, b) => {
-        const viewsA = a.views || 0;
-        const viewsB = b.views || 0;
+        const viewsA = a.rating || 0;
+        const viewsB = b.rating || 0;
         if (viewsB !== viewsA) return viewsB - viewsA;
         return b.rating - a.rating;
       })

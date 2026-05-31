@@ -3,6 +3,8 @@
   border-radius: var(--border-radius);
   padding: var(--spacing-xl);
   border: 1px solid var(--border-color);
+  max-width: 1000px;
+  word-break: break-all;
 }
 
 .sectionTitle {

@@ -17,6 +17,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
   StarIcon,
+  QrCodeIcon,
 } from "@heroicons/react/24/outline";
 import {
   HeartIcon as HeartIconSolid,
@@ -366,6 +367,15 @@ function ProductDetail() {
                       <div className={styles.specLabel}>Добавлено</div>
                       <div className={styles.specValue}>
                         {formatDate(product.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.specItem}>
+                    <QrCodeIcon className={styles.specIcon} />
+                    <div>
+                      <div className={styles.specLabel}>Количество</div>
+                      <div className={styles.specValue}>
+                        {product.stockQuantity}
                       </div>
                     </div>
                   </div>

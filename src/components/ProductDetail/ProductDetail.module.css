@@ -453,6 +453,9 @@
   line-height: 1.6;
   color: var(--font-color);
   margin: 0;
+  max-width: 1000px;
+  word-wrap: wrap;
+  word-break: break-all;
 }
 
 /* Информация о продавце */

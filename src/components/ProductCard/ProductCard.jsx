@@ -127,10 +127,6 @@ function ProductCard({ product }) {
             <TagIcon className={styles.categoryIcon} />
             <span>{product.category}</span>
           </div>
-          <div className={styles.views}>
-            <EyeIcon className={styles.viewsIcon} />
-            <span>{product.views}</span>
-          </div>
         </div>
 
         {/* Рейтинг */}

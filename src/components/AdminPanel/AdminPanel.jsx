@@ -1207,13 +1207,15 @@ function AdminPanel() {
               </div>
 
               <div className={styles.commentActions}>
-                <button
-                  onClick={() => navigate(`/creator/${comment.userId}`)}
-                  className={styles.viewProfileButton}
-                >
-                  <UserIcon className={styles.buttonIcon} />
-                  Профиль
-                </button>
+                {user.id !== comment.userId && (
+                  <button
+                    onClick={() => navigate(`/creator/${comment.userId}`)}
+                    className={styles.viewProfileButton}
+                  >
+                    <UserIcon className={styles.buttonIcon} />
+                    Профиль
+                  </button>
+                )}
                 <button
                   onClick={() =>
                     navigate(`/masterclass/${comment.masterclassId}`)
