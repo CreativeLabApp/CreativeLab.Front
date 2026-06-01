@@ -4,6 +4,8 @@ import { useAuthStore } from "../../stores/authStore";
 import { masterclassApi } from "../../api/masterclassApi";
 import { productApi } from "../../api/productApi";
 import { userApi } from "../../api/userApi";
+import { chatApi, messageApi } from "../../api/chatApi";
+import messagesStyles from "../Messages/Messages.module.css";
 import {
   ShieldCheckIcon,
   VideoCameraIcon,
@@ -34,22 +36,20 @@ function AdminPanel() {
       .getAll()
       .then((data) => {
         setAllUsers(
-          data
-            .filter((u) => u.role !== "admin")
-            .map((u) => ({
-              id: u.id,
-              name: `${u.name} ${u.surname}`.trim(),
-              email: u.email,
-              role:
-                u.role ||
-                (u.email?.toLowerCase() === "admin@creativelab.com"
-                  ? "admin"
-                  : "user"),
-              isActive: u.isActive,
-              registrationDate: u.createdAt?.split("T")[0] || "",
-              masterclassesCount: u.masterclassesCount,
-              productsCount: u.productsCount,
-            })),
+          data.map((u) => ({
+            id: u.id,
+            name: `${u.name} ${u.surname}`.trim(),
+            email: u.email,
+            role:
+              u.role ||
+              (u.email?.toLowerCase() === "admin@creativelab.com"
+                ? "admin"
+                : "user"),
+            isActive: u.isActive,
+            registrationDate: u.createdAt?.split("T")[0] || "",
+            masterclassesCount: u.masterclassesCount,
+            productsCount: u.productsCount,
+          })),
         );
       })
       .catch(() => {});
@@ -88,6 +88,13 @@ function AdminPanel() {
   }, []);
 
   const [allComments, setAllComments] = useState([]);
+  const [chats, setChats] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState("");
+  const [newMessage, setNewMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     masterclassApi
@@ -149,6 +156,103 @@ function AdminPanel() {
       navigate("/");
     }
   }, [user, isAdmin, navigate]);
+
+  // Предзагрузка списка чатов (чтобы бейдж в навигации показывал число чатов)
+  useEffect(() => {
+    const preloadChats = async () => {
+      if (!user) return;
+      try {
+        const data = await chatApi.getUserChats(user.id, user.token);
+        setChats(data.chats || data || []);
+      } catch (err) {
+        // silently ignore preload errors
+      }
+    };
+
+    preloadChats();
+  }, [user]);
+
+  // Загрузка чатов для администратора при переходе на вкладку
+  useEffect(() => {
+    const loadChats = async () => {
+      if (activeTab !== "chats") return;
+      if (!user) return;
+      setChatLoading(true);
+      setChatError("");
+      try {
+        const data = await chatApi.getUserChats(user.id, user.token);
+        setChats(data.chats || data || []);
+      } catch (err) {
+        setChatError(err.message || "Ошибка при загрузке чатов");
+      } finally {
+        setChatLoading(false);
+      }
+    };
+
+    loadChats();
+  }, [activeTab, user]);
+
+  const loadChatMessages = async (chat) => {
+    if (!chat || !user) return;
+    setChatLoading(true);
+    setChatError("");
+    try {
+      const data = await messageApi.getChatMessages(
+        chat.id,
+        user.id,
+        user.token,
+      );
+      setSelectedChat(chat);
+      setChatMessages(data.messages || data || []);
+    } catch (err) {
+      setChatError(err.message || "Ошибка при загрузке сообщений");
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedChat || !user) return;
+    try {
+      setIsSending(true);
+
+      let receiverId = selectedChat.participantId;
+      if (!receiverId && selectedChat.participants) {
+        const otherParticipant = selectedChat.participants.find(
+          (p) => p.userId !== user.id,
+        );
+        receiverId = otherParticipant?.userId;
+      }
+
+      if (!receiverId) {
+        setChatError("Не удалось определить получателя сообщения");
+        setIsSending(false);
+        return;
+      }
+
+      const dto = {
+        ChatId: selectedChat.id,
+        SenderId: user.id,
+        ReceiverId: receiverId,
+        Content: newMessage.trim(),
+      };
+
+      await messageApi.createMessage(dto, user.token);
+      setNewMessage("");
+      await loadChatMessages(selectedChat);
+    } catch (err) {
+      setChatError(err.message || "Не удалось отправить сообщение");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleMessageKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
   // Фильтрация пользователей
   const filteredUsers = allUsers
@@ -452,6 +556,15 @@ function AdminPanel() {
           </div>
           <div className={styles.statContent}>
             <div className={styles.statNumber}>{allUsers.length}</div>
+            <div className={styles.statBreakdown}>
+              <span>
+                {allUsers.filter((u) => u.role === "user").length} пользователей
+              </span>
+              <span>
+                {allUsers.filter((u) => u.role === "admin").length}{" "}
+                администраторов
+              </span>
+            </div>
           </div>
         </div>
 
@@ -712,54 +825,56 @@ function AdminPanel() {
                   </span>
                 </td>
                 <td>
-                  <div className={styles.actionButtons}>
-                    <button
-                      onClick={() => navigate(`/creator/${userItem.id}`)}
-                      className={styles.viewButton}
-                      title="Просмотреть профиль"
-                    >
-                      <EyeIcon className={styles.buttonIcon} />
-                    </button>
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/edit-user/${userItem.id}`)
-                      }
-                      className={styles.editButton}
-                      title="Редактировать профиль"
-                    >
-                      <PencilIcon className={styles.buttonIcon} />
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleToggleUserActive(
-                          userItem.id,
-                          userItem.isActive,
-                          userItem.name,
-                        )
-                      }
-                      className={
-                        userItem.isActive
-                          ? styles.deactivateButton
-                          : styles.activateButton
-                      }
-                      title={
-                        userItem.isActive ? "Деактивировать" : "Активировать"
-                      }
-                    >
-                      {userItem.isActive ? "Деакт." : "Акт."}
-                    </button>
-                    {userItem.id !== user.id && (
+                  {userItem.role !== "admin" && (
+                    <div className={styles.actionButtons}>
+                      <button
+                        onClick={() => navigate(`/creator/${userItem.id}`)}
+                        className={styles.viewButton}
+                        title="Просмотреть профиль"
+                      >
+                        <EyeIcon className={styles.buttonIcon} />
+                      </button>
                       <button
                         onClick={() =>
-                          handleDeleteUser(userItem.id, userItem.name)
+                          navigate(`/admin/edit-user/${userItem.id}`)
                         }
-                        className={styles.deleteButton}
-                        title="Удалить"
+                        className={styles.editButton}
+                        title="Редактировать профиль"
                       >
-                        <TrashIcon className={styles.buttonIcon} />
+                        <PencilIcon className={styles.buttonIcon} />
                       </button>
-                    )}
-                  </div>
+                      <button
+                        onClick={() =>
+                          handleToggleUserActive(
+                            userItem.id,
+                            userItem.isActive,
+                            userItem.name,
+                          )
+                        }
+                        className={
+                          userItem.isActive
+                            ? styles.deactivateButton
+                            : styles.activateButton
+                        }
+                        title={
+                          userItem.isActive ? "Деактивировать" : "Активировать"
+                        }
+                      >
+                        {userItem.isActive ? "Деакт." : "Акт."}
+                      </button>
+                      {userItem.id !== user.id && (
+                        <button
+                          onClick={() =>
+                            handleDeleteUser(userItem.id, userItem.name)
+                          }
+                          className={styles.deleteButton}
+                          title="Удалить"
+                        >
+                          <TrashIcon className={styles.buttonIcon} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
@@ -1070,6 +1185,147 @@ function AdminPanel() {
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+
+  // Управление чатами (просмотр только, создание чатов запрещено для админа)
+  const renderChatsManagement = () => (
+    <div className={styles.managementSection}>
+      <div className={styles.sectionHeader}>
+        <h3 className={styles.sectionTitle}>Чаты ({chats.length})</h3>
+        <div className={styles.sectionControls}>
+          <div className={styles.searchBox}>
+            <MagnifyingGlassIcon className={styles.searchIcon} />
+            <input
+              type="text"
+              placeholder="Поиск по чатам..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={styles.searchInput}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.chatsContainer}>
+        <div className={`${styles.chatsList} ${messagesStyles.sidebar}`}>
+          {chatLoading && <div>Загрузка чатов...</div>}
+          {chatError && <div className={styles.error}>{chatError}</div>}
+          {!chatLoading && !chats.length && (
+            <div className={styles.noComments}>Чаты не найдены</div>
+          )}
+          {chats
+            .filter(
+              (c) =>
+                !searchQuery ||
+                (c.participants &&
+                  c.participants.some((p) =>
+                    (p.name || p.userName || "")
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase()),
+                  )),
+            )
+            .map((c) => (
+              <div
+                key={c.id}
+                className={`${messagesStyles.creatorItem} ${selectedChat?.id === c.id ? messagesStyles.creatorItem + " " + "selected" : ""}`}
+                onClick={() => loadChatMessages(c)}
+              >
+                <div className={messagesStyles.creatorInfo}>
+                  <div className={messagesStyles.creatorHeader}>
+                    <div className={messagesStyles.creatorName}>
+                      {c.participants[1].name}
+                    </div>
+                    <div className={messagesStyles.creatorTime}>
+                      {c.updatedAt
+                        ? new Date(c.updatedAt).toLocaleString()
+                        : ""}
+                    </div>
+                  </div>
+                </div>
+                {c.unreadCount > 0 && (
+                  <div className={messagesStyles.unreadBadge}>
+                    {c.unreadCount}
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
+
+        <div className={`${styles.chatWindow} ${messagesStyles.chatArea}`}>
+          {selectedChat ? (
+            <>
+              <div className={messagesStyles.chatHeader}>
+                <div className={messagesStyles.chatCreatorInfo}>
+                  <div className={messagesStyles.chatCreatorName}>
+                    {selectedChat.title || "Чат"}
+                  </div>
+                </div>
+              </div>
+              <div className={messagesStyles.messagesContainer}>
+                {chatLoading && <div>Загрузка сообщений...</div>}
+                {!chatLoading && !chatMessages.length && (
+                  <div className={messagesStyles.emptyChat}>Сообщений нет</div>
+                )}
+                <div className={messagesStyles.messagesList}>
+                  {chatMessages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={`${messagesStyles.message} ${m.senderId === user.id ? messagesStyles.myMessage : messagesStyles.theirMessage}`}
+                    >
+                      <div className={messagesStyles.messageContent}>
+                        <div className={messagesStyles.messageText}>
+                          {m.text || m.content || m.body}
+                        </div>
+                        <div className={messagesStyles.messageMeta}>
+                          <div className={messagesStyles.messageTime}>
+                            {m.createdAt
+                              ? new Date(m.createdAt).toLocaleTimeString()
+                              : ""}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={messagesStyles.inputContainer}>
+                <button className={messagesStyles.attachmentButton} disabled>
+                  <span className={messagesStyles.attachmentIcon} />
+                </button>
+                <textarea
+                  className={messagesStyles.messageInput}
+                  placeholder="Напишите сообщение..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={handleMessageKeyDown}
+                />
+                <button
+                  className={messagesStyles.sendButton}
+                  onClick={handleSendMessage}
+                  disabled={isSending || !newMessage.trim()}
+                >
+                  <svg
+                    className={messagesStyles.sendIcon}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M3 11L21 3L14 21L11 14L3 11Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className={messagesStyles.noChatSelected}>
+              Выберите чат слева
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1499,6 +1755,17 @@ function AdminPanel() {
 
         <button
           className={`${styles.navButton} ${
+            activeTab === "chats" ? styles.active : ""
+          }`}
+          onClick={() => setActiveTab("chats")}
+        >
+          <ChatBubbleLeftIcon className={styles.navIcon} />
+          Чаты
+          <span className={styles.navBadge}>{chats.length}</span>
+        </button>
+
+        <button
+          className={`${styles.navButton} ${
             activeTab === "comments" ? styles.active : ""
           }`}
           onClick={() => setActiveTab("comments")}
@@ -1514,6 +1781,7 @@ function AdminPanel() {
         {activeTab === "users" && renderUsersManagement()}
         {activeTab === "masterclasses" && renderMasterClassesManagement()}
         {activeTab === "products" && renderProductsManagement()}
+        {activeTab === "chats" && renderChatsManagement()}
         {activeTab === "comments" && renderCommentsModeration()}
       </div>
     </div>

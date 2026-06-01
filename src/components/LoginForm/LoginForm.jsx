@@ -38,6 +38,13 @@ function LoginForm() {
   return (
     <FormProvider {...methods}>
       <FormWrapper title="Вход">
+        <Button
+          type="button"
+          onClick={() => navigate("/")}
+          className={styles.homeButton}
+        >
+          🡨 На главную
+        </Button>
         <form
           className={styles.form}
           onSubmit={methods.handleSubmit(handleSubmit)}

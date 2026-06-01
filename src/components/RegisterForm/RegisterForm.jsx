@@ -5,7 +5,7 @@ import Input from "../common/Input/Input";
 import Button from "../common/Button/Button";
 import styles from "./RegisterForm.module.css";
 import FormBottom from "../common/FormBottom/FormBottom";
-import { useNavigate } from "react-router-dom";
+import { Form, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 
 function RegisterForm() {
@@ -48,6 +48,13 @@ function RegisterForm() {
   return (
     <FormProvider {...methods}>
       <FormWrapper title="Регистрация">
+        <Button
+          type="button"
+          onClick={() => navigate("/")}
+          className={styles.homeButton}
+        >
+          🡨 На главную
+        </Button>
         <form
           className={styles.form}
           onSubmit={methods.handleSubmit(handleSubmit)}
