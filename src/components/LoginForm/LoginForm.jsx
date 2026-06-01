@@ -38,13 +38,6 @@ function LoginForm() {
   return (
     <FormProvider {...methods}>
       <FormWrapper title="Вход">
-        <Button
-          type="button"
-          onClick={() => navigate("/")}
-          className={styles.homeButton}
-        >
-          🡨 На главную
-        </Button>
         <form
           className={styles.form}
           onSubmit={methods.handleSubmit(handleSubmit)}
@@ -84,11 +77,18 @@ function LoginForm() {
             {isLoading ? "Вход..." : "Войти"}
           </Button>
 
-          <FormBottom
-            to="/register"
-            toLabel="Зарегистрироваться"
-            label="Нет аккаунта?"
-          />
+          <div className={styles.bottom}>
+            <FormBottom
+              to="/register"
+              toLabel="Зарегистрироваться"
+              label="Нет аккаунта?"
+            />
+            <FormBottom
+              to="/"
+              toLabel="На главную"
+              label="Вернуться на главную?"
+            />
+          </div>
         </form>
       </FormWrapper>
     </FormProvider>

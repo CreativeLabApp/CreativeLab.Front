@@ -48,13 +48,6 @@ function RegisterForm() {
   return (
     <FormProvider {...methods}>
       <FormWrapper title="Регистрация">
-        <Button
-          type="button"
-          onClick={() => navigate("/")}
-          className={styles.homeButton}
-        >
-          🡨 На главную
-        </Button>
         <form
           className={styles.form}
           onSubmit={methods.handleSubmit(handleSubmit)}
@@ -152,7 +145,14 @@ function RegisterForm() {
             {isLoading ? "Регистрация..." : "Зарегистрироваться"}
           </Button>
 
-          <FormBottom to="/login" toLabel="Войти" label="Уже есть аккаунт?" />
+          <div className={styles.bottom}>
+            <FormBottom to="/login" toLabel="Войти" label="Уже есть аккаунт?" />
+            <FormBottom
+              to="/"
+              toLabel="На главную"
+              label="Вернуться на главную?"
+            />
+          </div>
         </form>
       </FormWrapper>
     </FormProvider>
